@@ -26,12 +26,12 @@ Dataset alignment is the strategic prerequisite for production-grade computer vi
 
 We evaluated three primary Kaggle sources for their class distributions and annotation formats to ensure a unified pipeline:
 
-|   |   |   |   |   |
-|---|---|---|---|---|
-|Source|Image Count|Class Count|Format|Primary PPE Focus|
-|**snehilsanyal**|2,801|10|YOLO26|Hardhat, Vest (Includes Negatives)|
-|**Sajjad**|1,405|4|YOLOv8|Helmets, Vests, Boots|
-|**Anurag**|12,892|5|YOLOv8|General Construction PPE|
+|                  |             |             |        |                                    |
+| ---------------- | ----------- | ----------- | ------ | ---------------------------------- |
+| Source           | Image Count | Class Count | Format | Primary PPE Focus                  |
+| **snehilsanyal** | 2,801       | 10          | YOLO26 | Hardhat, Vest (Includes Negatives) |
+| **Sajjad**       | 1,405       | 4           | YOLOv8 | Helmets, Vests, Boots              |
+| **Anurag**       | 12,892      | 5           | YOLOv8 | General Construction PPE           |
 
 To bypass labeling conflicts and the "Missing Label Penalty," HI-VIS adopts the **Roboflow Construction PPE dataset** (8,845 images) as the "Clean Path." This dataset provides a unified ground truth for core PPE types (helmets, vests, and boots) across high-variance lighting. This clean foundation is required to achieve the robustness necessary for real-world site environments.
 
