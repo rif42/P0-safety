@@ -1,0 +1,37 @@
+{
+  "facts": {
+    "total_gb": 23.47,
+    "available_gb": 22.53,
+    "swap_gb": 16.0,
+    "shm_gb": 11.74,
+    "cgroup_limit_gb": 12.0,
+    "cgroup_used_gb": 0.14,
+    "vram_gb": 15.92,
+    "gpu_count": 1,
+    "usable_gb": 11.86
+  },
+  "recommendation": {
+    "workers": 2,
+    "cache": false,
+    "batch": 3,
+    "imgsz": 960,
+    "model_scale": "s",
+    "warnings": [
+      "/dev/shm is 11.7 GiB against 11.9 GiB usable RAM. It is a RAM-backed tmpfs, so that ceiling competes with training. Size it near 2 GiB."
+    ],
+    "notes": [
+      "batch scaled 8 -> 3 for imgsz 640 -> 960 (activation memory goes as pixel count).",
+      "Ultralytics accumulates gradients to nbs=64, so a smaller batch does not change the effective batch size or the learning-rate schedule - only wall-clock per epoch."
+    ]
+  },
+  "plan": {
+    "model": "yolo26s.pt",
+    "data": "data/ppe_yolo26/data.yaml",
+    "imgsz": 960,
+    "epochs": 120,
+    "batch": 3,
+    "workers": 2,
+    "cache": false,
+    "device": 0
+  }
+}

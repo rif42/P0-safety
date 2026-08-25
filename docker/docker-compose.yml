@@ -1,0 +1,73 @@
+# Ultralytics + JupyterLab for the PPE pipeline.
+#
+#   docker compose -f docker/docker-compose.yml up
+#   then open http://localhost:8888
+#
+# MEMORY — read this before the first training run.
+#
+# On Windows, Docker runs inside a WSL2 VM that defaults to 50% of host RAM.
+# On a 16 GB laptop that is 8 GB for everything: the container, /dev/shm, the
+# Jupyter server and the training process. The first run of this project died
+# there — not from a Docker limit, but because the VM itself ran dry and Linux
+# OOM-killed the largest process.
+#
+# Raise the ceiling in C:\Users\<you>\.wslconfig (create it if absent):
+#
+#     [wsl2]
+#     memory=24GB          # leave 8 GB for Windows
+#     swap=16GB            # turns a memory spike into slowness, not a kill
+#     processors=8
+#
+# then `wsl --shutdown` in PowerShell and restart Docker Desktop.
+#
+# Override the two limits below per machine, e.g.
+#     PPE_MEM_LIMIT=20g PPE_SHM_SIZE=4gb docker compose -f docker/docker-compose.yml up
+services:
+  ppe:
+    image: ultralytics/ultralytics:latest
+    container_name: ppe-yolo26
+    working_dir: /workspace
+
+    # An explicit limit means the container is killed for exceeding its own
+    # budget, reported as OOMKilled against this service, instead of the VM
+    # dying and the kernel picking a victim at random. Keep it a few GiB below
+    # the WSL2 memory ceiling so the VM always has room to breathe.
+    mem_limit: ${PPE_MEM_LIMIT:-12g}
+
+    ipc: host
+    # /dev/shm is a RAM-backed tmpfs and its ceiling competes with training.
+    # 8gb on a VM capped at 8gb — the original setting here — is most of the
+    # budget. Roughly a quarter of mem_limit is the right shape.
+    shm_size: ${PPE_SHM_SIZE:-2gb}
+
+    ports:
+      - "8888:8888"
+    volumes:
+      - ..:/workspace
+      - ppe-data:/workspace/data          # datasets survive a container rebuild
+      - ppe-hf:/root/.cache/huggingface
+      - ppe-kaggle:/root/.cache/kagglehub
+      - ${HOME}/.config/kaggle:/root/.config/kaggle:ro   # Kaggle credentials
+    environment:
+      - PYTHONUNBUFFERED=1
+      - YOLO_CONFIG_DIR=/workspace/.ultralytics
+      - KAGGLE_USERNAME=${KAGGLE_USERNAME:-}
+      - KAGGLE_KEY=${KAGGLE_KEY:-}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: >
+      bash -lc "pip install -q jupyterlab pandas kagglehub huggingface_hub &&
+                python /workspace/src/ppe_memory.py &&
+                jupyter lab --ip=0.0.0.0 --port=8888 --allow-root --no-browser
+                            --ServerApp.token='' --ServerApp.password=''
+                            --notebook-dir=/workspace"
+
+volumes:
+  ppe-data:
+  ppe-hf:
+  ppe-kaggle:
