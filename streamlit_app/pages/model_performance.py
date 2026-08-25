@@ -65,11 +65,16 @@ RUN_INFO = {
             "classes as our data — a useful ceiling to compare our own runs against."
         ),
     },
-    # "yolo26n": {
-    #     "label": "YOLOv26n",
-    #     "path": "detect/runs/ppe_dev/yolo26n",
-    #     "caption": "Add once this run is finished and you've decided to show it.",
-    # },
+    "pretrained_v26": {
+        "label": "YOLO26s — pretrained_v26",
+        "path": "pretrained_v26",
+        "caption": (
+            "Trained by a teammate outside this repo — different architecture from the other "
+            "two runs (YOLO26, not YOLOv8n). Weights are in; this card activates automatically "
+            "once results.csv (and ideally results.png / confusion_matrix.png / PR_curve.png) "
+            "land in runs/pretrained_v26/, same layout as pretrained_100e."
+        ),
+    },
 }
 
 st.header("YOLO training runs")

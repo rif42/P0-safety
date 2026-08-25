@@ -21,8 +21,17 @@ REPO_ROOT = _APP_DIR.parent  # streamlit_app/.. == repo root
 # with; HIVIS_MODEL_PATH (and HIVIS_MODEL_LABEL) let you point at a different
 # run without touching code, e.g.:
 #   HIVIS_MODEL_PATH=runs/scratch/yolov8n_scratch/weights/best.pt streamlit run app.py
-DEFAULT_WEIGHTS = REPO_ROOT / "runs" / "pretrained_100e" / "weights" / "best.pt"
-DEFAULT_LABEL = "YOLOv8n · pretrained_100e"
+#
+# V8_*/V26_* are named so pages that need BOTH runs at once (e.g. the model
+# comparison page) can load them explicitly instead of only ever getting
+# whichever one DEFAULT_WEIGHTS/HIVIS_MODEL_PATH currently points at.
+V8_WEIGHTS = REPO_ROOT / "runs" / "pretrained_100e" / "weights" / "best.pt"
+V8_LABEL = "YOLOv8n · pretrained_100e"
+V26_WEIGHTS = REPO_ROOT / "runs" / "pretrained_v26" / "weights" / "best.pt"
+V26_LABEL = "YOLO26s · pretrained_v26"  # different architecture from v8 (C3k2/C2PSA blocks, not C2f) — verified from the checkpoint itself
+
+DEFAULT_WEIGHTS = V26_WEIGHTS
+DEFAULT_LABEL = V26_LABEL
 
 _weights_env = os.environ.get("HIVIS_MODEL_PATH")
 WEIGHTS_PATH = (REPO_ROOT / _weights_env) if _weights_env else DEFAULT_WEIGHTS
@@ -53,10 +62,18 @@ CLASS_META = {
 # visible" (see assess()), same as any other item the model can't see.
 _RAW_TO_KEY = {
     "person": "person",
+    # pretrained_100e's vocabulary:
     "hardhat": "hardhat",
     "no-hardhat": "nohardhat",
     "safety vest": "vest",
     "no-safety vest": "novest",
+    # pretrained_v26's vocabulary — same four PPE states, different words.
+    # Add any future run's own class names here rather than retraining to
+    # match; this is the one place that needs to know about it.
+    "helmet": "hardhat",
+    "no-helmet": "nohardhat",
+    "vest": "vest",
+    "no-vest": "novest",
 }
 TRACKED_CLASSES = ["person", "hardhat", "nohardhat", "vest", "novest"]
 UNTRACKED_NOTE = "Boots: not a class in this model's training data — always reported as not visible."
@@ -208,6 +225,8 @@ def assess(raw_boxes, threshold, required=("hardhat", "vest")):
 
     if not out:
         recoverable = len(persons_raw) > 0
-        return {"persons": [], "verdict": "none", "recoverable": recoverable}
+        best_person_conf = max((p["conf"] for p in persons_raw), default=None)
+        return {"persons": [], "verdict": "none", "recoverable": recoverable,
+                "best_person_conf": best_person_conf}
     verdict = "non" if any(x["verdict"] == "non" for x in out) else "ok"
     return {"persons": out, "verdict": verdict, "recoverable": False}
