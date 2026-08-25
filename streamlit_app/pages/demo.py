@@ -8,9 +8,7 @@ view with detection overlays. Visual language follows the HI-VIS design spec
 labels.
 """
 
-import base64
 import hashlib
-import io
 import time
 
 import streamlit as st
@@ -65,89 +63,21 @@ def build_rule_text(required):
     return f"{core}; boots advisory (not tracked by this model)."
 
 
-def flag_confidence(assessment, required):
-    """The confidence of the strongest violation in this photo — the number
-    driving its non-compliant verdict. None for compliant / not-assessed
-    photos (there's no violation to report a confidence for)."""
-    confs = [p["status"][slot]["conf"] for p in assessment["persons"] for slot in required
-             if p["status"][slot]["state"] == "missing"]
-    return max(confs) if confs else None
-
 # ---------------------------------------------------------------------------
 # style
 # ---------------------------------------------------------------------------
 
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
-html, body, [class*="css"] { font-family:'IBM Plex Sans',sans-serif; }
-.stApp { background:#E4E5E2; }
-#MainMenu { visibility:hidden; }
-.block-container { max-width:1400px; }
-.hv-mono { font-family:'IBM Plex Mono',monospace; }
-.hv-h1 { font-family:'Barlow Condensed',sans-serif; font-weight:800; letter-spacing:.5px; color:#141414; }
-@keyframes hvspin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
-@keyframes hvstripe { from { background-position:0 0; } to { background-position:28px 0; } }
-[data-testid="stFileUploaderDropzone"] { background:#FFFFFF !important; border:2px dashed #141414 !important; border-radius:0 !important; }
-[role="radiogroup"] label { border:1px solid #141414; padding:4px 12px; margin-right:0 !important; background:#FFFFFF; }
-[data-testid="stBaseButton-secondary"], [data-testid="stBaseButton-primary"] { border-radius:0 !important; font-weight:600 !important; }
-[data-testid="stBaseButton-secondary"] { border:1px solid #141414 !important; background:#FFFFFF !important; color:#141414 !important; }
-[data-testid="stBaseButton-primary"] { border:1px solid #141414 !important; background:#141414 !important; color:#FFFFFF !important; }
-[data-testid="stAlert"] { background:#FFFFFF !important; border:1px solid #C4C6C0 !important; border-radius:0 !important; }
-[data-testid="stAlertContainer"] { background:#FFFFFF !important; color:#141414 !important; }
-[data-testid="stAlertContentInfo"] { color:#141414 !important; }
-[data-testid="stCaptionContainer"] { color:#4A4B47 !important; }
-hr { border-color:#C4C6C0; }
-</style>
-""", unsafe_allow_html=True)
-
-
-def icon_svg(kind, color, size=12, stroke=3):
-    paths = {
-        "check": '<path d="M4 12.5l5 5L20 6.5"/>',
-        "cross": '<path d="M5 5l14 14M19 5L5 19"/>',
-        "warn": '<path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5"/>',
-    }
-    return (f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" '
-            f'stroke="{color}" stroke-width="{stroke}" style="vertical-align:-2px;flex:none">'
-            f'{paths.get(kind, "")}</svg>')
-
-
-def verdict_badge(verdict):
-    meta = vh.badge_for(verdict)
-    kind = "check" if verdict == "ok" else "warn" if verdict == "non" else "cross"
-    icon = icon_svg(kind, meta["fg"], 11, 2.6)
-    return (f'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;'
-            f'font-weight:700;letter-spacing:.5px;padding:2px 7px;background:{meta["bg"]};'
-            f'color:{meta["fg"]};border:1px solid {meta["border"]};white-space:nowrap">'
-            f'{icon}{meta["label"]}</span>')
-
-
-def b64_image(img, max_dim=480, quality=82):
-    im = img.copy()
-    im.thumbnail((max_dim, max_dim))
-    if im.mode != "RGB":
-        im = im.convert("RGB")
-    buf = io.BytesIO()
-    im.save(buf, format="JPEG", quality=quality)
-    return base64.b64encode(buf.getvalue()).decode("ascii")
+# Style, header banner, icon/badge/thumbnail helpers, and flag_confidence all
+# live in view_helpers.py now — shared with the model comparison page so the
+# two don't visually drift apart or duplicate the same logic.
+st.markdown(vh.HV_STYLE_CSS, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
 # header
 # ---------------------------------------------------------------------------
 
-st.markdown(f"""
-<div style="background:#141414;color:#FFFFFF;display:flex;align-items:center;gap:16px;
-     padding:14px 24px;margin:0 0 20px 0;flex-wrap:wrap">
-  <div style="background:#EFE600;color:#141414;font-family:'Barlow Condensed',sans-serif;
-       font-weight:800;font-size:24px;letter-spacing:1px;padding:2px 10px 4px;line-height:1">HI-VIS</div>
-  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;
-       letter-spacing:2.5px">PPE COMPLIANCE DETECTION</div>
-  <div class="hv-mono" style="font-size:11px;color:#8D8F8A;border-left:1px solid #3A3B38;
-       padding-left:14px">{detector.MODEL_LABEL}</div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(vh.header_html("PPE COMPLIANCE DETECTION", detector.MODEL_LABEL), unsafe_allow_html=True)
 
 model = detector.load_model()
 if model is None:
@@ -357,8 +287,7 @@ if st.session_state.view == "results":
             st.checkbox("Hi-vis vest required", key="require_vest")
         with rc3:
             st.markdown(f'<div style="font-size:12.5px;color:#4A4B47;padding-top:22px">Uncheck an item to '
-                         f'stop flagging it — useful when a site only requires one. Boots aren\'t a class in '
-                         f'this model, so they never trigger a flag. Current rule: <b>{rule_text}</b></div>',
+                         f'stop flagging it.</div>',
                          unsafe_allow_html=True)
 
     st.markdown('<div class="hv-h1" style="font-size:24px;margin-top:24px">RESULTS</div>', unsafe_allow_html=True)
@@ -377,14 +306,14 @@ if st.session_state.view == "results":
         for i, it in enumerate(shown):
             a = it["assessment"]
             with cols[i % 4]:
-                b64 = b64_image(vh.draw_overlay(it["image"], a["persons"], show_boxes=True))
-                fc = flag_confidence(a, required)
+                b64 = vh.b64_image(vh.draw_overlay(it["image"], a["persons"], show_boxes=True))
+                fc = vh.flag_confidence(a, required)
                 conf_label = f"{fc:.2f} conf" if fc is not None else "— conf"
                 st.markdown(f"""
                 <div style="background:#FFFFFF;border:1px solid #C4C6C0" title="{it['name']}">
                   <img src="data:image/jpeg;base64,{b64}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block"/>
                   <div style="display:flex;align-items:center;gap:8px;padding:7px 9px">
-                    {verdict_badge(a["verdict"])}
+                    {vh.verdict_badge(a["verdict"])}
                     <span class="hv-mono" style="font-size:11px;color:#4A4B47;white-space:nowrap">{conf_label}</span>
                   </div>
                 </div>
@@ -474,7 +403,7 @@ else:
     with top2:
         st.markdown(f'<div class="hv-h1" style="font-size:24px">{it["name"]} '
                      f'<span class="hv-mono" style="font-size:13px;color:#4A4B47;font-weight:400">'
-                     f'· {it["datetime"] or "no capture time"}</span> {verdict_badge(a["verdict"])}</div>',
+                     f'· {it["datetime"] or "no capture time"}</span> {vh.verdict_badge(a["verdict"])}</div>',
                      unsafe_allow_html=True)
     with top3:
         n1, n2, n3 = st.columns(3)
@@ -495,7 +424,7 @@ else:
         st.session_state.show_boxes = st.checkbox("Show detection boxes", value=st.session_state.show_boxes)
         big = vh.draw_overlay(it["image"], a["persons"], selected_idx=st.session_state.selected_person,
                                show_boxes=st.session_state.show_boxes)
-        b64 = b64_image(big, max_dim=1400, quality=90)
+        b64 = vh.b64_image(big, max_dim=1400, quality=90)
         st.markdown(f'<div style="background:#141414;padding:10px"><img src="data:image/jpeg;base64,{b64}" '
                      f'style="width:100%;display:block"/></div>', unsafe_allow_html=True)
 
@@ -532,7 +461,7 @@ else:
         if not a["persons"]:
             note = " (detections exist below the current threshold — try lowering it)" if a.get("recoverable") else ""
             st.markdown(f'<div style="background:#FFFFFF;border:2px solid #141414;padding:16px;">'
-                         f'<div class="hv-h1" style="font-size:20px">{icon_svg("warn", "#141414", 20, 2)} NO PERSON DETECTIONS</div>'
+                         f'<div class="hv-h1" style="font-size:20px">{vh.icon_svg("warn", "#141414", 20, 2)} NO PERSON DETECTIONS</div>'
                          f'<div style="font-size:13px;margin-top:8px">No Person boxes returned for this photo{note}. '
                          f'Excluded from the compliance rate — review manually.</div></div>', unsafe_allow_html=True)
         for pi, p in enumerate(a["persons"]):
@@ -556,7 +485,7 @@ else:
             <div style="background:#FFFFFF;border:{border};margin-bottom:10px">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #E4E5E2">
                 <span class="hv-h1" style="font-size:17px">Person {pi + 1} <span class="hv-mono" style="font-size:11px;color:#71736D;font-weight:400">conf {p['conf']:.2f}</span></span>
-                {verdict_badge(p['verdict'])}
+                {vh.verdict_badge(p['verdict'])}
               </div>
               {rows_html}
             </div>
