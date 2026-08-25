@@ -1,1 +1,6 @@
 data
+models
+runs
+.DS_Store
+__pycache__
+.env
