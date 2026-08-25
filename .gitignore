@@ -1,7 +1,11 @@
 data
-dataset
+dataset/*
+!dataset/class_mapping.py
+!dataset/data.yaml
+!dataset/SOURCES.md
 vision-data-env
 reference
 experiments
 .DS_Store
 *.cache
+/*.zip
