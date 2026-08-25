@@ -11,6 +11,7 @@ labels.
 import base64
 import hashlib
 import io
+import time
 
 import streamlit as st
 
@@ -32,6 +33,8 @@ _DEFAULTS = {
     "type_filter": "All exception types",
     "verdict_filter": "Non-compliant only",
     "row_limit": 25,
+    "require_hardhat": True,
+    "require_vest": True,
 }
 for _k, _v in _DEFAULTS.items():
     st.session_state.setdefault(_k, _v)
@@ -47,7 +50,28 @@ VERDICT_FILTER_MAP = {
     "Compliant only": "compliant",
     "All assessed persons": "all",
 }
-RULE_TEXT = "Hardhat and hi-vis vest required; boots advisory (not tracked by this model)."
+_ITEM_NAMES = {"hardhat": "hardhat", "vest": "hi-vis vest"}
+
+
+def build_rule_text(required):
+    """Human-readable rule-set sentence for the currently checked items —
+    recomputed live as the WHAT COUNTS AS COMPLIANT filter changes."""
+    if not required:
+        core = "No PPE item currently required"
+    elif len(required) == 1:
+        core = f"{_ITEM_NAMES[required[0]].capitalize()} required"
+    else:
+        core = " and ".join(_ITEM_NAMES[s] for s in required).capitalize() + " required"
+    return f"{core}; boots advisory (not tracked by this model)."
+
+
+def flag_confidence(assessment, required):
+    """The confidence of the strongest violation in this photo — the number
+    driving its non-compliant verdict. None for compliant / not-assessed
+    photos (there's no violation to report a confidence for)."""
+    confs = [p["status"][slot]["conf"] for p in assessment["persons"] for slot in required
+             if p["status"][slot]["state"] == "missing"]
+    return max(confs) if confs else None
 
 # ---------------------------------------------------------------------------
 # style
@@ -58,14 +82,21 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 html, body, [class*="css"] { font-family:'IBM Plex Sans',sans-serif; }
 .stApp { background:#E4E5E2; }
-#MainMenu, footer { visibility:hidden; }
-.block-container { padding-top:1.5rem; max-width:1400px; }
+#MainMenu { visibility:hidden; }
+.block-container { max-width:1400px; }
 .hv-mono { font-family:'IBM Plex Mono',monospace; }
 .hv-h1 { font-family:'Barlow Condensed',sans-serif; font-weight:800; letter-spacing:.5px; color:#141414; }
-div[data-testid="stFileUploaderDropzone"] { background:#FFFFFF; border:2px dashed #141414 !important; border-radius:0; }
-div[role="radiogroup"] label { border:1px solid #141414; padding:4px 12px; margin-right:0 !important; background:#FFFFFF; }
-.stButton>button { border-radius:0; border:1px solid #141414; font-weight:600; }
-.stDownloadButton>button { border-radius:0; background:#141414; color:#FFFFFF; border:1px solid #141414; font-weight:600; }
+@keyframes hvspin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@keyframes hvstripe { from { background-position:0 0; } to { background-position:28px 0; } }
+[data-testid="stFileUploaderDropzone"] { background:#FFFFFF !important; border:2px dashed #141414 !important; border-radius:0 !important; }
+[role="radiogroup"] label { border:1px solid #141414; padding:4px 12px; margin-right:0 !important; background:#FFFFFF; }
+[data-testid="stBaseButton-secondary"], [data-testid="stBaseButton-primary"] { border-radius:0 !important; font-weight:600 !important; }
+[data-testid="stBaseButton-secondary"] { border:1px solid #141414 !important; background:#FFFFFF !important; color:#141414 !important; }
+[data-testid="stBaseButton-primary"] { border:1px solid #141414 !important; background:#141414 !important; color:#FFFFFF !important; }
+[data-testid="stAlert"] { background:#FFFFFF !important; border:1px solid #C4C6C0 !important; border-radius:0 !important; }
+[data-testid="stAlertContainer"] { background:#FFFFFF !important; color:#141414 !important; }
+[data-testid="stAlertContentInfo"] { color:#141414 !important; }
+[data-testid="stCaptionContainer"] { color:#4A4B47 !important; }
 hr { border-color:#C4C6C0; }
 </style>
 """, unsafe_allow_html=True)
@@ -108,7 +139,7 @@ def b64_image(img, max_dim=480, quality=82):
 
 st.markdown(f"""
 <div style="background:#141414;color:#FFFFFF;display:flex;align-items:center;gap:16px;
-     padding:14px 24px;margin:-1rem 0 20px 0;flex-wrap:wrap">
+     padding:14px 24px;margin:0 0 20px 0;flex-wrap:wrap">
   <div style="background:#EFE600;color:#141414;font-family:'Barlow Condensed',sans-serif;
        font-weight:800;font-size:24px;letter-spacing:1px;padding:2px 10px 4px;line-height:1">HI-VIS</div>
   <div style="font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;
@@ -130,45 +161,142 @@ if model is None:
     st.stop()
 
 # ---------------------------------------------------------------------------
-# upload
-# ---------------------------------------------------------------------------
-
-with st.container(border=True):
-    st.markdown('<div class="hv-h1" style="font-size:26px">DROP SITE PHOTOS HERE</div>', unsafe_allow_html=True)
-    st.caption("Multiple images or a whole folder. Each photo is checked for hardhats and hi-vis vests, person by person.")
-    uploaded_files = st.file_uploader(
-        "Select photos", type=["jpg", "jpeg", "png"], accept_multiple_files=True,
-        label_visibility="collapsed",
-    )
-
-if not uploaded_files:
-    st.info("Waiting for photos to analyse. Results, the exception log and CSV export appear here once you upload a batch.")
-    st.stop()
-
-# ---------------------------------------------------------------------------
-# process uploads (cached: inference runs once per unique file, not per rerun)
+# upload — only ever shown on the results screen, exactly like the prototype
+# (the detail screen has no drop zone / batch bar at all)
 # ---------------------------------------------------------------------------
 
 cache = st.session_state._detections
-items = []
-new_count = 0
-for f in uploaded_files:
-    raw_bytes = f.getvalue()
-    key = hashlib.md5(raw_bytes).hexdigest()
-    if key not in cache:
-        new_count += 1
-        img = vh.load_image(raw_bytes)
-        raw = detector.detect_raw(model, img)
-        dt = vh.exif_datetime(raw_bytes)
-        cache[key] = {"name": f.name, "image": img, "raw": raw, "datetime": dt}
-    items.append({"key": key, **cache[key]})
+st.session_state.setdefault("batch_order", [])  # upload order, survives switching to detail and back
 
-if new_count:
-    st.toast(f"Analysed {new_count} new photo{'s' if new_count != 1 else ''}.")
+if st.session_state.view == "results":
+    have_batch = bool(cache)
+
+    # Rendered into a single placeholder so it can be wiped out completely
+    # once there's a pending batch to animate — the drop box / batch-processed
+    # bar and the progress bar are never on screen at the same time.
+    uploader_slot = st.empty()
+    with uploader_slot.container():
+        if not have_batch:
+            with st.container(border=True):
+                st.markdown('<div class="hv-h1" style="font-size:26px">DROP SITE PHOTOS HERE</div>', unsafe_allow_html=True)
+                st.caption("Multiple images or a whole folder. Each photo is checked for hardhats and hi-vis vests, person by person.")
+                uploaded_files = st.file_uploader(
+                    "Select photos", type=["jpg", "jpeg", "png"], accept_multiple_files=True,
+                    label_visibility="collapsed",
+                )
+        else:
+            _n = len(cache)
+            with st.expander(f"✓ Batch processed — {_n} photo{'s' if _n != 1 else ''} loaded. Click to add more photos.", expanded=False):
+                uploaded_files = st.file_uploader(
+                    "Select photos", type=["jpg", "jpeg", "png"], accept_multiple_files=True,
+                    label_visibility="collapsed",
+                )
+
+    # process uploads (cached: inference runs once per unique file, not per rerun).
+    # Sort into pending (new) vs already-cached first so the progress bar below
+    # reflects only the work actually being done this run.
+    pending = []
+    for f in uploaded_files or []:
+        key = hashlib.md5(f.getvalue()).hexdigest()
+        if key not in cache:
+            pending.append((key, f))
+        if key not in st.session_state.batch_order:
+            st.session_state.batch_order.append(key)
+
+    if pending:
+        n = len(pending)
+        thresh_display = st.session_state.threshold
+        uploader_slot.empty()  # hide the drop box / batch-processed bar while the bar runs
+        progress_ph = st.empty()
+
+        def render_upload(pct):
+            # Phase 1 — uploading: fills left to right, navy.
+            progress_ph.markdown(f"""
+            <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+                <div class="hv-h1" style="font-size:22px">UPLOADING {n} PHOTO{"S" if n != 1 else ""}</div>
+                <div class="hv-mono" style="font-size:12px;color:#4A4B47">{pct}%</div>
+              </div>
+              <div style="height:8px;background:#E4E5E2;border:1px solid #141414">
+                <div style="height:100%;background:#14213D;width:{pct}%"></div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        def render_processing(done):
+            # Phase 2 — analysing: striped bar fills right to left as each
+            # photo actually finishes.
+            pct = round(done / n * 100)
+            progress_ph.markdown(f"""
+            <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.4"
+                       style="animation:hvspin 0.9s linear infinite"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>
+                  <div class="hv-h1" style="font-size:22px">ANALYSING PHOTOS — {done} OF {n}</div>
+                </div>
+                <div class="hv-mono" style="font-size:11px;background:#141414;color:#EFE600;padding:4px 8px">
+                  {detector.MODEL_LABEL} · conf ≥ {thresh_display:.2f}</div>
+              </div>
+              <div style="height:8px;border:1px solid #141414;
+                          background-image:linear-gradient(45deg,#EFE600 25%,#141414 25%,#141414 50%,#EFE600 50%,#EFE600 75%,#141414 75%);
+                          background-size:28px 28px;animation:hvstripe 0.8s linear infinite">
+                <div style="height:100%;background:#FFFFFF;width:{100 - pct}%"></div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Phase 1: simulated upload fill (the files are already on the server
+        # by the time this code runs — Streamlit received them to get here —
+        # so this is a deliberate, fixed-length flourish, not real transfer
+        # progress). Left to right, navy.
+        upload_frames = 14
+        for step in range(1, upload_frames + 1):
+            render_upload(round(step / upload_frames * 100))
+            time.sleep(0.03)
+
+        # Phase 2: real per-photo detection, right to left, striped. Each
+        # step gets a small floor so a 1-2 photo batch still shows visible
+        # motion instead of jumping straight to done.
+        step_time = min(0.25, max(0.03, 2.0 / n))
+        render_processing(0)
+        time.sleep(step_time)
+        for idx, (key, f) in enumerate(pending, start=1):
+            raw_bytes = f.getvalue()
+            img = vh.load_image(raw_bytes)
+            raw = detector.detect_raw(model, img)
+            dt = vh.exif_datetime(raw_bytes)
+            cache[key] = {"name": f.name, "image": img, "raw": raw, "datetime": dt}
+            render_processing(idx)
+            time.sleep(step_time)
+
+        # Phase 3: a confirmation box (matching the dashed "batch processed"
+        # style) that sits on screen for exactly 3 seconds, then clears
+        # itself — no click or toast needed.
+        progress_ph.markdown(f"""
+        <div style="background:#FFFFFF;border:1px dashed #9B9D97;padding:10px 16px;display:flex;align-items:center;gap:14px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B7A3D" stroke-width="2.4"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+          <div style="font-size:13px"><strong>Analysed {n} photo{'s' if n != 1 else ''}.</strong> Adding to your results…</div>
+        </div>
+        """, unsafe_allow_html=True)
+        time.sleep(3)
+        progress_ph.empty()
+        st.rerun()  # collapse the upload box into the slim bar immediately
+
+# Build the working batch from persisted order + cache — independent of whether
+# the uploader widget was even rendered this run, so the detail screen (which
+# renders no uploader) still has full access to every photo in the batch.
+items = [{"key": k, **cache[k]} for k in st.session_state.batch_order if k in cache]
+
+if not items:
+    st.info("Waiting for photos to analyse. Results, the exception log and CSV export appear here once you upload a batch.")
+    st.stop()
 
 threshold = st.session_state.threshold
+required = tuple(s for s, k in (("hardhat", "require_hardhat"), ("vest", "require_vest")) if st.session_state[k])
+rule_text = build_rule_text(required)
 for it in items:
-    it["assessment"] = detector.assess(it["raw"], threshold)
+    it["assessment"] = detector.assess(it["raw"], threshold, required=required)
 
 
 def go(**state):
@@ -219,6 +347,20 @@ if st.session_state.view == "results":
                 f'Results update live — currently <b>{len(non_items)} exception{"s" if len(non_items) != 1 else ""}</b> at {threshold:.2f}.</div>',
                 unsafe_allow_html=True)
 
+    with st.container(border=True):
+        rc1, rc2, rc3 = st.columns([1, 1, 2])
+        with rc1:
+            st.markdown('<div class="hv-h1" style="font-size:16px">WHAT COUNTS AS COMPLIANT</div>', unsafe_allow_html=True)
+            st.checkbox("Hardhat required", key="require_hardhat")
+        with rc2:
+            st.markdown('<div>&nbsp;</div>', unsafe_allow_html=True)
+            st.checkbox("Hi-vis vest required", key="require_vest")
+        with rc3:
+            st.markdown(f'<div style="font-size:12.5px;color:#4A4B47;padding-top:22px">Uncheck an item to '
+                         f'stop flagging it — useful when a site only requires one. Boots aren\'t a class in '
+                         f'this model, so they never trigger a flag. Current rule: <b>{rule_text}</b></div>',
+                         unsafe_allow_html=True)
+
     st.markdown('<div class="hv-h1" style="font-size:24px;margin-top:24px">RESULTS</div>', unsafe_allow_html=True)
     gcol1, gcol2 = st.columns([3, 1])
     with gcol1:
@@ -236,12 +378,14 @@ if st.session_state.view == "results":
             a = it["assessment"]
             with cols[i % 4]:
                 b64 = b64_image(vh.draw_overlay(it["image"], a["persons"], show_boxes=True))
+                fc = flag_confidence(a, required)
+                conf_label = f"{fc:.2f} conf" if fc is not None else "— conf"
                 st.markdown(f"""
-                <div style="background:#FFFFFF;border:1px solid #C4C6C0">
+                <div style="background:#FFFFFF;border:1px solid #C4C6C0" title="{it['name']}">
                   <img src="data:image/jpeg;base64,{b64}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block"/>
                   <div style="display:flex;align-items:center;gap:8px;padding:7px 9px">
                     {verdict_badge(a["verdict"])}
-                    <span class="hv-mono" style="font-size:11px;color:#4A4B47;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{it["name"]}</span>
+                    <span class="hv-mono" style="font-size:11px;color:#4A4B47;white-space:nowrap">{conf_label}</span>
                   </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -261,7 +405,7 @@ if st.session_state.view == "results":
 
     all_rows = vh.build_rows(
         [{"name": it["name"], "datetime": it["datetime"], "assessment": it["assessment"]} for it in items],
-        threshold, RULE_TEXT,
+        threshold, rule_text, required=required,
     )
     type_key = TYPE_FILTER_MAP[st.session_state.type_filter]
     verdict_key = VERDICT_FILTER_MAP[st.session_state.verdict_filter]
@@ -308,8 +452,8 @@ if st.session_state.view == "results":
                 st.session_state.row_limit += 25
                 st.rerun()
 
-    st.caption(f"Rule set: **{RULE_TEXT}** A person is non-compliant when the model makes a positive absence "
-               f"finding (NO-Hardhat / NO-Safety Vest) at or above the threshold. {detector.UNTRACKED_NOTE}")
+    st.caption(f"Rule set: **{rule_text}** A person is non-compliant when the model makes a positive absence "
+               f"finding at or above the threshold, for an item checked in WHAT COUNTS AS COMPLIANT above.")
 
 # ---------------------------------------------------------------------------
 # detail view
@@ -380,8 +524,8 @@ else:
         st.markdown(f"""
         <div style="background:#141414;color:#FFFFFF;padding:12px 16px;margin-bottom:10px">
           <div class="hv-mono" style="font-size:10px;letter-spacing:1.5px;color:#9B9D97">RULE SET APPLIED</div>
-          <div class="hv-h1" style="font-size:17px;color:#FFFFFF">Hardhat and hi-vis vest required. Boots advisory.</div>
-          <div style="font-size:11.5px;color:#B9BBB4;margin-top:6px">Non-compliant = a positive absence finding at or above threshold {threshold:.2f}. {detector.UNTRACKED_NOTE}</div>
+          <div class="hv-h1" style="font-size:17px;color:#FFFFFF">{rule_text}</div>
+          <div style="font-size:11.5px;color:#B9BBB4;margin-top:6px">Non-compliant = a positive absence finding at or above threshold {threshold:.2f}, for an item checked on the results screen.</div>
         </div>
         """, unsafe_allow_html=True)
 

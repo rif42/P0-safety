@@ -92,16 +92,18 @@ def badge_for(verdict):
     return VERDICT_META.get(verdict, VERDICT_META["none"])
 
 
-def build_rows(items, threshold, rule_text):
+def build_rows(items, threshold, rule_text, required=("hardhat", "vest")):
     """items: list of {"name", "datetime", "assessment"} — one per uploaded
-    photo. Returns one row per assessed person per tracked item (hardhat,
-    vest), covering both compliant and non-compliant findings, so the
-    verdict filter in the UI can slice either view from the same table."""
+    photo. Returns one row per assessed person per tracked item in
+    `required` (hardhat and/or vest), covering both compliant and
+    non-compliant findings, so the verdict filter in the UI can slice either
+    view from the same table. An item outside `required` never appears here
+    even if the model found it missing — it just is not part of the rule."""
     rows = []
     for item in items:
         assessment = item["assessment"]
         for p_idx, p in enumerate(assessment["persons"]):
-            missing = [slot for slot in ("hardhat", "vest") if p["status"][slot]["state"] == "missing"]
+            missing = [slot for slot in required if p["status"][slot]["state"] == "missing"]
             if missing:
                 for slot in missing:
                     st_ = p["status"][slot]

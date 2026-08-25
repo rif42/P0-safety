@@ -155,13 +155,19 @@ def detect_raw(model, image):
     return _dedupe(boxes)
 
 
-def assess(raw_boxes, threshold):
+def assess(raw_boxes, threshold, required=("hardhat", "vest")):
     """Group raw detections into per-person PPE findings at a given
     confidence threshold — pure python, safe to call on every slider move.
 
-    Rule set: hardhat and hi-vis vest required, boots advisory (and, on this
-    model, untracked). A person is non-compliant when a NO-Hardhat or
-    NO-Safety Vest box is matched to them at or above the threshold.
+    `required` controls which item(s) count toward the compliance verdict —
+    e.g. pass ("hardhat",) to check hardhats only. Status is still computed
+    for every tracked slot regardless, so switching `required` at the UI
+    layer needs no re-inference, just a re-call of this function.
+
+    Rule set: whichever of hardhat / hi-vis vest are in `required` (boots is
+    always advisory and, on this model, untracked). A person is
+    non-compliant when a required item has a NO-Hardhat or NO-Safety Vest
+    box matched to them at or above the threshold.
     """
     persons_raw = [b for b in raw_boxes if b["key"] == "person"]
     items_raw = [b for b in raw_boxes if b["key"] != "person"]
@@ -196,7 +202,7 @@ def assess(raw_boxes, threshold):
             else:
                 status[slot] = {"state": "notvisible", "conf": None, "box": None, "class_key": None}
         status["boots"] = {"state": "notvisible", "conf": None, "box": None, "class_key": None}
-        non_compliant = status["hardhat"]["state"] == "missing" or status["vest"]["state"] == "missing"
+        non_compliant = any(status[slot]["state"] == "missing" for slot in required)
         out.append({"box": p["box"], "conf": p["conf"], "status": status,
                      "verdict": "non" if non_compliant else "ok"})
 
