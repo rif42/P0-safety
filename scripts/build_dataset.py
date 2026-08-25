@@ -7,9 +7,16 @@ only the images that still have at least one annotation after that
 filtering. Images with none of the included classes present are excluded
 entirely, not just given an empty label file.
 
-dataset/images, dataset/labels, and dataset/merge_manifest.csv are fully
-derived from data/raw/, so this script rebuilds them from scratch every run
-rather than incrementally patching a previous run.
+dataset/images, dataset/labels, dataset/merge_manifest.csv, and
+dataset/labels_long.csv are fully derived from data/raw/, so this script
+rebuilds them from scratch every run rather than incrementally patching a
+previous run.
+
+Also writes dataset/labels_long.csv (one row per kept annotation: split,
+class_id, class_name, source, file) since this script already parses every
+label line to filter classes — downstream code (e.g. the class-distribution
+notebook) can read that one CSV instead of re-opening thousands of small
+label files itself.
 """
 import argparse
 import csv
@@ -71,6 +78,7 @@ def clean_output():
 def build(included_classes):
     clean_output()
     manifest_rows = []
+    label_rows = []
     kept_counts = [0] * len(MERGED_CLASSES)
     images_seen = 0
     images_kept = 0
@@ -110,10 +118,20 @@ def build(included_classes):
                     continue  # none of the included classes present -> drop the image
 
                 images_kept += 1
-                for line in kept_lines:
-                    kept_counts[int(line.split()[0])] += 1
-
                 merged_stem = f"{source}__{image_path.stem}"
+                for line in kept_lines:
+                    class_id = int(line.split(maxsplit=1)[0])
+                    kept_counts[class_id] += 1
+                    label_rows.append(
+                        {
+                            "split": split,
+                            "class_id": class_id,
+                            "class_name": MERGED_CLASSES[class_id],
+                            "source": source,
+                            "file": merged_stem,
+                        }
+                    )
+
                 out_image = OUT_ROOT / "images" / split / f"{merged_stem}{image_path.suffix}"
                 shutil.copy2(image_path, out_image)
                 out_label = OUT_ROOT / "labels" / split / f"{merged_stem}.txt"
@@ -138,6 +156,12 @@ def build(included_classes):
         writer.writeheader()
         writer.writerows(manifest_rows)
 
+    labels_long_path = OUT_ROOT / "labels_long.csv"
+    with labels_long_path.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["split", "class_id", "class_name", "source", "file"])
+        writer.writeheader()
+        writer.writerows(label_rows)
+
     by_source_split = {}
     for row in manifest_rows:
         key = (row["source"], row["split"])
@@ -155,6 +179,7 @@ def build(included_classes):
     for class_id in sorted(included_classes):
         print(f"  {class_id:2d} {MERGED_CLASSES[class_id]:20s} {kept_counts[class_id]}")
     print(f"Manifest written to {manifest_path}")
+    print(f"Per-annotation table written to {labels_long_path}")
 
 
 if __name__ == "__main__":
