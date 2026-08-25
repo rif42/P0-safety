@@ -1,0 +1,7 @@
+numpy
+pandas
+matplotlib
+seaborn
+opencv-python
+PyYAML
+ultralytics

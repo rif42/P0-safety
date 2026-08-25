@@ -1,1 +1,7 @@
 data
+dataset
+vision-data-env
+reference
+experiments
+.DS_Store
+*.cache
