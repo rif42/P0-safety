@@ -1,7 +1,7 @@
-# Unified, training-ready manifest for dataset/.
+# Unified, training-ready manifest for data/merged/.
 # Built by scripts/build_dataset.py (default: only classes 0-8, images with
 # none of them are excluded). Class IDs/order defined in
-# dataset/class_mapping.py — do not edit `names` here without updating that
+# scripts/class_mapping.py — do not edit `names` here without updating that
 # file too. Re-run with --classes to include a different/larger set.
 path: .
 train: images/train

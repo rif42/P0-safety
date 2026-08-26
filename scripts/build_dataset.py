@@ -1,48 +1,53 @@
 #!/usr/bin/env python3
 """
-Build dataset/ from data/raw/ in one pass: remap each label's class IDs to
-the merged schema (dataset/class_mapping.py), keep only annotations whose
-merged class is in --classes (default: the core classes 0-8), and copy over
-only the images that still have at least one annotation after that
-filtering. Images with none of the included classes present are excluded
-entirely, not just given an empty label file.
+Build data/merged/ from data/raw/ through two persisted, inspectable stages
+under data/build/:
 
-train/val/test is then assigned ourselves via iterative stratification
-(Sechidis et al. 2011) over the whole merged pool, NOT inherited from
-whatever split each source originally shipped with. The three sources ship
-wildly different split ratios (e.g. one is ~95% train), and different
-classes are concentrated in different sources, so trusting the original
-per-source splits leaves some classes with as little as ~2% of their
-instances in val/test — too little to trust a recall estimate on. Iterative
+  data/raw/<source>/...                     untouched, as-downloaded
+  data/build/01_remap_and_filter/<source>/  per-source images+labels that
+                                             survive class remap+filter
+                                             (dataset/class_mapping.py),
+                                             original filenames kept
+  data/build/02_stratified_split/           split_assignment.csv: which
+                                             split each surviving image was
+                                             assigned to, and why
+  data/merged/                              final training-ready dataset:
+                                             images/labels renamed
+                                             <source>__<original_name> and
+                                             sorted into images|labels/{train,val,test}
+
+Step 1 keeps only annotations whose merged class is in --classes (default:
+the core classes 0-8) and drops any image left with none of them.
+
+Step 2 assigns train/val/test via iterative stratification (Sechidis et al.
+2011, hand-rolled here, no new dependency) instead of trusting whatever
+split each source originally shipped with. The three sources ship wildly
+different split ratios (e.g. one is ~95% train), and since different
+classes concentrate in different sources, trusting the original per-source
+splits left some classes with as little as ~2% of their instances in
+val/test — too little to trust a recall estimate on. Iterative
 stratification instead targets --split-ratios for every class individually,
 prioritizing the rarest class first so it isn't starved by more common ones
 co-occurring in the same images.
 
-dataset/images, dataset/labels, dataset/merge_manifest.csv, and
-dataset/labels_long.csv are fully derived from data/raw/, so this script
-rebuilds them from scratch every run rather than incrementally patching a
-previous run.
-
-Also writes dataset/labels_long.csv (one row per kept annotation: split,
-class_id, class_name, source, file) since this script already parses every
-label line to filter classes — downstream code (e.g. the class-distribution
-notebook) can read that one CSV instead of re-opening thousands of small
-label files itself.
+Every run rebuilds data/build/ and data/merged/ from data/raw/ from scratch
+rather than incrementally patching a previous run.
 """
 import argparse
 import csv
 import random
 import shutil
-import sys
 from collections import Counter
 from pathlib import Path
 
+from class_mapping import DEFAULT_INCLUDED_CLASSES, MERGED_CLASSES, SOURCE_CLASS_MAPS
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RAW_ROOT = REPO_ROOT / "data" / "raw"
-OUT_ROOT = REPO_ROOT / "dataset"
-
-sys.path.insert(0, str(OUT_ROOT))
-from class_mapping import DEFAULT_INCLUDED_CLASSES, MERGED_CLASSES, SOURCE_CLASS_MAPS  # noqa: E402
+BUILD_ROOT = REPO_ROOT / "data" / "build"
+STEP1_ROOT = BUILD_ROOT / "01_remap_and_filter"
+STEP2_ROOT = BUILD_ROOT / "02_stratified_split"
+MERGED_ROOT = REPO_ROOT / "data" / "merged"
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp"}
 SPLIT_NAMES = ("train", "val", "test")
@@ -85,23 +90,21 @@ def parse_args():
     return parser.parse_args()
 
 
-def clean_output():
-    for split in SPLIT_NAMES:
-        img_dir = OUT_ROOT / "images" / split
-        lbl_dir = OUT_ROOT / "labels" / split
-        if img_dir.exists():
-            shutil.rmtree(img_dir)
-        if lbl_dir.exists():
-            shutil.rmtree(lbl_dir)
-        img_dir.mkdir(parents=True)
-        lbl_dir.mkdir(parents=True)
+def reset_dir(path):
+    if path.exists():
+        shutil.rmtree(path)
+    path.mkdir(parents=True)
 
 
-def collect_candidates(included_classes):
-    """Scan every source's raw files (across all its original splits, pooled
-    together) and apply the class filter. Returns a dict merged_stem ->
-    {"source", "image_path", "suffix", "kept_lines", "classes", "original_split"}
-    for every image that has at least one included-class annotation."""
+def step1_remap_and_filter(included_classes):
+    """Scan every source's raw files (across all its original splits, kept
+    separate here — this stage doesn't merge sources or reassign splits),
+    remap class IDs, and drop annotations/images that don't survive the
+    class filter. Writes filtered copies to STEP1_ROOT and returns a dict
+    merged_stem -> candidate info for step 2/3 to consume."""
+    for source in SOURCE_DIRS:
+        reset_dir(STEP1_ROOT / source)
+
     candidates = {}
     images_seen = 0
 
@@ -118,6 +121,11 @@ def collect_candidates(included_classes):
             if not img_dir.exists():
                 print(f"skip {source}/{original_split}: {img_dir} missing")
                 continue
+
+            out_img_dir = STEP1_ROOT / source / original_split / "images"
+            out_lbl_dir = STEP1_ROOT / source / original_split / "labels"
+            out_img_dir.mkdir(parents=True, exist_ok=True)
+            out_lbl_dir.mkdir(parents=True, exist_ok=True)
 
             for image_path in sorted(img_dir.iterdir()):
                 if not image_path.is_file() or image_path.suffix.lower() not in IMAGE_SUFFIXES:
@@ -139,15 +147,21 @@ def collect_candidates(included_classes):
                 if not kept_lines:
                     continue  # none of the included classes present -> drop the image
 
+                step1_image = out_img_dir / image_path.name
+                shutil.copy2(image_path, step1_image)
+                step1_label = out_lbl_dir / f"{image_path.stem}.txt"
+                step1_label.write_text("\n".join(kept_lines) + "\n")
+
                 merged_stem = f"{source}__{image_path.stem}"
-                classes_present = {int(line.split(maxsplit=1)[0]) for line in kept_lines}
                 candidates[merged_stem] = {
                     "source": source,
-                    "image_path": image_path,
-                    "suffix": image_path.suffix,
-                    "kept_lines": kept_lines,
-                    "classes": classes_present,
                     "original_split": original_split,
+                    "original_filename": image_path.name,
+                    "suffix": image_path.suffix,
+                    "step1_image": step1_image,
+                    "step1_label": step1_label,
+                    "kept_lines": kept_lines,
+                    "classes": {int(line.split(maxsplit=1)[0]) for line in kept_lines},
                 }
 
     return candidates, images_seen
@@ -176,20 +190,25 @@ def iterative_stratified_split(image_classes, ratios, seed=42):
     desired = {s: {c: ratios[s] * total for c, total in class_totals.items()} for s in split_names}
     remaining_capacity = {s: ratios[s] * len(image_classes) for s in split_names}
 
+    # A plain set's iteration order depends on Python's per-process string
+    # hash randomization, which would silently make the "seeded" shuffle
+    # below non-reproducible across runs (same seed, different result).
+    # Always derive orderings from a sorted list instead, so `seed` is the
+    # only source of randomness.
     unassigned = set(image_classes)
     assignment = {}
 
     while unassigned:
         class_counts = Counter()
-        for img in unassigned:
+        for img in sorted(unassigned):
             class_counts.update(image_classes[img])
-        positive_classes = [c for c, cnt in class_counts.items() if cnt > 0]
+        positive_classes = sorted(c for c, cnt in class_counts.items() if cnt > 0)
 
         if not positive_classes:
             # leftover images with none of their classes still "unprocessed"
             # (shouldn't happen since every candidate has >=1 class, but
             # handle it by remaining capacity so the loop always terminates)
-            for img in list(unassigned):
+            for img in sorted(unassigned):
                 best = max(split_names, key=lambda s: (remaining_capacity[s], rng.random()))
                 assignment[img] = best
                 remaining_capacity[best] -= 1
@@ -197,7 +216,7 @@ def iterative_stratified_split(image_classes, ratios, seed=42):
             break
 
         target_class = min(positive_classes, key=lambda c: class_counts[c])
-        imgs_with_class = [img for img in unassigned if target_class in image_classes[img]]
+        imgs_with_class = sorted(img for img in unassigned if target_class in image_classes[img])
         rng.shuffle(imgs_with_class)
 
         for img in imgs_with_class:
@@ -218,25 +237,43 @@ def iterative_stratified_split(image_classes, ratios, seed=42):
     return assignment
 
 
-def build(included_classes, ratios, seed):
-    clean_output()
-    candidates, images_seen = collect_candidates(included_classes)
-
+def step2_stratified_split(candidates, ratios, seed):
+    STEP2_ROOT.mkdir(parents=True, exist_ok=True)
     image_classes = {stem: c["classes"] for stem, c in candidates.items()}
-    split_assignment = iterative_stratified_split(image_classes, ratios, seed=seed)
+    assignment = iterative_stratified_split(image_classes, ratios, seed=seed)
+
+    assignment_path = STEP2_ROOT / "split_assignment.csv"
+    with assignment_path.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["merged_stem", "source", "original_split", "split"])
+        writer.writeheader()
+        for stem, info in candidates.items():
+            writer.writerow(
+                {
+                    "merged_stem": stem,
+                    "source": info["source"],
+                    "original_split": info["original_split"],
+                    "split": assignment[stem],
+                }
+            )
+    return assignment, assignment_path
+
+
+def step3_materialize_merged(candidates, assignment):
+    for split in SPLIT_NAMES:
+        reset_dir(MERGED_ROOT / "images" / split)
+        reset_dir(MERGED_ROOT / "labels" / split)
 
     manifest_rows = []
     label_rows = []
     kept_counts = [0] * len(MERGED_CLASSES)
 
     for merged_stem, info in candidates.items():
-        split = split_assignment[merged_stem]
-        source = info["source"]
+        split = assignment[merged_stem]
 
-        out_image = OUT_ROOT / "images" / split / f"{merged_stem}{info['suffix']}"
-        shutil.copy2(info["image_path"], out_image)
-        out_label = OUT_ROOT / "labels" / split / f"{merged_stem}.txt"
-        out_label.write_text("\n".join(info["kept_lines"]) + "\n")
+        out_image = MERGED_ROOT / "images" / split / f"{merged_stem}{info['suffix']}"
+        shutil.copy2(info["step1_image"], out_image)
+        out_label = MERGED_ROOT / "labels" / split / f"{merged_stem}.txt"
+        shutil.copy2(info["step1_label"], out_label)
 
         for line in info["kept_lines"]:
             class_id = int(line.split(maxsplit=1)[0])
@@ -246,7 +283,7 @@ def build(included_classes, ratios, seed):
                     "split": split,
                     "class_id": class_id,
                     "class_name": MERGED_CLASSES[class_id],
-                    "source": source,
+                    "source": info["source"],
                     "file": merged_stem,
                 }
             )
@@ -254,15 +291,15 @@ def build(included_classes, ratios, seed):
         manifest_rows.append(
             {
                 "merged_filename": f"{merged_stem}{info['suffix']}",
-                "source": source,
-                "original_filename": info["image_path"].name,
+                "source": info["source"],
+                "original_filename": info["original_filename"],
                 "original_split": info["original_split"],
                 "split": split,
                 "num_annotations": len(info["kept_lines"]),
             }
         )
 
-    manifest_path = OUT_ROOT / "merge_manifest.csv"
+    manifest_path = MERGED_ROOT / "merge_manifest.csv"
     with manifest_path.open("w", newline="") as f:
         writer = csv.DictWriter(
             f,
@@ -278,11 +315,21 @@ def build(included_classes, ratios, seed):
         writer.writeheader()
         writer.writerows(manifest_rows)
 
-    labels_long_path = OUT_ROOT / "labels_long.csv"
+    labels_long_path = MERGED_ROOT / "labels_long.csv"
     with labels_long_path.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["split", "class_id", "class_name", "source", "file"])
         writer.writeheader()
         writer.writerows(label_rows)
+
+    return manifest_rows, label_rows, kept_counts, manifest_path, labels_long_path
+
+
+def build(included_classes, ratios, seed):
+    candidates, images_seen = step1_remap_and_filter(included_classes)
+    assignment, assignment_path = step2_stratified_split(candidates, ratios, seed)
+    manifest_rows, label_rows, kept_counts, manifest_path, labels_long_path = step3_materialize_merged(
+        candidates, assignment
+    )
 
     by_source_split = Counter((row["source"], row["split"]) for row in manifest_rows)
     images_kept = len(manifest_rows)
@@ -307,8 +354,11 @@ def build(included_classes, ratios, seed):
         actual = "  ".join(f"{s}={pct[s]:5.1f}%" for s in SPLIT_NAMES)
         print(f"  {class_id:2d} {MERGED_CLASSES[class_id]:12s} n={total:6d}  {actual}")
 
-    print(f"Manifest written to {manifest_path}")
-    print(f"Per-annotation table written to {labels_long_path}")
+    print(f"Step 1 (remap+filter) written to {STEP1_ROOT}")
+    print(f"Step 2 (split assignment) written to {assignment_path}")
+    print(f"Merged dataset written to {MERGED_ROOT}")
+    print(f"  manifest: {manifest_path}")
+    print(f"  per-annotation table: {labels_long_path}")
 
 
 if __name__ == "__main__":

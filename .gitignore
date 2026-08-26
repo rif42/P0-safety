@@ -1,8 +1,8 @@
-data
-dataset/*
-!dataset/class_mapping.py
-!dataset/data.yaml
-!dataset/SOURCES.md
+data/raw
+data/build
+data/merged/*
+!data/merged/data.yaml
+!data/merged/SOURCES.md
 vision-data-env
 reference
 experiments

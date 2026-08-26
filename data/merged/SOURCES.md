@@ -1,15 +1,26 @@
 # Merged dataset — source provenance
 
-`dataset/` is built from `data/raw/` by `scripts/build_dataset.py`. Every file
-is copied as `<source>__<original_name>`, so `dataset/merge_manifest.csv` can
-always trace a merged file back to its origin.
+`data/merged/` is built from `data/raw/` by `scripts/build_dataset.py`,
+through an intermediate staging area at `data/build/`:
+
+- `data/raw/<source>/` — untouched, as-downloaded (see per-source sections below)
+- `data/build/01_remap_and_filter/<source>/<original_split>/` — that
+  source's images+labels after class remap and filtering, original
+  filenames kept, still organized by the source's own original split
+- `data/build/02_stratified_split/split_assignment.csv` — which split
+  (train/val/test) every surviving image was assigned to, and why
+- `data/merged/` — final training-ready dataset: every file renamed
+  `<source>__<original_name>` and sorted into `images|labels/{train,val,test}`
+
+so `data/merged/merge_manifest.csv` can always trace a merged file back to
+its origin. Every run rebuilds `data/build/` and `data/merged/` from
+`data/raw/` from scratch.
 
 By default the build only keeps the 9 core classes (0-8, see below) and
 **excludes any image with none of them present** — not just its label file,
 the image itself isn't copied. Pass `--classes` to include a different set
 (e.g. `--classes 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18` for
-everything). Re-running the script fully rebuilds `dataset/images`,
-`dataset/labels`, and the manifest from `data/raw/` each time.
+everything).
 
 **train/val/test is assigned by us, not inherited from the sources.** The
 three raw sources ship wildly different split ratios (anuragraj03 ~52/26/22,
@@ -115,7 +126,7 @@ Additional:
 
 ## Merged class schema
 
-`dataset/class_mapping.py` defines a single 19-class schema all three sources
+`scripts/class_mapping.py` defines a single 19-class schema all three sources
 are remapped into (labels only — bounding boxes are untouched, only the
 class-id column is rewritten). Core classes (0–8: person, then
 helmet/gloves/boots/vest paired with their negatives) come first, then
@@ -137,7 +148,7 @@ classes-0-8/image-dropping filter `build_dataset.py` applies:
 | 8 | no-vest | 4,158 | 18 | none (no relevant objects) | 797 |
 | 9 | goggles | 518 | | | |
 
-Full per-source → merged ID mapping tables live in `class_mapping.py`.
+Full per-source → merged ID mapping tables live in `scripts/class_mapping.py`.
 
 **Judgment calls made, worth revisiting:**
 - `anuragraj03`'s `safety-shoes`/`no-safety-shoes` were mapped to `boots`/
