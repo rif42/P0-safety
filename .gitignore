@@ -1,1 +1,5 @@
 /data
+reasonix.toml
+# large model weights - do not commit
+*.pt
+yolo26x-pose.pt

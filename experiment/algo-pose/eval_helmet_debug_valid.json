@@ -1,0 +1,1967 @@
+[
+  {
+    "image": "-1079-_png_jpg.rf.19092a3937930012f9fd9c1ce57f5a7b.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found",
+        "hardhat_miss_roi_miss"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "-1429-_png_jpg.rf.78a7894e86c79d018d80fa86f4d000f8.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 2,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 2,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "-1969-_png_jpg.rf.41dd58ed3ae83df95fb2417c679d581f.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "-1989-_png_jpg.rf.8cb3d6087bb86d08e693b4250fbf96e3.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 4,
+    "n_helmet": 3,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 5,
+      "n_helmet_boxes": 3,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found",
+        "helmet_found",
+        "hardhat_miss_roi_miss"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "-211-_png_jpg.rf.eac228e3993f9027795b6400262811e7.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 3,
+    "n_helmet": 2,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 4,
+      "n_helmet_boxes": 2,
+      "n_extra_seg_persons": 2,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found_fallback_head",
+        "hardhat_miss_roi_miss_fallback_head"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "-3154-_png_jpg.rf.f118da2b1c20afb78ff93dc7d558f42c.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "-3766-_png_jpg.rf.81ead992d4b8047ec7beb28b7532cf0a.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 23,
+    "n_helmet": 14,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 24,
+      "n_helmet_boxes": 14,
+      "n_extra_seg_persons": 16,
+      "per_person_reasons": [
+        "hardhat_miss_roi_miss",
+        "helmet_found",
+        "hardhat_miss_roi_miss",
+        "hardhat_miss_roi_miss",
+        "helmet_found",
+        "helmet_found",
+        "hardhat_miss_roi_miss",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "hardhat_miss_roi_miss_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "hardhat_miss_roi_miss_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "004424_jpg.rf.0470713b945b08839105cde711db62d9.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "005559_jpg.rf.5a5ab91289de227b286efca4418ff73d.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 2,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 2,
+      "n_extra_seg_persons": 1,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found_fallback_head"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "00596_jpg.rf.d030c5d98b937d080d75db1c1b269a84.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 4,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 4,
+      "n_helmet_boxes": 1,
+      "n_extra_seg_persons": 1,
+      "per_person_reasons": [
+        "helmet_found",
+        "hardhat_miss_roi_miss",
+        "hardhat_miss_roi_miss",
+        "hardhat_miss_roi_miss_fallback_head"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "02646_jpg.rf.5c93ba95bdc03808bcf872c7218ac5ef.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "1125_jpg.rf.2958d0a57630bdde8c3b5c6c560152af.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 5,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 5,
+      "n_helmet_boxes": 0,
+      "n_extra_seg_persons": 3,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "172_jpg.rf.9385682a04a12b6043a2ea893d1f319a.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "2009_000277_jpg.rf.baccd85360fb8011e7c303066ceac286.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "2009_000461_jpg.rf.43a28e2d6f1f9d399c92e18ccc9f0bf1.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "2009_002778_jpg.rf.7c8977ed190a2ce4211ef58f66864066.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "2009_003991_jpg.rf.c4fadb57b5579062cd4db5463ec3ba74.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "2009_004100_jpg.rf.6eb0dc058fc0d307a6b0f7f579945e24.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "4_jpg.rf.a937c41e1fc4d92e9e1f8c2d9efeb87d.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 3,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 3,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "518_jpg.rf.73999663994434126ac8b7ac5dbe6b52.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "644_jpg.rf.39197521b9addbcfa9d3620d85004e2d.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "681_jpg.rf.7a0a7ef78f7dc01872cc3130dc3b354e.jpg",
+    "gt": true,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "972_jpg.rf.4c6fac866e4928f3da7591fd2c26c2ac.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "airport_inside_0090_jpg.rf.663e21100a3c4bc66a41cceba5403e51.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "airport_inside_0115_jpg.rf.8277ce4e71886a343bfdb10ce7fb6d4a.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "autox3_mp4-78_jpg.rf.dc5c00104c4cf733c2c06c820b82d338.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "autox4_mp4-63_jpg.rf.b0fab4fd2c947536a122d6f2e7cca895.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "autox4_mp4-72_jpg.rf.5e9c1836f027bf40eb8898e68f2efdeb.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "casino_0448_jpg.rf.090df4137a5926092c541ee5c6918868.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "class1_077_jpg.rf.84c3583c1866262daeb1618b80e18df9.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 3,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found",
+        "hardhat_miss_roi_miss_fallback_head"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "class1_206_jpg.rf.3988ff665e55e1cd9dbcd22c87be73d9.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found",
+        "hardhat_miss_roi_miss"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "class1_267_jpg.rf.ab7a08d97aba5b0748e976df6e65700a.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found",
+        "hardhat_miss_roi_miss"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "construction-1-_mp4-147_jpg.rf.a9062a80b06ac796f7afb269e5f18c53.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "construction-1023-_jpg.rf.7b73352606fb1d79619d34031c07a232.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "construction-1027-_jpg.rf.e78f55761814a8726ea51993407957af.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "construction-1037-_jpg.rf.c44151f7f28c4da9757409953b1bff55.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "construction-1114-_jpg.rf.69b25d38992eb6da67701a614f0a3f97.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "construction-196-_jpg.rf.f593da25134315b48b325fb42436a01a.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "construction-2-_mp4-149_jpg.rf.c6d3939d4743a346de668a0ae05accbc.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "construction-2-_mp4-38_jpg.rf.0bb63aba0a9ebe5a4741a6207e2e1902.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "construction-274-_jpg.rf.21181010ffb2b9ea429080ccd258e3ae.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "construction-277-_jpg.rf.bf73a4edc7a1f7d412bc3267cbafcda7.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "construction-3-_mp4-219_jpg.rf.416dbf917b54d5895e2430fa0d6f1b66.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "construction-3-_mp4-21_jpg.rf.4fc9ff5afc8387b5c673a424781c527c.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "construction-4-_mp4-20_jpg.rf.cb627b855fa08d83357febb83f6ad4bc.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "construction-711-_jpg.rf.50a19be8c0ae3cd1a82cd543a9bb6a14.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "construction-823-_jpg.rf.640d8abfc7c7689d4a19e6aa00ac8984.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "construction-9-_jpg.rf.c2af6f04317b1ea7d6e2a84d776788a2.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "hospital-corridor_jpg.rf.bbac7f39a08bac2b0363ee9682bd86b2.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "img_08_jpg.rf.0f132a9c7ca6d12a8a9d1c4b3dbd54da.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_3093_mp4-22_jpg.rf.ea118a6046b21e9246efd53599dfdc41.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_3094_mp4-3_jpg.rf.65429c37fcf92b2ba8cfc9d2180051ef.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_3100_mp4-1_jpg.rf.7b4a6df995ec2702dee6e7f8c5b47e14.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_3100_mp4-3_jpg.rf.f05ef399880b1ac30e900df4f2fbb3c0.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_3103_mp4-16_jpg.rf.d31a50c14cb25c823066fe63793f7792.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_3103_mp4-17_jpg.rf.3223d405c1b3657aa54e170e32c8fe52.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_3103_mp4-18_jpg.rf.39e564f01ba6048fc34853e99f3de11b.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_3103_mp4-8_jpg.rf.d54ebee33e6fd97c282258aabc1e52d7.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_4921-2_mp4-122_jpg.rf.d27a983b805c273486c09e20f65a5a6b.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_5024_mp4-8_jpg.rf.6b626854d6228eab4c341ddd5f8b5e46.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "IMG_9949-1-_mp4-20_jpg.rf.6ff2adfaf91058088d86084475d4d575.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "MariusConePic31_png_jpg.rf.1fd6fccfeef580e0e0061d78d5a248a4.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "Mask2_mov-11_jpg.rf.34ddcb1a619624541a2cca4400b7cd92.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 0,
+      "n_extra_seg_persons": 1,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "Mask2_mov-15_jpg.rf.026bd9a95154b1ead451a722a25ed130.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "mms_00684_jpg.rf.47567bbd99db89023296aad0b965ff02.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "Movie-on-10-31-22-at-10_08-AM_mov-13_jpg.rf.91dc3b79da617fb2e4321f27f48f21f4.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "Movie-on-10-31-22-at-10_08-AM_mov-22_jpg.rf.a02b881bb190fa4a30026a648d13d278.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "Movie-on-10-31-22-at-10_08-AM_mov-6_jpg.rf.344372295a53aaf103587c9714ec98f7.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "ppe_0064_jpg.rf.f019b082d09af2750a81ef5ea3fcbc3e.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "ppe_0355_jpg.rf.508753d5b708536eca53de192b927c61.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 4,
+    "n_helmet": 3,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 3,
+      "n_helmet_boxes": 3,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found",
+        "helmet_found",
+        "hardhat_miss_roi_miss"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "ppe_0665_jpg.rf.1dad479f7f54b2a7127cf18ef74ffd85.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 7,
+    "n_helmet": 3,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 7,
+      "n_helmet_boxes": 3,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found",
+        "hardhat_miss_roi_miss",
+        "hardhat_miss_roi_miss",
+        "helmet_found",
+        "hardhat_miss_roi_miss",
+        "hardhat_miss_roi_miss"
+      ],
+      "reason": "roi_miss_or_missing_helmet"
+    }
+  },
+  {
+    "image": "ppe_1228_jpg.rf.29b714c415ea74df3160f56a603463a0.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "residential_jpg.rf.17181770c64333009b9101e1572c5112.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "RPReplay_Final1667001201_MP4-454_jpg.rf.74024a799f518f9a6314ed301827eb1b.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "shakespearebookshop_jpg.rf.9a14dbfdd07d9a0cc916cffef0194245.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "soooo_jpg.rf.5980d39f656b4d62672d2164173455e3.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 6,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 6,
+      "n_helmet_boxes": 0,
+      "n_extra_seg_persons": 3,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "video_CDC-YOUTUBE_mp4-42_jpg.rf.bbc5cf2369c54126f61f0b1f71f77d8d.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-118_jpg.rf.9dc8b46dfbac73d9e4f983964355d7ac.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-179_jpg.rf.bab3fbda351095d3b9aaba8007e3aa87.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-194_jpg.rf.601da70a10e87c30c693ffbee53b17a7.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-200_jpg.rf.2c8aaf9fb58df4a3af442c293217d0c5.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-226_jpg.rf.dd9d045ca17155289bcebe722e8a86e9.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-226_jpg.rf.e6dcacf16dc2dbcfd29f6705b7c1a224.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-232_jpg.rf.f92f310106a11e01495ce8bfae0f9b5a.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "youtube-255_jpg.rf.c5a9f8ed208cb72e1a700ba52dc2fdfa.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "helmet_found_fallback_head"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-260_jpg.rf.76ba0c9fa66318daee5bea72b83b4cc5.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "n_extra_seg_persons": 1,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-267_jpg.rf.acd9b5f407f573eaa830029418345ad3.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "youtube-277_jpg.rf.1bda1581c28b4f6cccd5eda6b23b94ee.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 3,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 3,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "helmet_found_fallback_head",
+        "helmet_found_fallback_head"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-287_jpg.rf.c9a7d5b17f75d0c9ed62ad4127141aa2.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found_fallback_head"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-308_jpg.rf.790ae393e769f8e6280734b7506523ab.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-342_jpg.rf.d7e55a17800f8d87313d7b6f33256ea9.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 3,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 3,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-367_jpg.rf.fab8b016cb63c0928f40849db44ee98d.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-391_jpg.rf.2744ad86e8dbd4366f1fa839accc48b3.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-392_jpg.rf.7e49e3a8486caaa4e9d82246de93e68e.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-399_jpg.rf.3472ef7c01bb9092da48f0d562581121.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-405_jpg.rf.6d1fc463659ac0d8e735bc1e731086a0.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-416_jpg.rf.8b5d7c27337f84a1cd2b3e8b7c6435a7.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-446_jpg.rf.b9d9b80538b79252761946ece0bc6317.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "youtube-455_jpg.rf.35acd2e91608806a26f3ac4e784ea512.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 3,
+    "n_helmet": 2,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 3,
+      "n_helmet_boxes": 2,
+      "n_extra_seg_persons": 1,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found",
+        "helmet_found_fallback_head"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-470_jpg.rf.6aebf4cfb6c5a7e703c6532ca5090517.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-476_jpg.rf.3744f21a7b74ea642bbcbc8251659001.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "youtube-487_jpg.rf.5f1c67ece433c16da8ed3c9200ef4b5f.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "fallback": "seg_person_geometric",
+      "per_person_reasons": [
+        "helmet_found_fallback_head"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-504_jpg.rf.23771986686856ac7d350cea84ddf611.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-51_jpg.rf.083f4487f9a468d9ff42aa13953f377a.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "youtube-540_jpg.rf.b229e14d526db6e53965f59e6146cf15.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "youtube-584_jpg.rf.3136186a0786384c1ffc261f4d40ea42.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-617_jpg.rf.309ef116f1d9074886d61bb0816b6b9e.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 2,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 2,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-619_jpg.rf.93749f0e33b2f7beb302dd2e176d768a.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 2,
+    "n_helmet": 2,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 2,
+      "n_helmet_boxes": 2,
+      "per_person_reasons": [
+        "helmet_found",
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-697_jpg.rf.950b34f23e196850ec51a4add2eeb840.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "youtube-70_jpg.rf.2d5f69c78f062dfc572ccb6ce6bc3c9b.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "youtube-727_jpg.rf.cb4c039b4ffea84835e67e2e3d2edf6e.jpg",
+    "gt": false,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  },
+  {
+    "image": "youtube-804_jpg.rf.c4250b3c54e1cca8d58622970882f60a.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 0,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": false,
+      "n_seg_persons": 0,
+      "n_helmet_boxes": 0,
+      "reason": "no_person_detected"
+    }
+  },
+  {
+    "image": "youtube-836_jpg.rf.df6fc9e569e7b6b850ecb75c37781d10.jpg",
+    "gt": false,
+    "pred_B": false,
+    "inconc": false,
+    "n_persons": 1,
+    "n_helmet": 1,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 1,
+      "n_helmet_boxes": 1,
+      "per_person_reasons": [
+        "helmet_found"
+      ],
+      "reason": "all_compliant"
+    }
+  },
+  {
+    "image": "YouTube_FreeStockFootage_People-wearing-face-mask_Empty-Street_Covid19-D_DbgrvhlGs-720p_mp4-66_jpg.rf.72af13fb1f20520e0d41547037ced88b.jpg",
+    "gt": true,
+    "pred_B": true,
+    "inconc": false,
+    "n_persons": 6,
+    "n_helmet": 0,
+    "debug": {
+      "has_pose_persons": true,
+      "n_seg_persons": 7,
+      "n_helmet_boxes": 0,
+      "n_extra_seg_persons": 2,
+      "per_person_reasons": [
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes",
+        "hardhat_miss_no_boxes_fallback_head",
+        "hardhat_miss_no_boxes_fallback_head"
+      ],
+      "reason": "hardhat_miss"
+    }
+  }
+]

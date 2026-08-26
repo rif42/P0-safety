@@ -1,0 +1,54 @@
+{
+  "split": "valid",
+  "n": 114,
+  "metrics": {
+    "A": {
+      "tp": 33,
+      "fp": 1,
+      "tn": 76,
+      "fn": 4,
+      "precision": 0.9705882352941176,
+      "recall": 0.8918918918918919,
+      "f1": 0.9295774647887325,
+      "n": 114
+    },
+    "B_filtered": {
+      "tp": 36,
+      "fp": 26,
+      "tn": 51,
+      "fn": 1,
+      "precision": 0.5806451612903226,
+      "recall": 0.972972972972973,
+      "f1": 0.7272727272727273,
+      "n": 114
+    },
+    "B_as_violation": {
+      "tp": 36,
+      "fp": 26,
+      "tn": 51,
+      "fn": 1,
+      "precision": 0.5806451612903226,
+      "recall": 0.972972972972973,
+      "f1": 0.7272727272727273,
+      "n": 114
+    },
+    "B_inconc_rate": 0.0,
+    "B_inconc_count": 0
+  },
+  "params": {
+    "HEAD_PAD": 2.0,
+    "CONF_THR": 0.4,
+    "KPT_CONF_THR": 0.3,
+    "conf_a": 0.25,
+    "imgsz": 640,
+    "iou_thr": 0.05,
+    "pose": "yolo26s-pose.pt",
+    "seg_fallback": true
+  },
+  "reason_hist": {
+    "roi_miss_or_missing_helmet": 10,
+    "all_compliant": 26,
+    "hardhat_miss": 52,
+    "no_person_detected": 26
+  }
+}
