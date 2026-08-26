@@ -11,6 +11,24 @@ the image itself isn't copied. Pass `--classes` to include a different set
 everything). Re-running the script fully rebuilds `dataset/images`,
 `dataset/labels`, and the manifest from `data/raw/` each time.
 
+**train/val/test is assigned by us, not inherited from the sources.** The
+three raw sources ship wildly different split ratios (anuragraj03 ~52/26/22,
+ketakichalke-boots ~80/10/10, snehilsanyal-main ~95/3/2), and since different
+classes are concentrated in different sources, just keeping each source's
+original split left some classes — `person`, `vest`, `no-vest`, all
+snehilsanyal-heavy — with as little as ~2-5% of their instances in val/test.
+Too little to trust a recall estimate on, especially given the plan's >0.95
+head-protection / >0.85 foot-protection recall thresholds.
+
+`scripts/build_dataset.py` now pools every source's images together and
+re-splits with iterative stratification (Sechidis et al. 2011, implemented
+directly in the script — no new dependency): repeatedly assign the rarest
+not-yet-exhausted class's images to whichever split needs that class most,
+targeting `--split-ratios` (default `0.8,0.1,0.1`) for every class
+individually rather than just overall. `--seed` (default 42) controls the
+assignment; `merge_manifest.csv` keeps each image's original per-source
+split as `original_split`, separate from the new `split` column.
+
 Class IDs inside each source's label `.txt` files are **not remapped** by the
 merge script — they're copied verbatim. Do not compare class indices across
 sources without checking this table first.
@@ -136,27 +154,32 @@ Full per-source → merged ID mapping tables live in `class_mapping.py`.
 
 Running `scripts/build_dataset.py` with no arguments keeps 13,284 of the
 19,385 merged images (6,101 dropped for having none of the 9 core classes)
-and only these instance counts:
+and only these instance counts — each within ~1% of the 80/10/10 target on
+every class:
 
-| ID | Class | Instances |
-|---|---|---|
-| 0 | person | 12,117 |
-| 1 | helmet | 14,165 |
-| 2 | gloves | 8,917 |
-| 3 | boots | 10,939 |
-| 4 | vest | 4,753 |
-| 5 | no-helmet | 8,350 |
-| 6 | no-gloves | 7,054 |
-| 7 | no-boots | 5,523 |
-| 8 | no-vest | 4,158 |
+| ID | Class | Instances | train % | val % | test % |
+|---|---|---|---|---|---|
+| 0 | person | 12,117 | 79.7 | 10.6 | 9.7 |
+| 1 | helmet | 14,165 | 80.2 | 9.8 | 10.0 |
+| 2 | gloves | 8,917 | 80.6 | 9.5 | 9.9 |
+| 3 | boots | 10,939 | 79.8 | 9.8 | 10.4 |
+| 4 | vest | 4,753 | 79.0 | 11.0 | 10.0 |
+| 5 | no-helmet | 8,350 | 79.5 | 10.3 | 10.2 |
+| 6 | no-gloves | 7,054 | 79.9 | 9.8 | 10.3 |
+| 7 | no-boots | 5,523 | 79.8 | 9.9 | 10.3 |
+| 8 | no-vest | 4,158 | 79.8 | 9.9 | 10.3 |
 
-Per-source image counts after filtering:
+Compare to the old per-source-inherited split, which left `person`/`vest`/
+`no-vest` with as little as 2-5% of their instances in val/test.
+
+Per-source image counts after the stratified split (note these no longer
+match each source's original split sizes — that's expected):
 
 | Source | train | val | test |
 |---|---|---|---|
-| anuragraj03 | 4,804 | 2,369 | 2,017 |
-| ketakichalke-boots | 1,131 | 143 | 141 |
-| snehilsanyal-main | 2,535 | 84 | 60 |
+| anuragraj03 | 7,332 | 926 | 932 |
+| ketakichalke-boots | 1,136 | 148 | 131 |
+| snehilsanyal-main | 2,138 | 265 | 276 |
 
 ## Before unifying to the project's positive-only training schema
 
