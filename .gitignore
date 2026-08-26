@@ -2,3 +2,8 @@ data
 .DS_Store
 __pycache__
 .env
+.venv
+.python-version
+.vscode
+.claude
+.obsidian
