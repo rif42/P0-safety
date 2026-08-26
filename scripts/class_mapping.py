@@ -68,7 +68,7 @@ SOURCE_CLASS_MAPS = {
         9: 6,   # no_gloves -> no-gloves
         10: 7,  # no_boots  -> no-boots
     },
-    # experiments/legacy-snehilsanyal-yolov8n_100e/kaggle/working/ppe_data.yaml
+    # data/raw/snehilsanyal-main/_extra/legacy-yolov8n-training-run/kaggle/working/ppe_data.yaml
     "snehilsanyal-main": {
         0: 1,   # Hardhat        -> helmet
         1: 10,  # Mask           -> mask

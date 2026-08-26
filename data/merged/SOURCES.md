@@ -65,7 +65,7 @@ catastrophically per the plan's own findings).
 
 ## snehilsanyal-main (css-data) — 10 classes
 
-Source: recovered from `experiments/legacy-snehilsanyal-yolov8n_100e/kaggle/working/ppe_data.yaml`,
+Source: recovered from `data/raw/snehilsanyal-main/_extra/legacy-yolov8n-training-run/kaggle/working/ppe_data.yaml`,
 a `data.yaml` left over from a prior Kaggle training run on this same dataset
 (paths inside it point at `/kaggle/input/construction-site-safety-image-dataset-roboflow/...`,
 confirming it's the source for `css-data`). Not present anywhere in the

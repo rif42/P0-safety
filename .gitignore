@@ -4,8 +4,6 @@ data/merged/*
 !data/merged/data.yaml
 !data/merged/SOURCES.md
 vision-data-env
-reference
-experiments
 .DS_Store
 *.cache
 /*.zip
