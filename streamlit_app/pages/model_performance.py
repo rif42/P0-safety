@@ -65,14 +65,14 @@ RUN_INFO = {
             "classes as our data — a useful ceiling to compare our own runs against."
         ),
     },
-    "pretrained_v26": {
-        "label": "YOLO26s — pretrained_v26",
-        "path": "pretrained_v26",
+    "yolo26s_css_100e": {
+        "label": "YOLO26s — css-data, 100 epochs",
+        "path": "yolo26s_css_100e",
         "caption": (
-            "Trained by a teammate outside this repo — different architecture from the other "
-            "two runs (YOLO26, not YOLOv8n). Weights are in; this card activates automatically "
-            "once results.csv (and ideally results.png / confusion_matrix.png / PR_curve.png) "
-            "land in runs/pretrained_v26/, same layout as pretrained_100e."
+            "Trained by a teammate outside this repo, on the same css-data dataset and class "
+            "list as pretrained_100e — a genuine apples-to-apples comparison. Different "
+            "architecture (YOLO26, not YOLOv8n). Beats pretrained_100e on recall, mAP50 and "
+            "mAP50-95 at the final epoch."
         ),
     },
 }

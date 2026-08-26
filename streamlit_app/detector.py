@@ -27,8 +27,14 @@ REPO_ROOT = _APP_DIR.parent  # streamlit_app/.. == repo root
 # whichever one DEFAULT_WEIGHTS/HIVIS_MODEL_PATH currently points at.
 V8_WEIGHTS = REPO_ROOT / "runs" / "pretrained_100e" / "weights" / "best.pt"
 V8_LABEL = "YOLOv8n · pretrained_100e"
-V26_WEIGHTS = REPO_ROOT / "runs" / "pretrained_v26" / "weights" / "best.pt"
-V26_LABEL = "YOLO26s · pretrained_v26"  # different architecture from v8 (C3k2/C2PSA blocks, not C2f) — verified from the checkpoint itself
+# pretrained_v26 (below, now unused) was an earlier, mismatched checkpoint —
+# trained on a different 7-class dataset (ppe_yolo26) with no working Person
+# detection. yolo26s_css_100e is the real comparable run: same css-data
+# dataset and class names as v8, verified via results.csv/confusion_matrix —
+# Person recall 0.83, in line with every other class, and it beats v8 on
+# recall/mAP50/mAP50-95. Use this one.
+V26_WEIGHTS = REPO_ROOT / "runs" / "yolo26s_css_100e" / "weights" / "best.pt"
+V26_LABEL = "YOLO26s · yolo26s_css_100e"
 
 DEFAULT_WEIGHTS = V26_WEIGHTS
 DEFAULT_LABEL = V26_LABEL
