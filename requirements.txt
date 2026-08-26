@@ -124,8 +124,9 @@ tensorflow==2.21.0
 termcolor==3.3.0
 terminado==0.18.1
 tinycss2==1.5.1
-torch==2.13.0
-torchvision==0.28.0
+--extra-index-url https://download.pytorch.org/whl/cu130
+torch==2.13.0+cu130
+torchvision==0.28.0+cu130
 tornado==6.5.8
 traitlets==5.16.1
 typing_extensions==4.16.0
