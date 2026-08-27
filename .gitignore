@@ -6,5 +6,3 @@ data/merged/*
 vision-data-env
 .DS_Store
 *.cache
-/*.zip
-data/*.zip
