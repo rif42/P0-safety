@@ -40,18 +40,26 @@ POSITIVE_CLASSES = ["person", "helmet", "gloves", "boots", "vest"]
 NEGATIVE_CLASSES = ["no-helmet", "no-gloves", "no-boots", "no-vest"]
 ALL_CLASSES = POSITIVE_CLASSES + NEGATIVE_CLASSES
 
+# Editable, visible prompt template for every chat-style (non-grounding)
+# model. {class_list} and {json_shape} are filled in per-model from its own
+# queryable_classes via render_prompt() — e.g. a notebook can print/edit
+# PROMPT_TEMPLATE directly and pass it into an adapter's prompt_template=.
+DEFAULT_PROMPT_TEMPLATE = (
+    "You are reviewing a construction-site photo for PPE compliance. "
+    "For each of these classes: {class_list} — report whether AT LEAST "
+    "ONE INSTANCE is visible anywhere in the image. A 'no-X' class means "
+    "a visible person who is clearly missing that item (e.g. 'no-helmet' "
+    "= a visible person with no helmet on).\n"
+    "Respond with ONLY a JSON object, no markdown fences, no other text, "
+    "in exactly this shape (one boolean per class listed above):\n"
+    "{json_shape}"
+)
 
-def build_presence_prompt(classes):
-    class_list = ", ".join(classes)
-    return (
-        "You are reviewing a construction-site photo for PPE compliance. "
-        f"For each of these classes: {class_list} — report whether AT LEAST "
-        "ONE INSTANCE is visible anywhere in the image. A 'no-X' class means "
-        "a visible person who is clearly missing that item (e.g. 'no-helmet' "
-        "= a visible person with no helmet on).\n"
-        "Respond with ONLY a JSON object, no markdown fences, no other text, "
-        "in exactly this shape (one boolean per class listed above):\n"
-        "{" + ", ".join(f'"{c}": true/false' for c in classes) + "}"
+
+def render_prompt(template, classes):
+    return template.format(
+        class_list=", ".join(classes),
+        json_shape="{" + ", ".join(f'"{c}": true/false' for c in classes) + "}",
     )
 
 
@@ -158,16 +166,18 @@ class OllamaAdapter:
     """Chat-style local VLM via Ollama's REST API (presence/classification
     only — do not trust coordinates from a chat model). Requires Ollama
     installed and running separately (`brew install ollama`, `ollama pull
-    llava`, `ollama serve`) — not set up by this scaffold, and not
-    live-tested in this environment since Ollama isn't installed here."""
+    <model>`, `ollama serve`) — not set up by this scaffold. Backs three
+    registry entries (ollama/qwen3-vl/gemma3n below) that differ only in
+    which model tag they pull; none have been live-tested in this
+    environment since Ollama isn't installed here."""
 
-    name = "ollama"
     supports_grounding = False
     queryable_classes = ALL_CLASSES
 
-    def __init__(self, model="llava", base_url="http://localhost:11434"):
+    def __init__(self, model="llava", base_url="http://localhost:11434", prompt_template=DEFAULT_PROMPT_TEMPLATE):
         self.model = model
         self.base_url = base_url.rstrip("/")
+        self.prompt_template = prompt_template
 
     def predict(self, image_path):
         import requests
@@ -179,7 +189,7 @@ class OllamaAdapter:
             f"{self.base_url}/api/generate",
             json={
                 "model": self.model,
-                "prompt": build_presence_prompt(self.queryable_classes),
+                "prompt": render_prompt(self.prompt_template, self.queryable_classes),
                 "images": [image_b64],
                 "stream": False,
                 "format": "json",
@@ -202,11 +212,12 @@ class ClaudeAdapter:
     supports_grounding = False
     queryable_classes = ALL_CLASSES
 
-    def __init__(self, model="claude-opus-5"):
+    def __init__(self, model="claude-haiku-4-5", prompt_template=DEFAULT_PROMPT_TEMPLATE):
         import anthropic
 
         self.client = anthropic.Anthropic()
         self.model = model
+        self.prompt_template = prompt_template
 
     def predict(self, image_path):
         media_type = mimetypes.guess_type(str(image_path))[0] or "image/jpeg"
@@ -221,7 +232,7 @@ class ClaudeAdapter:
                     "role": "user",
                     "content": [
                         {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_b64}},
-                        {"type": "text", "text": build_presence_prompt(self.queryable_classes)},
+                        {"type": "text", "text": render_prompt(self.prompt_template, self.queryable_classes)},
                     ],
                 }
             ],
@@ -233,11 +244,20 @@ class ClaudeAdapter:
         return [Detection(class_name=c, present=present) for c, present in presence.items()]
 
 
-# name -> (adapter class, is_cloud) — compare_models.py uses is_cloud to
-# enforce the --include-cloud gate.
+# name -> {cls, is_cloud, default_model}. compare_models.py uses is_cloud to
+# enforce the --include-cloud gate, and default_model to pick a model tag
+# when the caller doesn't override one.
+#
+# qwen3-vl and gemma3n default tags ("qwen3-vl:4b", "gemma3n:e4b") are best
+# guesses at Ollama's published naming for Qwen3-VL-4B and Gemma 3n E4B —
+# verify with `ollama pull <tag>` (or `ollama list` after pulling) before
+# relying on them; Ollama isn't installed in this environment so these
+# haven't been live-tested.
 ADAPTERS = {
-    "yolo": (YOLOAdapter, False),
-    "florence2": (Florence2Adapter, False),
-    "ollama": (OllamaAdapter, False),
-    "claude": (ClaudeAdapter, True),
+    "yolo": {"cls": YOLOAdapter, "is_cloud": False, "default_model": None},
+    "florence2": {"cls": Florence2Adapter, "is_cloud": False, "default_model": "microsoft/Florence-2-base"},
+    "ollama": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "llava"},
+    "qwen3-vl": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "qwen3-vl:4b"},
+    "gemma3n": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "gemma3n:e4b"},
+    "claude": {"cls": ClaudeAdapter, "is_cloud": True, "default_model": "claude-haiku-4-5"},
 }
