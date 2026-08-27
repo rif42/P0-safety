@@ -33,6 +33,9 @@ _DEFAULTS = {
     "row_limit": 25,
     "require_hardhat": True,
     "require_vest": True,
+    "require_mask": True,
+    "require_gloves": False,
+    "require_boots": False,
 }
 for _k, _v in _DEFAULTS.items():
     st.session_state.setdefault(_k, _v)
@@ -42,25 +45,36 @@ TYPE_FILTER_MAP = {
     "All exception types": "all",
     "Hardhat — absence detected": "hardhat",
     "Hi-vis vest — absence detected": "vest",
+    "Mask — absence detected": "mask",
+    "Gloves — absence detected": "gloves",
+    "Boots — absence detected": "boots",
 }
 VERDICT_FILTER_MAP = {
     "Non-compliant only": "non-compliant",
     "Compliant only": "compliant",
     "All assessed persons": "all",
 }
-_ITEM_NAMES = {"hardhat": "hardhat", "vest": "hi-vis vest"}
+_ITEM_NAMES = {"hardhat": "hardhat", "vest": "hi-vis vest", "mask": "mask", "gloves": "gloves", "boots": "boots"}
+_ALL_SLOTS = ("hardhat", "vest", "mask", "gloves", "boots")
 
 
 def build_rule_text(required):
     """Human-readable rule-set sentence for the currently checked items —
-    recomputed live as the WHAT COUNTS AS COMPLIANT filter changes."""
+    recomputed live as the WHAT COUNTS AS COMPLIANT filter changes. Any
+    slot not in `required` is called out as advisory-only — it may still be
+    detected and shown (if the loaded model tracks it), it just never
+    drives the compliance verdict."""
     if not required:
         core = "No PPE item currently required"
     elif len(required) == 1:
         core = f"{_ITEM_NAMES[required[0]].capitalize()} required"
     else:
         core = " and ".join(_ITEM_NAMES[s] for s in required).capitalize() + " required"
-    return f"{core}; boots advisory (not tracked by this model)."
+    advisory = [s for s in _ALL_SLOTS if s not in required]
+    if advisory:
+        names = " / ".join(_ITEM_NAMES[s] for s in advisory)
+        core += f"; {names} advisory (not currently required)."
+    return core
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +123,7 @@ if st.session_state.view == "results":
         if not have_batch:
             with st.container(border=True):
                 st.markdown('<div class="hv-h1" style="font-size:26px">DROP SITE PHOTOS HERE</div>', unsafe_allow_html=True)
-                st.caption("Multiple images or a whole folder. Each photo is checked for hardhats and hi-vis vests, person by person.")
+                st.caption("Multiple images or a whole folder. Each photo is checked for hardhats, hi-vis vests, masks, and (on a model trained to detect them) gloves and boots, person by person.")
                 uploaded_files = st.file_uploader(
                     "Select photos", type=["jpg", "jpeg", "png"], accept_multiple_files=True,
                     label_visibility="collapsed",
@@ -223,7 +237,12 @@ if not items:
     st.stop()
 
 threshold = st.session_state.threshold
-required = tuple(s for s, k in (("hardhat", "require_hardhat"), ("vest", "require_vest")) if st.session_state[k])
+required = tuple(
+    s for s, k in (
+        ("hardhat", "require_hardhat"), ("vest", "require_vest"), ("mask", "require_mask"),
+        ("gloves", "require_gloves"), ("boots", "require_boots"),
+    ) if st.session_state[k]
+)
 rule_text = build_rule_text(required)
 for it in items:
     it["assessment"] = detector.assess(it["raw"], threshold, required=required)
@@ -269,7 +288,8 @@ if st.session_state.view == "results":
         c1, c2 = st.columns([2, 3])
         with c1:
             st.markdown('<div class="hv-h1" style="font-size:18px">DETECTION CONFIDENCE THRESHOLD</div>', unsafe_allow_html=True)
-            st.slider("Threshold", min_value=0.10, max_value=0.90, step=0.01, key="threshold", label_visibility="collapsed")
+            st.slider("Threshold", min_value=0.10, max_value=0.90, value=st.session_state.threshold, step=0.01,
+                      key="threshold", label_visibility="collapsed")
         with c2:
             st.markdown(
                 f'<div style="font-size:12.5px;color:#4A4B47;padding-top:28px">Detections below this confidence are ignored. '
@@ -278,17 +298,25 @@ if st.session_state.view == "results":
                 unsafe_allow_html=True)
 
     with st.container(border=True):
-        rc1, rc2, rc3 = st.columns([1, 1, 2])
+        st.markdown('<div class="hv-h1" style="font-size:16px">WHAT COUNTS AS COMPLIANT</div>', unsafe_allow_html=True)
+        rc1, rc2, rc3, rc4, rc5 = st.columns(5)
         with rc1:
-            st.markdown('<div class="hv-h1" style="font-size:16px">WHAT COUNTS AS COMPLIANT</div>', unsafe_allow_html=True)
             st.checkbox("Hardhat required", key="require_hardhat")
         with rc2:
-            st.markdown('<div>&nbsp;</div>', unsafe_allow_html=True)
             st.checkbox("Hi-vis vest required", key="require_vest")
         with rc3:
-            st.markdown(f'<div style="font-size:12.5px;color:#4A4B47;padding-top:22px">Uncheck an item to '
-                         f'stop flagging it.</div>',
-                         unsafe_allow_html=True)
+            st.checkbox("Mask required", key="require_mask")
+        with rc4:
+            st.checkbox("Gloves required", key="require_gloves")
+        with rc5:
+            st.checkbox("Boots required", key="require_boots")
+        st.markdown(
+            '<div style="font-size:12.5px;color:#4A4B47;margin-top:6px">Uncheck an item to stop flagging it. '
+            'Mask uses the css-data vocabulary (detected by v8 / yolo26s_css_100e). Gloves/boots are only '
+            'detected by yolo26s_merged_100e. On any other model, requiring an item it never detects has no '
+            'effect — that box is simply never found.</div>',
+            unsafe_allow_html=True,
+        )
 
     st.markdown('<div class="hv-h1" style="font-size:24px;margin-top:24px">RESULTS</div>', unsafe_allow_html=True)
     gcol1, gcol2 = st.columns([3, 1])
@@ -467,7 +495,7 @@ else:
         for pi, p in enumerate(a["persons"]):
             border = "2px solid #141414" if st.session_state.selected_person == pi else "1px solid #C4C6C0"
             rows_html = ""
-            for slot in ("hardhat", "vest", "boots"):
+            for slot in ("hardhat", "vest", "mask", "gloves", "boots"):
                 st_ = p["status"][slot]
                 if st_["state"] == "notvisible":
                     label, fg = "not visible", "#9B9D97"

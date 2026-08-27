@@ -1,0 +1,21 @@
+# Unified, training-ready manifest for data/merged/.
+# Built by scripts/build_dataset.py (default: only classes 0-8, images with
+# none of them are excluded). Class IDs/order defined in
+# scripts/class_mapping.py — do not edit `names` here without updating that
+# file too. Re-run with --classes to include a different/larger set.
+path: .
+train: train/images
+val: val/images
+test: test/images
+
+nc: 9
+names:
+  - person
+  - helmet
+  - gloves
+  - boots
+  - vest
+  - no-helmet
+  - no-gloves
+  - no-boots
+  - no-vest

@@ -64,6 +64,8 @@ RUN_INFO = {
             "COCO-pretrained yolov8n.pt weights and fine-tuned for 100 epochs on the same 10 "
             "classes as our data — a useful ceiling to compare our own runs against."
         ),
+        "compare_label": "v8",
+        "live_on_compare": True,
     },
     "yolo26s_css_100e": {
         "label": "YOLO26s — css-data, 100 epochs",
@@ -72,8 +74,35 @@ RUN_INFO = {
             "Trained by a teammate outside this repo, on the same css-data dataset and class "
             "list as pretrained_100e — a genuine apples-to-apples comparison. Different "
             "architecture (YOLO26, not YOLOv8n). Beats pretrained_100e on recall, mAP50 and "
-            "mAP50-95 at the final epoch."
+            "mAP50-95 at the final epoch. Shown on Model Comparison as \"v26\"."
         ),
+        "compare_label": "v26",
+        "live_on_compare": True,
+    },
+    "yolo26s_merged_100e": {
+        "label": "YOLO26s — merged dataset, 100 epochs",
+        "path": "detect/yolo26s_merged_100e",
+        "caption": (
+            "Trained by a teammate outside this repo on a merged dataset (9 classes: person, "
+            "helmet/no-helmet, vest/no-vest, gloves/no-gloves, boots/no-boots). Working Person "
+            "class (0.83 recall) plus two PPE items no other run here tracks. Shown on Model "
+            "Comparison and wired into the app's compliance logic."
+        ),
+        "compare_label": "merged",
+        "live_on_compare": True,
+    },
+    "yolo26s_Altec_PPE_100e": {
+        "label": "YOLO26s — Altec PPE dataset, 100 epochs",
+        "path": "detect/yolo26s_Altec_PPE_100e",
+        "caption": (
+            "Trained by a teammate outside this repo on a different PPE dataset (10 classes: "
+            "Face_masks, Face_shield, Glasses, Gloves, Helmet, Safety_shoes, Safety_vests, plus "
+            "lowercase glasses/helmet duplicates) — no Person class at all, confirmed via its "
+            "confusion matrix below. Can't drive a per-person compliance verdict, so it doesn't "
+            "run live on Model Comparison — training metrics only, here."
+        ),
+        "compare_label": "Altec",
+        "live_on_compare": False,  # no Person class — Model Comparison shows it as an N/A card
     },
 }
 
@@ -82,12 +111,101 @@ runs_to_show = []
 for key, info in RUN_INFO.items():
     results_path = RUNS_DIR / info["path"] / "results.csv"
     if results_path.exists():
-        runs_to_show.append((info, results_path))
+        runs_to_show.append((key, info, results_path))
+
+# Summary table — the 4 models currently on the Model Comparison page, side by side.
+# yolov8n_scratch is deliberately excluded: it's shown lower on this page, but was never
+# added to Model Comparison, so it's not part of "the 4 models" this table is answering for.
+compare_rows = [(key, info, path) for key, info, path in runs_to_show if info.get("compare_label")]
+if compare_rows:
+    st.subheader("The 4 models on Model Comparison, side by side")
+    st.caption(
+        """
+        mAP50 = average precision at a loose 0.5 IoU overlap threshold (is the box roughly in the right place)\n
+        mAP50-95 = average across stricter thresholds from 0.5 to 0.95 (more demanding number)
+        """
+    )
+    table_rows = []
+    for key, info, results_path in compare_rows:
+        df = pd.read_csv(results_path)
+        df.columns = df.columns.str.strip()
+        last = df.iloc[-1]
+        map50_95_col = next((c for c in df.columns if "mAP50-95" in c), None)
+        map50_col = next((c for c in df.columns if "mAP50" in c and "mAP50-95" not in c), None)
+        precision_col = _find_col(df, "precision")
+        recall_col = _find_col(df, "recall")
+        table_rows.append({
+            "Model": info["compare_label"],
+            "Run": info.get("label", key),
+            "Epochs": len(df),
+            "Precision": round(float(last[precision_col]), 3) if precision_col else None,
+            "Recall": round(float(last[recall_col]), 3) if recall_col else None,
+            "mAP50": round(float(last[map50_col]), 3) if map50_col else None,
+            "mAP50-95": round(float(last[map50_95_col]), 3) if map50_95_col else None,
+            "Live on Model Comparison": "Yes" if info.get("live_on_compare") else "No",
+        })
+    st.dataframe(pd.DataFrame(table_rows), hide_index=True, width="stretch")
+
+    # Per-class numbers: results.csv is aggregate-only — Ultralytics never writes a per-class
+    # CSV, the confusion matrix image is the only place these numbers exist. So this table is
+    # manually transcribed from each run's confusion_matrix(_normalized).png diagonal (read
+    # 2026-08-27) — NOT recomputed live like the summary table above. If any of these 4 runs
+    # get retrained, re-read the new confusion matrix and update this table by hand.
+    #
+    # Rows follow the app's own tracked slots (detector.SLOT_ITEMS) — person, then each PPE
+    # item's present/absent pair. "—" means that model's training data has no matching class at
+    # all (e.g. Altec has no Person, no negative classes for anything). Different models use
+    # different words for the same slot (hardhat vs helmet) and different underlying datasets,
+    # so a cell is that MODEL's own class name plus its own diagonal value — read each column on
+    # its own terms rather than comparing raw numbers across columns as if it were one dataset.
+    st.subheader("Per-class numbers")
+    PER_CLASS = [
+        {"Slot": "Person",                    "v8": "0.80", "v26": "0.83", "merged": "0.83", "Altec": "—"},
+        {"Slot": "Head protection — present",  "v8": "0.76", "v26": "0.85", "merged": "0.94", "Altec": "0.89 / 0.78"},
+        {"Slot": "Head protection — absent",   "v8": "0.62", "v26": "0.67", "merged": "0.88", "Altec": "—"},
+        {"Slot": "Vest — present",             "v8": "0.78", "v26": "0.90", "merged": "0.76", "Altec": "0.70"},
+        {"Slot": "Vest — absent",              "v8": "0.70", "v26": "0.74", "merged": "0.78", "Altec": "—"},
+        {"Slot": "Mask — present",             "v8": "0.90", "v26": "0.95", "merged": "—",    "Altec": "0.83 / 0.70"},
+        {"Slot": "Mask — absent",              "v8": "0.66", "v26": "0.70", "merged": "—",    "Altec": "—"},
+        {"Slot": "Gloves — present",           "v8": "—",    "v26": "—",    "merged": "0.86", "Altec": "0.56"},
+        {"Slot": "Gloves — absent",            "v8": "—",    "v26": "—",    "merged": "0.83", "Altec": "—"},
+        {"Slot": "Boots — present",            "v8": "—",    "v26": "—",    "merged": "0.90", "Altec": "0.73"},
+        {"Slot": "Boots — absent",             "v8": "—",    "v26": "—",    "merged": "0.86", "Altec": "—"},
+    ]
+    st.dataframe(pd.DataFrame(PER_CLASS), hide_index=True, width="stretch")
+    st.caption(
+        "Numbers are each class's diagonal in its confusion matrix — of every box that was "
+        "truly that class, the fraction the model predicted correctly (≈ recall). Blank cells "
+        "are classes that model's dataset never had, not a zero score. A cell with two numbers "
+        "(Altec's Head protection / Mask rows) is two separate classes that model tracks for "
+        "the same slot — e.g. Helmet and a lowercase duplicate \"helmet\" class, or Face_masks "
+        "and Face_shield — see the confusion matrices below for the exact class names and full "
+        "picture, including classes not in this table (Safety Cone/machinery/vehicle for v8/v26, "
+        "Glasses for Altec)."
+    )
+
+    # Full confusion matrices below the table — the underlying image each number above came
+    # from, plus every class (including the ones not in the table) with its confusions visible.
+    st.subheader("Confusion matrices")
+    cm_cols = st.columns(2)
+    for i, (key, info, results_path) in enumerate(compare_rows):
+        run_dir = results_path.parent
+        cm_path = run_dir / "confusion_matrix_normalized.png"
+        if not cm_path.exists():
+            cm_path = run_dir / "confusion_matrix.png"
+        with cm_cols[i % 2]:
+            st.markdown(f"**{info['compare_label']}** — {info.get('label', key)}")
+            if cm_path.exists():
+                st.image(str(cm_path), width="stretch")
+            else:
+                st.info("No confusion matrix found for this run.")
+
+    st.divider()
 
 if not runs_to_show:
     st.info("No YOLO training runs configured yet — add an entry to RUN_INFO in this file.")
 else:
-    for info, results_path in runs_to_show:
+    for key, info, results_path in runs_to_show:
         run_dir = results_path.parent
         df = pd.read_csv(results_path)
         df.columns = df.columns.str.strip()
@@ -131,16 +249,33 @@ else:
             st.caption("Precision / recall per epoch")
             st.line_chart(pd.DataFrame({"precision": df[precision_col], "recall": df[recall_col]}))
 
-        # Ultralytics also drops ready-made plots (PR curve, confusion matrix) in the run folder —
-        # no need to rebuild these from scratch, just surface them.
+        # results.csv is aggregate-only (one row per epoch, no per-class columns) — Ultralytics
+        # never writes a per-class numeric table. The confusion matrix and the Box P/R/F1/PR
+        # curves it drops in the run folder ARE the real per-class breakdown, so surface the
+        # confusion matrix directly (most readable at a glance) and keep the rest one click away.
+        cm_path = run_dir / "confusion_matrix_normalized.png"
+        if not cm_path.exists():
+            cm_path = run_dir / "confusion_matrix.png"
+        if cm_path.exists():
+            st.caption("Per-class detection breakdown (confusion matrix — diagonal ≈ per-class recall)")
+            st.image(str(cm_path), width="stretch")
+        else:
+            st.caption("No confusion matrix found for this run.")
+
+        # Ultralytics also drops other ready-made plots in the run folder — no need to rebuild
+        # these from scratch, just surface them.
         extra_plots = {
             "results.png": "All metrics, Ultralytics' own summary grid",
-            "confusion_matrix.png": "Confusion matrix",
-            "PR_curve.png": "Precision-recall curve",
+            "confusion_matrix.png": "Confusion matrix (raw counts)",
+            "confusion_matrix_normalized.png": "Confusion matrix (normalized)",
+            "BoxPR_curve.png": "Precision-recall curve, per class",
+            "BoxP_curve.png": "Precision curve, per class",
+            "BoxR_curve.png": "Recall curve, per class",
+            "BoxF1_curve.png": "F1 curve, per class",
         }
         available_plots = [(name, caption) for name, caption in extra_plots.items() if (run_dir / name).exists()]
         if available_plots:
-            with st.expander("More plots from this run"):
+            with st.expander("More plots from this run (per-class curves, raw confusion matrix, summary grid)"):
                 for name, caption in available_plots:
                     st.image(str(run_dir / name), caption=caption, width="stretch")
 
