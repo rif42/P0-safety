@@ -3,3 +3,12 @@ reasonix.toml
 # large model weights - do not commit
 *.pt
 yolo26x-pose.pt
+data
+.DS_Store
+__pycache__
+.env
+.venv
+.python-version
+.vscode
+.claude
+.obsidian

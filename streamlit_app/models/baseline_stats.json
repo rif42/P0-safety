@@ -1,0 +1,11 @@
+{
+  "val_class_counts": {
+    "hardhat": 617,
+    "no_hardhat": 475
+  },
+  "majority_class": "hardhat",
+  "majority_baseline_accuracy": 0.565,
+  "random_guess_accuracy": 0.5,
+  "val_loss": 0.2883,
+  "val_accuracy": 0.9048
+}
