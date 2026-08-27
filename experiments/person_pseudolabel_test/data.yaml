@@ -1,0 +1,14 @@
+names:
+- no-safety-glove
+- no-safety-helmet
+- no-safety-shoes
+- no-welding-glass
+- safety-glove
+- safety-helmet
+- safety-shoes
+- welding-glass
+- person
+nc: 9
+path: /Users/joanna/code/ds-final-project/P0-safety/experiments/person_pseudolabel_test
+train: images
+val: images

@@ -1,0 +1,16 @@
+names:
+- Person
+- Hardhat
+- NO-Hardhat
+- Vest
+- NO-Vest
+- Mask
+- NO-Mask
+- Gloves
+- NO-Gloves
+- Boots
+- NO-Boots
+nc: 11
+path: /Users/joanna/code/ds-final-project/P0-safety/experiments/merge_sim/run1_as_is
+train: train/images
+val: val/images
