@@ -3,6 +3,10 @@ data/build
 data/merged/*
 !data/merged/data.yaml
 !data/merged/SOURCES.md
+data/comparisons
 vision-data-env
 .DS_Store
 *.cache
+__pycache__
+/*.zip
+data/*.zip
