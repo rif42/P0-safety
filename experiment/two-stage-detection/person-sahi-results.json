@@ -1,0 +1,58 @@
+{
+  "valid_single": {
+    "n": 114,
+    "prec": 1.0,
+    "rec": 0.8095238095238095,
+    "f1": 0.8947368421052632,
+    "TP": 68,
+    "FP": 0,
+    "TN": 30,
+    "FN": 16,
+    "bprec": 0.9105691056910569,
+    "brec": 0.6746987951807228,
+    "bf1": 0.7750865051903113,
+    "bTP": 112,
+    "bFP": 11,
+    "bFN": 54,
+    "srec": 0.40476190476190477,
+    "ms": 91.44144727472673
+  },
+  "valid_SAHI_512": {
+    "n": 114,
+    "prec": 1.0,
+    "rec": 0.8452380952380952,
+    "f1": 0.9161290322580644,
+    "TP": 71,
+    "FP": 0,
+    "TN": 30,
+    "FN": 13,
+    "bprec": 0.9090909090909091,
+    "brec": 0.6626506024096386,
+    "bf1": 0.7665505226480838,
+    "bTP": 110,
+    "bFP": 11,
+    "bFN": 56,
+    "srec": 0.38095238095238093,
+    "ms": 464.0182361268161
+  },
+  "valid_old_SAHI_320": {
+    "prec": 0.934,
+    "rec": 0.845,
+    "f1": 0.888,
+    "bprec": 0.627,
+    "brec": 0.669,
+    "bf1": 0.647,
+    "srec": 0.405,
+    "ms": 868,
+    "n": 114
+  },
+  "config": {
+    "slice": 512,
+    "overlap": 0.25,
+    "postprocess": "GREEDYNMM+IOS+full-image",
+    "conf": 0.25,
+    "model": "yolo26s.pt"
+  },
+  "gate": "PASS img-level: Rec +0.035 (68->71, FN 16->13), Prec +0.000, F1 0.895->0.916, box Prec restored 0.627->0.909, 5.1x cost -> ship on-demand",
+  "note": "All images 640x640. Slice 640=1 tile no gain. Old 320 sliced giants -> limbs duplicated. New 512 keeps context + full-image + NMM merges limbs + IOS dedup inside big box."
+}
