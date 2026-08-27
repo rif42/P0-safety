@@ -26,9 +26,8 @@ and breaks on it (AttributeError on load) — 4.49.0 is a known-working pin.
 Re-test against a newer transformers before ever bumping it.
 ollama/claude adapters need their own separate setup (Ollama installed +
 running with the relevant model(s) pulled — `ollama pull llava`, `ollama
-pull qwen3-vl:4b`, `ollama pull gemma3n:e4b`, the latter two tag names being
-best guesses, see model_adapters.py; ANTHROPIC_API_KEY or `ant auth login`
-for Claude) — none configured in this environment as of this scaffold.
+pull qwen3-vl:4b`, `ollama pull gemma4:e4b`; ANTHROPIC_API_KEY or `ant auth
+login` for Claude).
 
 Output, per run — folder name encodes timestamp, dataset, n_images, seed,
 and models so a run is identifiable without opening it:
@@ -61,7 +60,7 @@ LLM_RUNS_ROOT = REPO_ROOT / "runs" / "llm"
 
 DEFAULT_YOLO_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26s_merged_100e" / "weights" / "best.pt"
 DEFAULT_N_IMAGES = 20
-DEFAULT_MODELS = "yolo,florence2,ollama,qwen3-vl,gemma3n"
+DEFAULT_MODELS = "yolo,florence2,ollama,qwen3-vl,gemma4"
 
 
 def parse_args():
@@ -84,13 +83,13 @@ def parse_args():
     parser.add_argument("--florence2-model", default=ADAPTERS["florence2"]["default_model"])
     parser.add_argument("--ollama-model", default=ADAPTERS["ollama"]["default_model"])
     parser.add_argument("--qwen3-vl-model", default=ADAPTERS["qwen3-vl"]["default_model"])
-    parser.add_argument("--gemma3n-model", default=ADAPTERS["gemma3n"]["default_model"])
+    parser.add_argument("--gemma4-model", default=ADAPTERS["gemma4"]["default_model"])
     parser.add_argument("--ollama-url", default="http://localhost:11434")
     parser.add_argument("--claude-model", default=ADAPTERS["claude"]["default_model"])
     parser.add_argument(
         "--prompt-template",
         default=DEFAULT_PROMPT_TEMPLATE,
-        help="Overrides the prompt sent to every chat-style model (ollama/qwen3-vl/gemma3n/claude). "
+        help="Overrides the prompt sent to every chat-style model (ollama/qwen3-vl/gemma4/claude). "
         "Must contain {class_list} and {json_shape} placeholders. See model_adapters.DEFAULT_PROMPT_TEMPLATE.",
     )
     parser.add_argument("--seed", type=int, default=42)
@@ -164,8 +163,8 @@ def build_adapter(model_name, args):
         return spec["cls"](args.ollama_model, args.ollama_url, prompt_template=args.prompt_template)
     if model_name == "qwen3-vl":
         return spec["cls"](args.qwen3_vl_model, args.ollama_url, prompt_template=args.prompt_template)
-    if model_name == "gemma3n":
-        return spec["cls"](args.gemma3n_model, args.ollama_url, prompt_template=args.prompt_template)
+    if model_name == "gemma4":
+        return spec["cls"](args.gemma4_model, args.ollama_url, prompt_template=args.prompt_template)
     if model_name == "claude":
         return spec["cls"](args.claude_model, prompt_template=args.prompt_template)
     raise SystemExit(f"No constructor wired up for '{model_name}'")
@@ -278,7 +277,7 @@ def main():
             "florence2_model": args.florence2_model,
             "ollama_model": args.ollama_model,
             "qwen3_vl_model": args.qwen3_vl_model,
-            "gemma3n_model": args.gemma3n_model,
+            "gemma4_model": args.gemma4_model,
             "claude_model": args.claude_model,
         },
         "parse_failures": parse_failures,

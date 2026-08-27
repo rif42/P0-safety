@@ -167,7 +167,7 @@ class OllamaAdapter:
     only — do not trust coordinates from a chat model). Requires Ollama
     installed and running separately (`brew install ollama`, `ollama pull
     <model>`, `ollama serve`) — not set up by this scaffold. Backs three
-    registry entries (ollama/qwen3-vl/gemma3n below) that differ only in
+    registry entries (ollama/qwen3-vl/gemma4 below) that differ only in
     which model tag they pull; none have been live-tested in this
     environment since Ollama isn't installed here."""
 
@@ -194,10 +194,16 @@ class OllamaAdapter:
                 "stream": False,
                 "format": "json",
             },
-            timeout=120,
+            timeout=300,  # cold model loads observed up to ~140s under load; leave headroom
         )
         response.raise_for_status()
-        presence = parse_presence_json(response.json().get("response", ""), self.queryable_classes)
+        data = response.json()
+        # Reasoning models (e.g. qwen3-vl) can emit their entire answer inside
+        # Ollama's "thinking" field and leave "response" empty if they never
+        # produce a distinct post-thinking answer — try both.
+        presence = parse_presence_json(data.get("response", ""), self.queryable_classes)
+        if presence is None:
+            presence = parse_presence_json(data.get("thinking", ""), self.queryable_classes)
         if presence is None:
             return None  # caller records this as a parse failure
         return [Detection(class_name=c, present=present) for c, present in presence.items()]
@@ -248,16 +254,14 @@ class ClaudeAdapter:
 # enforce the --include-cloud gate, and default_model to pick a model tag
 # when the caller doesn't override one.
 #
-# qwen3-vl and gemma3n default tags ("qwen3-vl:4b", "gemma3n:e4b") are best
-# guesses at Ollama's published naming for Qwen3-VL-4B and Gemma 3n E4B —
-# verify with `ollama pull <tag>` (or `ollama list` after pulling) before
-# relying on them; Ollama isn't installed in this environment so these
-# haven't been live-tested.
+# qwen3-vl:4b (3.3GB) and gemma4:e4b (9.6GB, released April 2026) are
+# confirmed real Ollama library tags — verified via ollama.com/library
+# before pulling, not guesses.
 ADAPTERS = {
     "yolo": {"cls": YOLOAdapter, "is_cloud": False, "default_model": None},
     "florence2": {"cls": Florence2Adapter, "is_cloud": False, "default_model": "microsoft/Florence-2-base"},
     "ollama": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "llava"},
     "qwen3-vl": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "qwen3-vl:4b"},
-    "gemma3n": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "gemma3n:e4b"},
+    "gemma4": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "gemma4:e4b"},
     "claude": {"cls": ClaudeAdapter, "is_cloud": True, "default_model": "claude-haiku-4-5"},
 }
