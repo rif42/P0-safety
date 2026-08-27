@@ -9,3 +9,8 @@ vision-data-env
 __pycache__
 /*.zip
 data/*.zip
+# YOLOEAdapter (scripts/model_adapters.py) auto-downloads these on first
+# use: the yoloe checkpoint plus a shared MobileCLIP text encoder used to
+# embed its text-prompt class names.
+/yoloe-*.pt
+/mobileclip*.ts

@@ -6,7 +6,7 @@ predictions to runs/llm/<run_name>/ for ModelComparison.ipynb to score and
 visualize.
 
     python scripts/compare_models.py
-    python scripts/compare_models.py --n-images -1 --models yolo,florence2
+    python scripts/compare_models.py --n-images -1 --models yolo,yoloe
     python scripts/compare_models.py --n-images 100 --models yolo,claude --include-cloud
 
 --n-images -1 means "every image in the test split," not a sample.
@@ -20,10 +20,11 @@ this script never modifies data/merged/ or the YOLO checkpoint.
 
 Setup (installed into vision-data-env for this tool; not added to the
 top-level requirements.txt, which targets the separate CUDA training env):
-    pip install "transformers==4.49.0" einops timm anthropic requests
-Florence-2's remote code (trust_remote_code=True) predates transformers 5.x
-and breaks on it (AttributeError on load) — 4.49.0 is a known-working pin.
-Re-test against a newer transformers before ever bumping it.
+    pip install anthropic requests
+yoloe reuses the ultralytics install already needed for the "yolo" adapter
+(no extra package) — its first run auto-downloads yoloe-26s-seg.pt (~30MB)
+plus a shared MobileCLIP text encoder (~250MB) into the working directory;
+both are gitignored, like the repo's other base *.pt checkpoints.
 ollama/claude adapters need their own separate setup (Ollama installed +
 running with the relevant model(s) pulled — `ollama pull llava`, `ollama
 pull qwen3-vl:4b`, `ollama pull gemma4:e4b`; ANTHROPIC_API_KEY or `ant auth
@@ -60,7 +61,7 @@ LLM_RUNS_ROOT = REPO_ROOT / "runs" / "llm"
 
 DEFAULT_YOLO_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26s_merged_100e" / "weights" / "best.pt"
 DEFAULT_N_IMAGES = 20
-DEFAULT_MODELS = "yolo,florence2,ollama,qwen3-vl,gemma4"
+DEFAULT_MODELS = "yolo,yoloe,ollama,qwen3-vl,gemma4"
 
 
 def parse_args():
@@ -80,7 +81,7 @@ def parse_args():
         help="Required in addition to naming a cloud model in --models, or the run aborts",
     )
     parser.add_argument("--yolo-weights", default=str(DEFAULT_YOLO_WEIGHTS))
-    parser.add_argument("--florence2-model", default=ADAPTERS["florence2"]["default_model"])
+    parser.add_argument("--yoloe-model", default=ADAPTERS["yoloe"]["default_model"])
     parser.add_argument("--ollama-model", default=ADAPTERS["ollama"]["default_model"])
     parser.add_argument("--qwen3-vl-model", default=ADAPTERS["qwen3-vl"]["default_model"])
     parser.add_argument("--gemma4-model", default=ADAPTERS["gemma4"]["default_model"])
@@ -104,10 +105,18 @@ def build_run_name(n_images, seed, model_names):
 
 
 def sample_test_images(n_images, seed):
-    """Stratified-ish sample from the test split: guarantees every class
-    gets some representation (rarest class first) before topping up
-    randomly, so a small n_images doesn't accidentally miss a rare class
-    like vest/no-vest entirely. n_images=-1 means every test image."""
+    """Stratified sample from the test split: reserves an even per-class
+    quota (rarest class first) before topping up randomly, so a small
+    n_images doesn't accidentally miss a rare class like vest/no-vest
+    entirely. n_images=-1 means every test image.
+
+    Each class is capped at floor(n_images / n_classes) images during the
+    reservation pass — an earlier version let the single rarest class fill
+    the *entire* n_images budget before ever considering the next class,
+    which silently starved any class confined to a different raw source
+    (e.g. gloves/boots, which only anuragraj03 labels, never got sampled
+    because a same-image-count-or-larger class from snehilsanyal-main
+    always sorted rarer and ate the whole quota first)."""
     labels_long = pd.read_csv(MERGED_ROOT / "labels_long.csv")
     test_labels = labels_long[labels_long["split"] == "test"]
     all_test_files = sorted(test_labels["file"].unique())
@@ -119,17 +128,22 @@ def sample_test_images(n_images, seed):
     selected = []
     seen = set()
     class_counts = test_labels["class_id"].value_counts()
-    for class_id in class_counts.sort_values().index:  # rarest first
+    class_ids_rarest_first = class_counts.sort_values().index.tolist()
+    per_class_quota = max(1, n_images // len(class_ids_rarest_first))
+
+    for class_id in class_ids_rarest_first:
+        if len(selected) >= n_images:
+            break
         candidates = test_labels[test_labels["class_id"] == class_id]["file"].unique().tolist()
         rng.shuffle(candidates)
+        taken = 0
         for f in candidates:
-            if len(selected) >= n_images:
+            if taken >= per_class_quota or len(selected) >= n_images:
                 break
             if f not in seen:
                 seen.add(f)
                 selected.append(f)
-        if len(selected) >= n_images:
-            break
+                taken += 1
 
     remaining_pool = [f for f in all_test_files if f not in seen]
     rng.shuffle(remaining_pool)
@@ -157,8 +171,8 @@ def build_adapter(model_name, args):
 
     if model_name == "yolo":
         return spec["cls"](args.yolo_weights)
-    if model_name == "florence2":
-        return spec["cls"](args.florence2_model)
+    if model_name == "yoloe":
+        return spec["cls"](args.yoloe_model)
     if model_name == "ollama":
         return spec["cls"](args.ollama_model, args.ollama_url, prompt_template=args.prompt_template)
     if model_name == "qwen3-vl":
@@ -274,7 +288,7 @@ def main():
         "prompt_template": args.prompt_template,
         "config": {
             "yolo_weights": args.yolo_weights,
-            "florence2_model": args.florence2_model,
+            "yoloe_model": args.yoloe_model,
             "ollama_model": args.ollama_model,
             "qwen3_vl_model": args.qwen3_vl_model,
             "gemma4_model": args.gemma4_model,

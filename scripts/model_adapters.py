@@ -7,17 +7,17 @@ orchestration logic.
 
 Every adapter declares `queryable_classes`: the subset of the 9-class schema
 it can actually be asked about. This matters because grounding-only models
-(Florence-2, or any dedicated open-vocab detector) can point at "helmet" but
+(YOLOE, or any dedicated open-vocab detector) can point at "helmet" but
 cannot express "no-helmet" as a groundable phrase — that's an absence, not an
 object. Asking them about negative classes and silently recording "not
 found" as a confident "false" would be dishonest scoring. Chat-style models
 (Ollama, Claude) CAN reason about absence in text, so their queryable set is
 the full schema.
 
-Only YOLO and Florence-2 set `supports_grounding = True` — their `bbox`
-values are real predicted boxes worth IoU-scoring against ground truth.
-Chat-style models' `bbox` is always None; comparing them at the box level
-would be comparing a coordinate to a guess.
+Only YOLO and YOLOE set `supports_grounding = True` — their `bbox` values
+are real predicted boxes worth IoU-scoring against ground truth. Chat-style
+models' `bbox` is always None; comparing them at the box level would be
+comparing a coordinate to a guess.
 """
 import base64
 import json
@@ -111,54 +111,56 @@ class YOLOAdapter:
         return detections
 
 
-class Florence2Adapter:
-    """Local, open-source, real grounding output via transformers — no API
-    key, no new runtime beyond what's already installed. Only queryable on
-    positive classes (see module docstring): one phrase-grounding call per
-    class per image, so this is the slowest adapter (~5 calls x ~5s each on
-    an M-series Mac)."""
+class YOLOEAdapter:
+    """Local, open-source, real grounding output via Ultralytics YOLOE
+    ("Real-Time Seeing Anything") — open-vocabulary detection prompted with
+    our own class names as text, no API key, one dependency we already have
+    (ultralytics) rather than the separate transformers/einops/timm stack
+    Florence-2 needed. Replaces the earlier Florence2Adapter: on the same
+    sample images Florence-2 (microsoft/Florence-2-base) badly
+    under-performed every other model (e.g. 0.09 precision / 0.17 recall on
+    vest, 0/0 on gloves and boots) while being the slowest adapter to run —
+    one sequential phrase-grounding call per class per image. YOLOE detects
+    every queryable class in a single forward pass instead, and — being a
+    real detector rather than a caption model repurposed for grounding —
+    scores far closer to our trained YOLO baseline.
 
-    name = "florence2"
+    Only queryable on positive classes (see module docstring): open-vocab
+    text prompts name objects ("helmet"), they can't express an absence
+    ("no-helmet").
+
+    First run downloads the checkpoint (~30MB) plus a shared MobileCLIP text
+    encoder (~250MB, used to embed the class-name prompts) via Ultralytics'
+    normal auto-download — both land in the working directory and are
+    gitignored, same as the other *.pt base checkpoints already in this
+    repo's root."""
+
+    name = "yoloe"
     supports_grounding = True
     queryable_classes = POSITIVE_CLASSES
 
-    def __init__(self, model_id="microsoft/Florence-2-base", device=None):
-        import torch
-        from transformers import AutoModelForCausalLM, AutoProcessor
+    def __init__(self, model_id="yoloe-26s-seg.pt", conf=0.15):
+        from ultralytics import YOLOE
 
-        self.device = device or ("mps" if torch.backends.mps.is_available() else "cpu")
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_id, trust_remote_code=True, torch_dtype=torch.float32
-        ).to(self.device)
-        self.processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
-        self.task = "<CAPTION_TO_PHRASE_GROUNDING>"
+        self.model = YOLOE(model_id)
+        self.model.set_classes(self.queryable_classes, self.model.get_text_pe(self.queryable_classes))
+        self.conf = conf
 
     def predict(self, image_path):
-        from PIL import Image
-
-        image = Image.open(image_path).convert("RGB")
+        result = self.model.predict(str(image_path), conf=self.conf, verbose=False)[0]
+        img_h, img_w = result.orig_shape
         detections = []
-        for cls_name in self.queryable_classes:
-            inputs = self.processor(text=self.task + cls_name, images=image, return_tensors="pt").to(self.device)
-            generated_ids = self.model.generate(
-                input_ids=inputs["input_ids"],
-                pixel_values=inputs["pixel_values"],
-                max_new_tokens=512,
-                num_beams=3,
-            )
-            generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
-            parsed = self.processor.post_process_generation(
-                generated_text, task=self.task, image_size=(image.width, image.height)
-            )
-            for x1, y1, x2, y2 in parsed.get(self.task, {}).get("bboxes", []):
-                detections.append(
-                    Detection(
-                        class_name=cls_name,
-                        present=True,
-                        confidence=None,  # not a calibrated score for this task
-                        bbox=(x1 / image.width, y1 / image.height, x2 / image.width, y2 / image.height),
-                    )
+        for box in result.boxes:
+            cls_id = int(box.cls[0])
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            detections.append(
+                Detection(
+                    class_name=result.names[cls_id],
+                    present=True,
+                    confidence=float(box.conf[0]),
+                    bbox=(x1 / img_w, y1 / img_h, x2 / img_w, y2 / img_h),
                 )
+            )
         return detections
 
 
@@ -259,7 +261,7 @@ class ClaudeAdapter:
 # before pulling, not guesses.
 ADAPTERS = {
     "yolo": {"cls": YOLOAdapter, "is_cloud": False, "default_model": None},
-    "florence2": {"cls": Florence2Adapter, "is_cloud": False, "default_model": "microsoft/Florence-2-base"},
+    "yoloe": {"cls": YOLOEAdapter, "is_cloud": False, "default_model": "yoloe-26s-seg.pt"},
     "ollama": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "llava"},
     "qwen3-vl": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "qwen3-vl:4b"},
     "gemma4": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "gemma4:e4b"},
