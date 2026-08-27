@@ -10,7 +10,8 @@ through an intermediate staging area at `data/build/`:
 - `data/build/02_stratified_split/split_assignment.csv` — which split
   (train/val/test) every surviving image was assigned to, and why
 - `data/merged/` — final training-ready dataset: every file renamed
-  `<source>__<original_name>` and sorted into `images|labels/{train,val,test}`
+  `<source>__<original_name>` and sorted into `{train,val,test}/images|labels`
+  (the standard Ultralytics/Roboflow layout)
 
 so `data/merged/merge_manifest.csv` can always trace a merged file back to
 its origin. Every run rebuilds `data/build/` and `data/merged/` from

@@ -15,7 +15,7 @@ Cloud models only run when --include-cloud is passed too, even if named in
 --models — a deliberate double gate so a typo or reused command can't
 accidentally spend API credits.
 
-Images are sampled from data/merged/images/test only (never train/val) and
+Images are sampled from data/merged/test/images only (never train/val) and
 this script never modifies data/merged/ or the YOLO checkpoint.
 
 Setup (installed into vision-data-env for this tool; not added to the
@@ -144,7 +144,7 @@ def sample_test_images(n_images, seed):
 
 def image_path_for(file_stem):
     for ext in (".jpg", ".jpeg", ".png", ".bmp"):
-        p = MERGED_ROOT / "images" / "test" / f"{file_stem}{ext}"
+        p = MERGED_ROOT / "test" / "images" / f"{file_stem}{ext}"
         if p.exists():
             return p
     return None

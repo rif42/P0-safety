@@ -4,9 +4,9 @@
 # scripts/class_mapping.py — do not edit `names` here without updating that
 # file too. Re-run with --classes to include a different/larger set.
 path: .
-train: images/train
-val: images/val
-test: images/test
+train: train/images
+val: val/images
+test: test/images
 
 nc: 9
 names:

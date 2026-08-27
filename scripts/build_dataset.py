@@ -14,7 +14,8 @@ under data/build/:
   data/merged/                              final training-ready dataset:
                                              images/labels renamed
                                              <source>__<original_name> and
-                                             sorted into images|labels/{train,val,test}
+                                             sorted into {train,val,test}/images|labels
+                                             (the standard Ultralytics/Roboflow layout)
 
 Step 1 keeps only annotations whose merged class is in --classes (default:
 the core classes 0-8) and drops any image left with none of them.
@@ -260,8 +261,8 @@ def step2_stratified_split(candidates, ratios, seed):
 
 def step3_materialize_merged(candidates, assignment):
     for split in SPLIT_NAMES:
-        reset_dir(MERGED_ROOT / "images" / split)
-        reset_dir(MERGED_ROOT / "labels" / split)
+        reset_dir(MERGED_ROOT / split / "images")
+        reset_dir(MERGED_ROOT / split / "labels")
 
     manifest_rows = []
     label_rows = []
@@ -270,9 +271,9 @@ def step3_materialize_merged(candidates, assignment):
     for merged_stem, info in candidates.items():
         split = assignment[merged_stem]
 
-        out_image = MERGED_ROOT / "images" / split / f"{merged_stem}{info['suffix']}"
+        out_image = MERGED_ROOT / split / "images" / f"{merged_stem}{info['suffix']}"
         shutil.copy2(info["step1_image"], out_image)
-        out_label = MERGED_ROOT / "labels" / split / f"{merged_stem}.txt"
+        out_label = MERGED_ROOT / split / "labels" / f"{merged_stem}.txt"
         shutil.copy2(info["step1_label"], out_label)
 
         for line in info["kept_lines"]:
