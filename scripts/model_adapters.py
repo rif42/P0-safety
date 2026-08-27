@@ -6,18 +6,16 @@ adding a new model later means writing one adapter class, not touching the
 orchestration logic.
 
 Every adapter declares `queryable_classes`: the subset of the 9-class schema
-it can actually be asked about. This matters because grounding-only models
-(YOLOE, or any dedicated open-vocab detector) can point at "helmet" but
-cannot express "no-helmet" as a groundable phrase — that's an absence, not an
-object. Asking them about negative classes and silently recording "not
-found" as a confident "false" would be dishonest scoring. Chat-style models
-(Ollama, Claude) CAN reason about absence in text, so their queryable set is
-the full schema.
+it can actually be asked about. In this comparison every non-YOLO model is
+a chat-style LLM/VLM (Ollama-served, or Claude) that reasons about absence
+in text as readily as presence, so their queryable set is the full schema.
 
-Only YOLO and YOLOE set `supports_grounding = True` — their `bbox` values
-are real predicted boxes worth IoU-scoring against ground truth. Chat-style
-models' `bbox` is always None; comparing them at the box level would be
-comparing a coordinate to a guess.
+Only YOLO sets `supports_grounding = True` — its `bbox` values are real
+predicted boxes worth IoU-scoring against ground truth. It's the sole
+non-LLM entrant, included as the fixed baseline every LLM/VLM is compared
+against. Every other adapter's `bbox` is always None (presence/
+classification only); comparing them at the box level would be comparing a
+coordinate to a guess.
 """
 import base64
 import json
@@ -111,67 +109,15 @@ class YOLOAdapter:
         return detections
 
 
-class YOLOEAdapter:
-    """Local, open-source, real grounding output via Ultralytics YOLOE
-    ("Real-Time Seeing Anything") — open-vocabulary detection prompted with
-    our own class names as text, no API key, one dependency we already have
-    (ultralytics) rather than the separate transformers/einops/timm stack
-    Florence-2 needed. Replaces the earlier Florence2Adapter: on the same
-    sample images Florence-2 (microsoft/Florence-2-base) badly
-    under-performed every other model (e.g. 0.09 precision / 0.17 recall on
-    vest, 0/0 on gloves and boots) while being the slowest adapter to run —
-    one sequential phrase-grounding call per class per image. YOLOE detects
-    every queryable class in a single forward pass instead, and — being a
-    real detector rather than a caption model repurposed for grounding —
-    scores far closer to our trained YOLO baseline.
-
-    Only queryable on positive classes (see module docstring): open-vocab
-    text prompts name objects ("helmet"), they can't express an absence
-    ("no-helmet").
-
-    First run downloads the checkpoint (~30MB) plus a shared MobileCLIP text
-    encoder (~250MB, used to embed the class-name prompts) via Ultralytics'
-    normal auto-download — both land in the working directory and are
-    gitignored, same as the other *.pt base checkpoints already in this
-    repo's root."""
-
-    name = "yoloe"
-    supports_grounding = True
-    queryable_classes = POSITIVE_CLASSES
-
-    def __init__(self, model_id="yoloe-26s-seg.pt", conf=0.15):
-        from ultralytics import YOLOE
-
-        self.model = YOLOE(model_id)
-        self.model.set_classes(self.queryable_classes, self.model.get_text_pe(self.queryable_classes))
-        self.conf = conf
-
-    def predict(self, image_path):
-        result = self.model.predict(str(image_path), conf=self.conf, verbose=False)[0]
-        img_h, img_w = result.orig_shape
-        detections = []
-        for box in result.boxes:
-            cls_id = int(box.cls[0])
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
-            detections.append(
-                Detection(
-                    class_name=result.names[cls_id],
-                    present=True,
-                    confidence=float(box.conf[0]),
-                    bbox=(x1 / img_w, y1 / img_h, x2 / img_w, y2 / img_h),
-                )
-            )
-        return detections
-
-
 class OllamaAdapter:
     """Chat-style local VLM via Ollama's REST API (presence/classification
     only — do not trust coordinates from a chat model). Requires Ollama
     installed and running separately (`brew install ollama`, `ollama pull
-    <model>`, `ollama serve`) — not set up by this scaffold. Backs three
-    registry entries (ollama/qwen3-vl/gemma4 below) that differ only in
-    which model tag they pull; none have been live-tested in this
-    environment since Ollama isn't installed here."""
+    <model>`, `ollama serve`) — not set up by this scaffold. Backs four
+    registry entries (ollama/qwen3-vl/gemma4/minicpm-v below) that
+    differ only in which model tag they pull — four different model
+    families (LLaVA, Qwen, Gemma, MiniCPM) compared under identical
+    prompting and scoring."""
 
     supports_grounding = False
     queryable_classes = ALL_CLASSES
@@ -256,14 +202,14 @@ class ClaudeAdapter:
 # enforce the --include-cloud gate, and default_model to pick a model tag
 # when the caller doesn't override one.
 #
-# qwen3-vl:4b (3.3GB) and gemma4:e4b (9.6GB, released April 2026) are
-# confirmed real Ollama library tags — verified via ollama.com/library
-# before pulling, not guesses.
+# qwen3-vl:4b (3.3GB), gemma4:e4b (9.6GB, released April 2026), and
+# minicpm-v:8b are confirmed real Ollama library tags — verified via
+# ollama.com/library before pulling, not guesses.
 ADAPTERS = {
     "yolo": {"cls": YOLOAdapter, "is_cloud": False, "default_model": None},
-    "yoloe": {"cls": YOLOEAdapter, "is_cloud": False, "default_model": "yoloe-26s-seg.pt"},
     "ollama": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "llava"},
     "qwen3-vl": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "qwen3-vl:4b"},
     "gemma4": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "gemma4:e4b"},
+    "minicpm-v": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "minicpm-v:8b"},
     "claude": {"cls": ClaudeAdapter, "is_cloud": True, "default_model": "claude-haiku-4-5"},
 }
