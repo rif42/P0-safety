@@ -1,78 +1,70 @@
-# Crew B — "Proof the toolbox talk worked"
+# Crew B — "The turnaround" (a scare, then a real fix)
 
-**Dataset:** `data/crew_b/HSM/` (images + labels, split by camera) · 92 photos · 92 unique source images (no reuse)
-**Camera:** HSM-Post-8, the same real industrial fabrication-floor CCTV camera as Crew A
-**Window:** 6 simulated weeks, 2026-06-01 → 2026-07-10, weekdays only, 2–4 photos/day
-**Filenames:** `<date>_<time>_<verdict>.jpg` — verdict is the real, computed overall compliance
-result (see below), not just which pool the photo was drawn from
+**Dataset:** `data/crew_b/CAM-B1/` (images + labels, split by camera) · 92 photos · 6 simulated weeks (30 weekdays), 2026-06-01 → 2026-07-10
+**⚠️ This dataset is fully generated — every image is a programmatically drawn
+CCTV-style mockup (PIL), not a real photograph.** Say so wherever it's shown.
+See `generate_synthetic_crew_data.py`.
+**Filenames:** `<date>_<time>_<verdict>.jpg` — verdict is the exact, known-by-construction
+compliance result for that photo (every drawn worker's every item), not an estimate.
 
-## The story
+## Why generated, not real photos
 
-Crew B opens the window struggling — helmet compliance stuck around 80–82% for
-three straight weeks, gloves bouncing unpredictably. Then week 4: a toolbox talk
-(a short, informal on-site safety briefing) and the numbers don't drift back up
-gradually — they jump. Helmet compliance hits 100% the very week of the
-intervention and stays there through week 6. This is the counterpart story to
-Crew A: not just "compliance can decline unnoticed," but "an intervention's
-effect is now something you can point to and prove," turning "we did a safety
-briefing" from an assertion into a number.
+An earlier round of this dataset used real CCTV frames (from a real Kaggle source,
+individually camera-verified — see `classify_cameras.py` and git history for that
+investigation). It worked, but it was limited to whatever compliance states happened
+to exist in the available real photos, with no way to design a specific narrative
+event on a specific day. Generating the images directly removes that ceiling: every
+worker's every PPE item is a controlled random draw against a daily probability that
+a short list of named **events** (below) can move up or down on cue — so the pitch
+can point at one day on the trend chart and say exactly why it moved.
 
-## What's real and what's illustrative
+## The events driving this crew's trend
 
-- **Real:** every one of the 92 photos is a genuine frame from the same real
-  industrial CCTV camera as Crew A (burned-in date/time and camera ID
-  "HSM-Post-8" watermark intact), individually verified not to be off-domain
-  content. Every compliance number is the dataset's own human-annotated ground
-  truth on that photo — not a re-run model score, not fabricated.
-- **Illustrative:** which week/day/time each real photo was assigned to, and the
-  framing of a "week-4 toolbox talk" as the cause of the jump — no such event is
-  in the source data, it's the narrative device used to assign photos to weeks.
-  Present this as "an illustrative monitoring scenario built from real, verified
-  site photos," not a real recorded intervention.
+| Event | When | Effect |
+|---|---|---|
+| **Rainy week** | Week 1, all 5 days | Boots −20pp, gloves −15pp. A wet first week: workers swap boots/gloves for whatever's dry, dragging those two metrics down before anything else changes. |
+| **Near-miss (dropped tool)** | Week 3, days 2–5 (Tue–Fri) | Helmet +30pp, short-lived. A dropped tool narrowly misses an unhelmeted worker — a sharp helmet-compliance spike as the crew self-corrects out of fear, fading back down by end of week without reinforcement. |
+| **Toolbox talk / safety stand-down** | Week 4 onward (permanent) | Helmet +40pp, vest +35pp, gloves +35pp, boots +30pp, sustained through week 6. A formal safety stand-down: unlike the near-miss spike, this holds. |
 
-## Weekly stats (real ground truth on the assigned photos)
+Underneath all three events, this crew starts from a weak baseline (helmet/vest/gloves/boots
+all in the 45-55% range) that barely moves on its own — the story here is entirely
+about what the two interventions (one accidental scare, one deliberate program) do to it.
 
-| Week | Helmet | Gloves | Boots | Photos |
-|---|---|---|---|---|
-| 1 | 82% | 80% | 94% | 14 |
-| 2 | 80% | 91% | 96% | 14 |
-| 3 | 82% | 83% | 95% | 16 |
-| 4 | 100% | 75% | 98% | 16 |
-| 5 | 98% | 96% | 99% | 17 |
-| 6 | 100% | 91% | 97% | 15 |
+## Weekly stats (exact — known by construction, not estimated)
 
-**Headline numbers:**
-- Helmet compliance: **82% → 100%** (week 1 → week 6), overall mean 91% — the
-  cleanest step-change of the three metrics, landing right at the week-4 mark
-- Gloves compliance: **80% → 91%**, overall mean 86%, noisier (a dip to 75% in
-  week 4 itself before recovering — a realistic "the message takes a moment to
-  land across the whole crew" wrinkle, not a clean line)
-- Boots compliance: **94% → 97%** — already fairly strong throughout, smallest
-  room to improve
-- **Overall verdict (every annotated item at 100% for that photo): 44 compliant / 48 noncompliant.**
-  This is stricter than any single metric above — a photo with perfect helmets but
-  one worker missing gloves counts as noncompliant, which is what the filename on
-  each image reflects.
-- 57 photos drawn from the "compliant" *pool* (helmet-only criterion used to build
-  the schedule), 35 from the "mixed compliance" pool — note this differs from the
-  92-photo overall-verdict split above precisely because the pool tag only looked
-  at helmets; the filename uses the real multi-item verdict instead
+| Week | Helmet | Vest | Gloves | Boots | Photos |
+|---|---|---|---|---|---|
+| 1 | 53% | 56% | 26% | 31% | 14 |
+| 2 | 41% | 44% | 46% | 53% | 17 |
+| 3 | 69% | 52% | 50% | 51% | 17 |
+| 4 | 86% | 85% | 86% | 85% | 14 |
+| 5 | 90% | 91% | 80% | 90% | 14 |
+| 6 | 88% | 87% | 89% | 88% | 16 |
+
+Note week 3's helmet-only bump (69%, the near-miss — vest/gloves/boots barely move,
+because the scare was specifically about a helmet) versus week 4's jump across
+*every* metric at once (the toolbox talk) — two visibly different shapes for two
+different kinds of event, not the same story told twice.
+
+**Overall verdict** (every item at 100% for that photo): **4 compliant / 88 noncompliant**
+out of 92 photos.
 
 ## The pitch line
 
-> "A continuous score turns 'we did a safety briefing' into a number you can
-> actually show improved — and shows it landed on helmets before it fully
-> landed on gloves."
+> "Two different kinds of event, two different shapes on the chart. The
+> near-miss in week 3 only moves helmets — because that's what the scare was
+> about — and it fades. The toolbox talk in week 4 moves everything, and it
+> holds through week 6. That's the difference between a scare and a program,
+> and it's visible in the data, not just asserted."
 
 ## Provenance
 
-`generate_crew_data.py` (seed 2026) decides which real photo from the `HSM`
-camera pool in `camera_split/` (1400 compliant + 95 mixed real photos, both
-camera-classified and spot-verified — see `classify_cameras.py`'s docstring
-for the full investigation that led to this pipeline) lands on which
-crew/day/timestamp, and writes `data/manifest.csv`. `score_crew_data.py` then
-scores each photo against `data/merged/labels_long.csv`'s real annotations,
-computes the overall verdict, and materializes the final
-`data/<crew>/<camera>/images|labels/` files with verdict-bearing filenames,
-writing `data/manifest_scored.csv`. Re-run both scripts in order to regenerate
-a fresh draw (same seed = same result).
+Generated by `generate_synthetic_crew_data.py` (seed 2026). Fully synthetic:
+every worker figure, PPE item, and watermark is drawn by PIL from a per-day,
+per-item probability (baseline drift + active event deltas, clipped to
+[3%, 98%]), with real Bernoulli draws per worker per item — so individual
+photos vary realistically around each day's target, not landing exactly on
+it. Ground truth is exact by construction (every drawn box is a labeled box,
+using this project's 9-class schema — see `data/merged/data.yaml`). Re-run
+to regenerate (same seed = same result); edit the `Event` list in the script
+to change the story.
