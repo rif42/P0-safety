@@ -125,8 +125,16 @@ termcolor==3.3.0
 terminado==0.18.1
 tinycss2==1.5.1
 --extra-index-url https://download.pytorch.org/whl/cu130
-torch==2.13.0+cu130
-torchvision==0.28.0+cu130
+# The +cu130 build only exists for Linux/Windows with an NVIDIA GPU — no
+# CUDA wheel is ever published for macOS, so pip fails outright on Darwin
+# regardless of version. Split by platform: CUDA machines keep the pinned
+# GPU wheel, macOS gets the plain PyPI wheel (same version number, MPS
+# backend built in) — confirmed working via vision-data-env on Apple
+# Silicon.
+torch==2.13.0+cu130; sys_platform != "darwin"
+torchvision==0.28.0+cu130; sys_platform != "darwin"
+torch==2.13.0; sys_platform == "darwin"
+torchvision==0.28.0; sys_platform == "darwin"
 tornado==6.5.8
 traitlets==5.16.1
 typing_extensions==4.16.0

@@ -78,7 +78,7 @@ def draw_overlay(image, persons, selected_idx=None, show_boxes=True):
         color = _hex_to_rgba(detector.CLASS_META["person"]["color"], alpha)
         draw.rectangle(_box_px(p["box"], w, h), outline=color, width=line_width)
 
-        for slot in ("hardhat", "vest"):
+        for slot in p["status"]:
             st_ = p["status"][slot]
             if st_["state"] == "notvisible" or not st_.get("box"):
                 continue
@@ -197,10 +197,11 @@ def header_html(subtitle, model_label=None):
 def build_rows(items, threshold, rule_text, required=("hardhat", "vest")):
     """items: list of {"name", "datetime", "assessment"} — one per uploaded
     photo. Returns one row per assessed person per tracked item in
-    `required` (hardhat and/or vest), covering both compliant and
-    non-compliant findings, so the verdict filter in the UI can slice either
-    view from the same table. An item outside `required` never appears here
-    even if the model found it missing — it just is not part of the rule."""
+    `required` (any of hardhat/vest/gloves/boots), covering both compliant
+    and non-compliant findings, so the verdict filter in the UI can slice
+    either view from the same table. An item outside `required` never
+    appears here even if the model found it missing — it just is not part
+    of the rule."""
     rows = []
     for item in items:
         assessment = item["assessment"]

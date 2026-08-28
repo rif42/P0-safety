@@ -4,10 +4,15 @@ person/item matching + compliance-assessment logic shared by the demo page.
 TO SWAP IN A DIFFERENT TRAINED RUN: change DEFAULT_WEIGHTS below (or set the
 HIVIS_MODEL_PATH environment variable — no code edit needed for that path).
 Everything else keeps working as long as the new weights were trained on a
-dataset with classes named "Person", "Hardhat", "NO-Hardhat", "Safety Vest",
-"NO-Safety Vest" (extra classes, e.g. Mask/Safety Cone/machinery/vehicle, are
-simply ignored). If the new model also detects boots, add a "boots" /
-"no-boots" mapping to _RAW_TO_KEY and TRACKED_CLASSES.
+dataset with a Person class plus any of the four tracked PPE slots — hardhat,
+vest, gloves, boots (see SLOT_ITEMS) — named per _RAW_TO_KEY's vocabulary
+(extra classes, e.g. Mask/Safety Cone/machinery/vehicle, are simply ignored).
+A model missing a slot's classes just reports that slot "not visible" for
+every person. A model missing Person entirely (e.g. yolo26s_Altec_PPE_100e)
+can't drive this pipeline at all — see ALTEC_NO_PERSON_NOTE. If a future run
+uses yet another vocabulary for an existing slot, add its raw class names to
+_RAW_TO_KEY; a genuinely new slot needs an entry in SLOT_ITEMS and CLASS_META
+too.
 """
 
 import os
@@ -36,8 +41,51 @@ V8_LABEL = "YOLOv8n · pretrained_100e"
 V26_WEIGHTS = REPO_ROOT / "runs" / "yolo26s_css_100e" / "weights" / "best.pt"
 V26_LABEL = "YOLO26s · yolo26s_css_100e"
 
-DEFAULT_WEIGHTS = V26_WEIGHTS
-DEFAULT_LABEL = V26_LABEL
+# yolo26s_merged_100e — a teammate's run on a merged dataset with a working
+# Person class (0.83 recall) PLUS two item classes v8/yolo26s_css_100e never
+# saw: gloves and boots (each with a matching no-gloves/no-boots negative).
+# Fully comparable to the two runs above on hardhat/vest, and additionally
+# exercises the gloves/boots slots end to end.
+MERGED_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26s_merged_100e" / "weights" / "best.pt"
+MERGED_LABEL = "YOLO26s · yolo26s_merged_100e"
+
+# yolo26s_Altec_PPE_100e — another teammate run, but on a dataset with NO
+# Person class at all (Face_masks, Face_shield, Glasses, Gloves, Helmet,
+# Safety_shoes, Safety_vests — confirmed via its confusion matrix, no Person
+# row). Nothing to anchor a per-person compliance verdict to, and per policy
+# this app never synthesizes a fake person box to work around that — so this
+# run cannot be run live through assess()/detect_raw() for a compliance
+# verdict. Kept here only so pages can show its identity/weights path; see
+# ALTEC_NO_PERSON_NOTE for the explanation to display instead of live results.
+ALTEC_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26s_Altec_PPE_100e" / "weights" / "best.pt"
+ALTEC_LABEL = "YOLO26s · yolo26s_Altec_PPE_100e"
+ALTEC_NO_PERSON_NOTE = (
+    "This run has no Person class in its training data (Face_masks, Face_shield, Glasses, "
+    "Gloves, Helmet, Safety_shoes, Safety_vests) — no person box exists to anchor a per-person "
+    "compliance verdict to."
+)
+
+# yolo26m_merged_150e — same merged dataset/vocabulary as yolo26s_merged_100e above, but the
+# larger YOLO26m backbone trained for the full 150 epochs (patience=20, ran to completion
+# rather than early-stopping). Beats yolo26s_merged_100e on every aggregate metric and every
+# per-class confusion-matrix diagonal — this is now the app's default (see DEFAULT_WEIGHTS
+# below).
+MERGED_M_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_merged_150e" / "weights" / "best.pt"
+MERGED_M_LABEL = "YOLO26m · yolo26m_merged_150e"
+
+# yolo26m_mergedpeople_150e — same run setup as yolo26m_merged_150e above, trained instead on
+# "mergedpeople": data/merged with ppe_detection_m's Person boxes filled in via pseudo-labeling
+# (see person_pseudolabels_test.ipynb) rather than left absent. Early-stopped at 134/150
+# epochs. Slightly better Person recall (0.88 vs 0.86) and aggregate mAP50-95/recall than
+# yolo26m_merged_150e, but a real trade-off, not a clean win: its confusion matrix shows it
+# also misclassifies far more true background as "person" (0.31 vs 0.16), which shows up as
+# lower aggregate precision (0.912 vs 0.922) — why MERGED_M_WEIGHTS, not this one, was chosen
+# as the default. Kept live on Model Comparison so the trade-off is visible side by side.
+MERGEDPEOPLE_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_mergedpeople_150e" / "weights" / "best.pt"
+MERGEDPEOPLE_LABEL = "YOLO26m · yolo26m_mergedpeople_150e"
+
+DEFAULT_WEIGHTS = MERGED_M_WEIGHTS
+DEFAULT_LABEL = MERGED_M_LABEL
 
 _weights_env = os.environ.get("HIVIS_MODEL_PATH")
 WEIGHTS_PATH = (REPO_ROOT / _weights_env) if _weights_env else DEFAULT_WEIGHTS
@@ -60,12 +108,29 @@ CLASS_META = {
     "nohardhat": {"label": "NO-Hardhat",     "color": "#FF4D42"},
     "vest":      {"label": "Safety Vest",    "color": "#2FBE6B"},
     "novest":    {"label": "NO-Safety Vest", "color": "#FF8A00"},
+    "gloves":    {"label": "Gloves",         "color": "#00B8D9"},
+    "nogloves":  {"label": "NO-Gloves",      "color": "#FF6F3C"},
     "boots":     {"label": "Boots",          "color": "#B07CFF"},
+    "noboots":   {"label": "NO-Boots",       "color": "#C2185B"},
+    "mask":      {"label": "Mask",           "color": "#2EC4B6"},
+    "nomask":    {"label": "NO-Mask",        "color": "#9C27B0"},
 }
 
-# Boots has no entry here on purpose: this dataset/model has no boots class,
-# so it's never detected — every person's boots status comes back "not
-# visible" (see assess()), same as any other item the model can't see.
+# Which two raw classes make up each tracked PPE "slot", and which of the
+# two is the negative (absence) one. A model that never detects a given
+# slot's classes (e.g. gloves/boots on v8/yolo26s_css_100e, or mask on
+# yolo26s_merged_100e) simply never produces those raw keys — that slot
+# just comes back "not visible" for every person, same as before.
+SLOT_ITEMS = {
+    "hardhat": ("hardhat", "nohardhat"),
+    "vest": ("vest", "novest"),
+    "mask": ("mask", "nomask"),
+    "gloves": ("gloves", "nogloves"),
+    "boots": ("boots", "noboots"),
+}
+NEGATIVE_KEYS = {neg for _pos, neg in SLOT_ITEMS.values()}
+_KEY_TO_SLOT = {key: slot for slot, keys in SLOT_ITEMS.items() for key in keys}
+
 _RAW_TO_KEY = {
     "person": "person",
     # pretrained_100e's vocabulary:
@@ -73,16 +138,24 @@ _RAW_TO_KEY = {
     "no-hardhat": "nohardhat",
     "safety vest": "vest",
     "no-safety vest": "novest",
-    # pretrained_v26's vocabulary — same four PPE states, different words.
-    # Add any future run's own class names here rather than retraining to
-    # match; this is the one place that needs to know about it.
+    # pretrained_v26's / yolo26s_merged_100e's vocabulary — same four PPE
+    # states, different words. Add any future run's own class names here
+    # rather than retraining to match; this is the one place that needs to
+    # know about it.
     "helmet": "hardhat",
     "no-helmet": "nohardhat",
     "vest": "vest",
     "no-vest": "novest",
+    # pretrained_100e's / yolo26s_css_100e's vocabulary (css-data dataset):
+    "mask": "mask",
+    "no-mask": "nomask",
+    # yolo26s_merged_100e only:
+    "gloves": "gloves",
+    "no-gloves": "nogloves",
+    "boots": "boots",
+    "no-boots": "noboots",
 }
-TRACKED_CLASSES = ["person", "hardhat", "nohardhat", "vest", "novest"]
-UNTRACKED_NOTE = "Boots: not a class in this model's training data — always reported as not visible."
+TRACKED_CLASSES = ["person"] + [k for pair in SLOT_ITEMS.values() for k in pair]
 
 
 def _norm(name):
@@ -184,13 +257,15 @@ def assess(raw_boxes, threshold, required=("hardhat", "vest")):
 
     `required` controls which item(s) count toward the compliance verdict —
     e.g. pass ("hardhat",) to check hardhats only. Status is still computed
-    for every tracked slot regardless, so switching `required` at the UI
-    layer needs no re-inference, just a re-call of this function.
+    for every slot in SLOT_ITEMS regardless (hardhat/vest/gloves/boots), so
+    switching `required` at the UI layer needs no re-inference, just a
+    re-call of this function. A slot the loaded model never detects (e.g.
+    gloves/boots on v8 or yolo26s_css_100e, or mask on yolo26s_merged_100e)
+    simply comes back "not visible" for every person, exactly like an
+    unchecked/untracked item always did.
 
-    Rule set: whichever of hardhat / hi-vis vest are in `required` (boots is
-    always advisory and, on this model, untracked). A person is
-    non-compliant when a required item has a NO-Hardhat or NO-Safety Vest
-    box matched to them at or above the threshold.
+    A person is non-compliant when a required slot has its NO-* box matched
+    to them at or above the threshold.
     """
     persons_raw = [b for b in raw_boxes if b["key"] == "person"]
     items_raw = [b for b in raw_boxes if b["key"] != "person"]
@@ -199,6 +274,9 @@ def assess(raw_boxes, threshold, required=("hardhat", "vest")):
                for p in persons_raw]
 
     for it in items_raw:
+        slot = _KEY_TO_SLOT.get(it["key"])
+        if slot is None:
+            continue  # not a tracked PPE class
         best, best_score = None, 0.0
         for p in persons:
             score = _containment(it["box"], p["box"])
@@ -206,7 +284,6 @@ def assess(raw_boxes, threshold, required=("hardhat", "vest")):
                 best, best_score = p, score
         if best is None or best_score < 0.3:
             continue  # doesn't sit inside any detected person — leave unassigned
-        slot = "hardhat" if it["key"] in ("hardhat", "nohardhat") else "vest"
         current = best["items"].get(slot)
         if current is None or it["conf"] > current["conf"]:
             best["items"][slot] = {"key": it["key"], "conf": it["conf"], "box": it["box"]}
@@ -216,15 +293,14 @@ def assess(raw_boxes, threshold, required=("hardhat", "vest")):
         if not p["above"]:
             continue
         status = {}
-        for slot in ("hardhat", "vest"):
+        for slot in SLOT_ITEMS:
             it = p["items"].get(slot)
             if it is not None and it["conf"] >= threshold:
-                is_negative = it["key"] in ("nohardhat", "novest")
+                is_negative = it["key"] in NEGATIVE_KEYS
                 status[slot] = {"state": "missing" if is_negative else "present",
                                  "conf": it["conf"], "box": it["box"], "class_key": it["key"]}
             else:
                 status[slot] = {"state": "notvisible", "conf": None, "box": None, "class_key": None}
-        status["boots"] = {"state": "notvisible", "conf": None, "box": None, "class_key": None}
         non_compliant = any(status[slot]["state"] == "missing" for slot in required)
         out.append({"box": p["box"], "conf": p["conf"], "status": status,
                      "verdict": "non" if non_compliant else "ok"})

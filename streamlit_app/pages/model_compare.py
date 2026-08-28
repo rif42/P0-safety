@@ -1,11 +1,17 @@
-"""HI-VIS — side-by-side comparison of the two trained runs (pretrained_100e
-"v8" vs pretrained_v26). Deliberately minimal for now: no upload box of its
-own and no detail view (tiles aren't clickable) — it reuses whatever batch is
-already loaded on the Demo page and runs both models over it, showing the
+"""HI-VIS — side-by-side comparison of the trained runs. Deliberately minimal
+for now: no upload box of its own and no detail view (tiles aren't
+clickable) — it reuses whatever batch is already loaded on the Demo page and
+runs every model that CAN produce a compliance verdict over it, showing the
 three core stat tiles (Photos Processed / PPE Exceptions Flagged / Image
 Compliance) plus the actual photos with their overlays, verdict and
-confidence, per model, side by side, so the two runs can be judged on
-identical input.
+confidence, per model, side by side, so the runs can be judged on identical
+input.
+
+One model — yolo26s_Altec_PPE_100e — has no Person class in its training
+data at all (confirmed via its confusion matrix), so it structurally cannot
+produce a per-person compliance verdict. Per policy this app never fakes a
+person box to paper over that, so it gets its own card explaining why
+instead of a live result. See detector.ALTEC_NO_PERSON_NOTE.
 """
 
 import streamlit as st
@@ -25,28 +31,36 @@ items = [{"key": k, **cache[k]} for k in batch_order if k in cache]
 if not items:
     st.info(
         "No photos loaded yet. Upload a batch on the **Demo** page first — this page "
-        "runs both trained models over whatever batch is currently loaded, so there's "
-        "nothing to compare until one exists."
+        "runs every model that can produce a compliance verdict over whatever batch is "
+        "currently loaded, so there's nothing to compare until one exists."
     )
     st.stop()
 
 threshold = st.session_state.get("threshold", 0.35)
 required = tuple(
-    s for s, k in (("hardhat", "require_hardhat"), ("vest", "require_vest"))
-    if st.session_state.get(k, True)
+    s for s, dflt in (
+        ("hardhat", True), ("vest", True), ("mask", True), ("gloves", True), ("boots", True),
+    )
+    if st.session_state.get(f"require_{s}", dflt)
 )
 
 st.markdown(
-    f'<div style="font-size:12.5px;color:#4A4B47;margin-bottom:18px">Comparing both runs on the current '
+    f'<div style="font-size:12.5px;color:#4A4B47;margin-bottom:18px">Comparing runs on the current '
     f'batch of <b>{len(items)}</b> photo{"s" if len(items) != 1 else ""}, at threshold '
     f'<b>{threshold:.2f}</b>, using the same WHAT COUNTS AS COMPLIANT rule set as the Demo page. '
-    f'Change either on the Demo page to see both sides update here.</div>',
+    f'Change either on the Demo page to see this update here.</div>',
     unsafe_allow_html=True,
 )
 
 MODELS = [
-    ("v8", detector.V8_WEIGHTS, detector.V8_LABEL),
-    ("v26", detector.V26_WEIGHTS, detector.V26_LABEL),
+    {"kind": "live", "key": "v8", "weights": detector.V8_WEIGHTS, "label": detector.V8_LABEL},
+    {"kind": "live", "key": "v26", "weights": detector.V26_WEIGHTS, "label": detector.V26_LABEL},
+    {"kind": "live", "key": "merged", "weights": detector.MERGED_WEIGHTS, "label": detector.MERGED_LABEL},
+    {"kind": "live", "key": "merged-m", "weights": detector.MERGED_M_WEIGHTS, "label": detector.MERGED_M_LABEL},
+    {"kind": "live", "key": "mergedpeople", "weights": detector.MERGEDPEOPLE_WEIGHTS,
+     "label": detector.MERGEDPEOPLE_LABEL},
+    {"kind": "no_person", "key": "altec", "weights": detector.ALTEC_WEIGHTS, "label": detector.ALTEC_LABEL,
+     "note": detector.ALTEC_NO_PERSON_NOTE},
 ]
 
 # Raw detections per model are cached here (keyed by model + photo) so
@@ -54,8 +68,8 @@ MODELS = [
 # too — never re-runs inference, only the cheap pure-python assess() step.
 st.session_state.setdefault("_compare_raw", {})
 
-cols = st.columns(2)
-for col, (model_key, weights_path, label) in zip(cols, MODELS):
+
+def render_live(col, model_key, weights_path, label):
     with col:
         st.markdown(f'<div class="hv-h1" style="font-size:20px;margin-bottom:10px">{label}</div>',
                     unsafe_allow_html=True)
@@ -63,7 +77,7 @@ for col, (model_key, weights_path, label) in zip(cols, MODELS):
         model = detector.load_model(weights_path)
         if model is None:
             st.warning(f"Weights not found at `{weights_path}`.")
-            continue
+            return
 
         raw_cache = st.session_state._compare_raw.setdefault(model_key, {})
         for it in items:
@@ -112,6 +126,31 @@ for col, (model_key, weights_path, label) in zip(cols, MODELS):
                   </div>
                 </div>
                 """, unsafe_allow_html=True)
+
+
+def render_no_person(col, label, note):
+    with col:
+        st.markdown(f'<div class="hv-h1" style="font-size:20px;margin-bottom:10px">{label}</div>',
+                    unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background:#E4E5E2;border:2px dashed #9B9D97;padding:20px;display:flex;flex-direction:column;gap:10px">
+          <div class="hv-h1" style="font-size:32px;color:#71736D">N/A</div>
+          <div style="font-size:12.5px;color:#4A4B47;line-height:1.5">{note}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.caption("Training metrics for this run are on the Model Performance page.")
+
+
+# 2×2 grid — two models per row, so each column stays wide enough for its
+# photo grid to read comfortably.
+for row_start in range(0, len(MODELS), 2):
+    row_cols = st.columns(2)
+    for col, m in zip(row_cols, MODELS[row_start:row_start + 2]):
+        if m["kind"] == "live":
+            render_live(col, m["key"], m["weights"], m["label"])
+        else:
+            render_no_person(col, m["label"], m["note"])
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
 st.caption(
     "Tiles aren't clickable yet — no detail view or drop box of its own on this page for now. "
