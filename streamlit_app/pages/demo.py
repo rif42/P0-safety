@@ -34,8 +34,8 @@ _DEFAULTS = {
     "require_hardhat": True,
     "require_vest": True,
     "require_mask": True,
-    "require_gloves": False,
-    "require_boots": False,
+    "require_gloves": True,
+    "require_boots": True,
 }
 for _k, _v in _DEFAULTS.items():
     st.session_state.setdefault(_k, _v)

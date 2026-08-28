@@ -41,9 +41,6 @@ V8_LABEL = "YOLOv8n · pretrained_100e"
 V26_WEIGHTS = REPO_ROOT / "runs" / "yolo26s_css_100e" / "weights" / "best.pt"
 V26_LABEL = "YOLO26s · yolo26s_css_100e"
 
-DEFAULT_WEIGHTS = V26_WEIGHTS
-DEFAULT_LABEL = V26_LABEL
-
 # yolo26s_merged_100e — a teammate's run on a merged dataset with a working
 # Person class (0.83 recall) PLUS two item classes v8/yolo26s_css_100e never
 # saw: gloves and boots (each with a matching no-gloves/no-boots negative).
@@ -67,6 +64,28 @@ ALTEC_NO_PERSON_NOTE = (
     "Gloves, Helmet, Safety_shoes, Safety_vests) — no person box exists to anchor a per-person "
     "compliance verdict to."
 )
+
+# yolo26m_merged_150e — same merged dataset/vocabulary as yolo26s_merged_100e above, but the
+# larger YOLO26m backbone trained for the full 150 epochs (patience=20, ran to completion
+# rather than early-stopping). Beats yolo26s_merged_100e on every aggregate metric and every
+# per-class confusion-matrix diagonal — this is now the app's default (see DEFAULT_WEIGHTS
+# below).
+MERGED_M_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_merged_150e" / "weights" / "best.pt"
+MERGED_M_LABEL = "YOLO26m · yolo26m_merged_150e"
+
+# yolo26m_mergedpeople_150e — same run setup as yolo26m_merged_150e above, trained instead on
+# "mergedpeople": data/merged with ppe_detection_m's Person boxes filled in via pseudo-labeling
+# (see person_pseudolabels_test.ipynb) rather than left absent. Early-stopped at 134/150
+# epochs. Slightly better Person recall (0.88 vs 0.86) and aggregate mAP50-95/recall than
+# yolo26m_merged_150e, but a real trade-off, not a clean win: its confusion matrix shows it
+# also misclassifies far more true background as "person" (0.31 vs 0.16), which shows up as
+# lower aggregate precision (0.912 vs 0.922) — why MERGED_M_WEIGHTS, not this one, was chosen
+# as the default. Kept live on Model Comparison so the trade-off is visible side by side.
+MERGEDPEOPLE_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_mergedpeople_150e" / "weights" / "best.pt"
+MERGEDPEOPLE_LABEL = "YOLO26m · yolo26m_mergedpeople_150e"
+
+DEFAULT_WEIGHTS = MERGED_M_WEIGHTS
+DEFAULT_LABEL = MERGED_M_LABEL
 
 _weights_env = os.environ.get("HIVIS_MODEL_PATH")
 WEIGHTS_PATH = (REPO_ROOT / _weights_env) if _weights_env else DEFAULT_WEIGHTS

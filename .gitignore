@@ -9,3 +9,8 @@ vision-data-env
 __pycache__
 /*.zip
 data/*.zip
+.venv
+data
+.vscode
+.claude
+.obsidian

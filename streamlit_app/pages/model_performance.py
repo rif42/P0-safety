@@ -91,6 +91,35 @@ RUN_INFO = {
         "compare_label": "merged",
         "live_on_compare": True,
     },
+    "yolo26m_merged_150e": {
+        "label": "YOLO26m — merged dataset, 150 epochs",
+        "path": "detect/yolo26m_merged_150e",
+        "caption": (
+            "Same merged dataset/vocabulary as yolo26s_merged_100e above, but the larger "
+            "YOLO26m backbone trained for the full 150 epochs (patience=20, ran to "
+            "completion). Beats yolo26s_merged_100e on every aggregate metric and every "
+            "per-class confusion-matrix diagonal. Now the app's default model on the Demo "
+            "page — see Model Comparison for how it stacks up against yolo26m_mergedpeople_150e."
+        ),
+        "compare_label": "merged-m",
+        "live_on_compare": True,
+    },
+    "yolo26m_mergedpeople_150e": {
+        "label": "YOLO26m — merged + pseudo-labeled Person, 150 epochs",
+        "path": "detect/yolo26m_mergedpeople_150e",
+        "caption": (
+            "Same run setup as yolo26m_merged_150e, trained instead on \"mergedpeople\": "
+            "data/merged with ppe_detection_m's Person boxes filled in via pseudo-labeling "
+            "(see person_pseudolabels_test.ipynb) rather than left absent. Early-stopped at "
+            "134/150 epochs. Slightly better Person recall (0.88 vs 0.86) and aggregate "
+            "mAP50-95/recall than yolo26m_merged_150e, but a real trade-off: its confusion "
+            "matrix shows it also misclassifies far more true background as \"person\" (0.31 "
+            "vs 0.16), driving its lower aggregate precision (0.912 vs 0.922) — why "
+            "yolo26m_merged_150e, not this run, was chosen as the app's default."
+        ),
+        "compare_label": "mergedpeople",
+        "live_on_compare": True,
+    },
     "yolo26s_Altec_PPE_100e": {
         "label": "YOLO26s — Altec PPE dataset, 100 epochs",
         "path": "detect/yolo26s_Altec_PPE_100e",
@@ -113,12 +142,12 @@ for key, info in RUN_INFO.items():
     if results_path.exists():
         runs_to_show.append((key, info, results_path))
 
-# Summary table — the 4 models currently on the Model Comparison page, side by side.
+# Summary table — the 6 models currently on the Model Comparison page, side by side.
 # yolov8n_scratch is deliberately excluded: it's shown lower on this page, but was never
 # added to Model Comparison, so it's not part of "the 4 models" this table is answering for.
 compare_rows = [(key, info, path) for key, info, path in runs_to_show if info.get("compare_label")]
 if compare_rows:
-    st.subheader("The 4 models on Model Comparison, side by side")
+    st.subheader("The 6 models on Model Comparison, side by side")
     st.caption(
         """
         mAP50 = average precision at a loose 0.5 IoU overlap threshold (is the box roughly in the right place)\n
@@ -148,9 +177,10 @@ if compare_rows:
 
     # Per-class numbers: results.csv is aggregate-only — Ultralytics never writes a per-class
     # CSV, the confusion matrix image is the only place these numbers exist. So this table is
-    # manually transcribed from each run's confusion_matrix(_normalized).png diagonal (read
-    # 2026-08-27) — NOT recomputed live like the summary table above. If any of these 4 runs
-    # get retrained, re-read the new confusion matrix and update this table by hand.
+    # manually transcribed from each run's confusion_matrix(_normalized).png diagonal (v8/v26/
+    # merged/Altec read 2026-08-27, merged-m/mergedpeople added 2026-08-28) — NOT recomputed
+    # live like the summary table above. If any of these 6 runs get retrained, re-read the new
+    # confusion matrix and update this table by hand.
     #
     # Rows follow the app's own tracked slots (detector.SLOT_ITEMS) — person, then each PPE
     # item's present/absent pair. "—" means that model's training data has no matching class at
@@ -160,17 +190,17 @@ if compare_rows:
     # its own terms rather than comparing raw numbers across columns as if it were one dataset.
     st.subheader("Per-class numbers")
     PER_CLASS = [
-        {"Slot": "Person",                    "v8": "0.80", "v26": "0.83", "merged": "0.83", "Altec": "—"},
-        {"Slot": "Head protection — present",  "v8": "0.76", "v26": "0.85", "merged": "0.94", "Altec": "0.89 / 0.78"},
-        {"Slot": "Head protection — absent",   "v8": "0.62", "v26": "0.67", "merged": "0.88", "Altec": "—"},
-        {"Slot": "Vest — present",             "v8": "0.78", "v26": "0.90", "merged": "0.76", "Altec": "0.70"},
-        {"Slot": "Vest — absent",              "v8": "0.70", "v26": "0.74", "merged": "0.78", "Altec": "—"},
-        {"Slot": "Mask — present",             "v8": "0.90", "v26": "0.95", "merged": "—",    "Altec": "0.83 / 0.70"},
-        {"Slot": "Mask — absent",              "v8": "0.66", "v26": "0.70", "merged": "—",    "Altec": "—"},
-        {"Slot": "Gloves — present",           "v8": "—",    "v26": "—",    "merged": "0.86", "Altec": "0.56"},
-        {"Slot": "Gloves — absent",            "v8": "—",    "v26": "—",    "merged": "0.83", "Altec": "—"},
-        {"Slot": "Boots — present",            "v8": "—",    "v26": "—",    "merged": "0.90", "Altec": "0.73"},
-        {"Slot": "Boots — absent",             "v8": "—",    "v26": "—",    "merged": "0.86", "Altec": "—"},
+        {"Slot": "Person",                    "v8": "0.80", "v26": "0.83", "merged": "0.83", "merged-m": "0.86", "mergedpeople": "0.88", "Altec": "—"},
+        {"Slot": "Head protection — present",  "v8": "0.76", "v26": "0.85", "merged": "0.94", "merged-m": "0.95", "mergedpeople": "0.95", "Altec": "0.89 / 0.78"},
+        {"Slot": "Head protection — absent",   "v8": "0.62", "v26": "0.67", "merged": "0.88", "merged-m": "0.90", "mergedpeople": "0.88", "Altec": "—"},
+        {"Slot": "Vest — present",             "v8": "0.78", "v26": "0.90", "merged": "0.76", "merged-m": "0.81", "mergedpeople": "0.81", "Altec": "0.70"},
+        {"Slot": "Vest — absent",              "v8": "0.70", "v26": "0.74", "merged": "0.78", "merged-m": "0.81", "mergedpeople": "0.82", "Altec": "—"},
+        {"Slot": "Mask — present",             "v8": "0.90", "v26": "0.95", "merged": "—",    "merged-m": "—",    "mergedpeople": "—",    "Altec": "0.83 / 0.70"},
+        {"Slot": "Mask — absent",              "v8": "0.66", "v26": "0.70", "merged": "—",    "merged-m": "—",    "mergedpeople": "—",    "Altec": "—"},
+        {"Slot": "Gloves — present",           "v8": "—",    "v26": "—",    "merged": "0.86", "merged-m": "0.88", "mergedpeople": "0.88", "Altec": "0.56"},
+        {"Slot": "Gloves — absent",            "v8": "—",    "v26": "—",    "merged": "0.83", "merged-m": "0.83", "mergedpeople": "0.82", "Altec": "—"},
+        {"Slot": "Boots — present",            "v8": "—",    "v26": "—",    "merged": "0.90", "merged-m": "0.91", "mergedpeople": "0.91", "Altec": "0.73"},
+        {"Slot": "Boots — absent",             "v8": "—",    "v26": "—",    "merged": "0.86", "merged-m": "0.89", "mergedpeople": "0.89", "Altec": "—"},
     ]
     st.dataframe(pd.DataFrame(PER_CLASS), hide_index=True, width="stretch")
     st.caption(
