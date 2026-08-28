@@ -11,6 +11,15 @@ __pycache__
 data/*.zip
 .venv
 data
+# The bare "data" rule above (added via a merge, not authored in this
+# session) matches any directory literally named "data" at any depth -- it
+# was meant for the top-level ./data (already covered explicitly by the
+# data/raw, data/build, data/merged/* lines above anyway), but it also
+# silently swallowed crew_datasets/data/, which is a real, wanted dataset
+# (crew_a/crew_b images+labels+manifests), not scratch data. Un-ignore it
+# explicitly rather than removing the teammate's line outright.
+!crew_datasets/data/
+!crew_datasets/data/**
 .vscode
 .claude
 .obsidian
