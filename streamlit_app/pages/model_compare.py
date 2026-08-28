@@ -39,7 +39,7 @@ if not items:
 threshold = st.session_state.get("threshold", 0.35)
 required = tuple(
     s for s, dflt in (
-        ("hardhat", True), ("vest", True), ("mask", True), ("gloves", False), ("boots", False),
+        ("hardhat", True), ("vest", True), ("mask", True), ("gloves", True), ("boots", True),
     )
     if st.session_state.get(f"require_{s}", dflt)
 )
@@ -56,6 +56,9 @@ MODELS = [
     {"kind": "live", "key": "v8", "weights": detector.V8_WEIGHTS, "label": detector.V8_LABEL},
     {"kind": "live", "key": "v26", "weights": detector.V26_WEIGHTS, "label": detector.V26_LABEL},
     {"kind": "live", "key": "merged", "weights": detector.MERGED_WEIGHTS, "label": detector.MERGED_LABEL},
+    {"kind": "live", "key": "merged-m", "weights": detector.MERGED_M_WEIGHTS, "label": detector.MERGED_M_LABEL},
+    {"kind": "live", "key": "mergedpeople", "weights": detector.MERGEDPEOPLE_WEIGHTS,
+     "label": detector.MERGEDPEOPLE_LABEL},
     {"kind": "no_person", "key": "altec", "weights": detector.ALTEC_WEIGHTS, "label": detector.ALTEC_LABEL,
      "note": detector.ALTEC_NO_PERSON_NOTE},
 ]
