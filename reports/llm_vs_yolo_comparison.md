@@ -1,12 +1,17 @@
 # LLM/VLM vs. our YOLO detector — presence-detection comparison
 
-**Run:** `runs/llm/20260828_035813_merged_n100_seed42_yolo-ollama-qwen3-vl-gemma4-minicpm-v/`
+**Runs:**
+- `runs/llm/20260828_035813_merged_n100_seed42_yolo-ollama-qwen3-vl-gemma4-minicpm-v/` — yolo, ollama, qwen3-vl, gemma4, minicpm-v
+- `runs/llm/20260831_merged_n100_seed42_yolo-gemini/` — yolo (re-run as a consistency check — landed byte-identical, as expected from a deterministic checkpoint on the same sample), gemini
+
+Both runs sample the **same 100 test images at seed 42** (see `sample_test_images()` in `scripts/compare_models.py` — deterministic given n/seed), so every model in this report is judged on an identical set of images despite coming from two separate runs.
+
 **Dataset:** `merged` test split · **n = 100 images** · **seed 42**
 **Task:** presence/absence classification (per image, per class — "is at least one instance of X visible?"), scored against the same ground truth for every model
-**Models:** our trained **YOLO26** detector (baseline) vs. four general-purpose vision-language models prompted with an identical instruction — `ollama` (llava), `qwen3-vl`, `gemma4`, `minicpm-v`
+**Models:** our trained **YOLO26** detector (baseline) vs. five general-purpose vision-language models prompted with an identical instruction — `ollama` (llava), `qwen3-vl`, `gemma4`, `minicpm-v`, and **Gemini** (`gemini-3.6-flash`, cloud)
 **Classes:** `person`, `helmet`, `gloves`, `boots`, `vest` (positive/presence) and `no-helmet`, `no-gloves`, `no-boots`, `no-vest` (negative/absence)
 
-See `scripts/compare_models.py` for how the run was produced and `ModelComparison.ipynb` for the underlying scoring.
+See `scripts/compare_models.py` (adapters in `scripts/model_adapters.py`) for how the runs were produced and `ModelComparison.ipynb` for the underlying scoring. Gemini needs `GEMINI_API_KEY` in the environment — never committed, see `model_adapters.GeminiAdapter`.
 
 ---
 
@@ -17,12 +22,15 @@ Our trained detector outperforms every general-purpose VLM on every class, and t
 | Model | Macro F1 — positive classes (person/helmet/gloves/boots/vest) | Macro F1 — negative classes (no-*) | Macro F1 — all 9 classes |
 |---|---|---|---|
 | **YOLO (ours)** | **0.964** | **0.948** | **0.957** |
+| gemini (gemini-3.6-flash) | 0.801 | 0.439 | 0.640 |
 | qwen3-vl | 0.744 | 0.355 | 0.571 |
 | gemma4 | 0.634 | 0.303 | 0.487 |
 | minicpm-v | 0.658 | 0.228 | 0.467 |
 | ollama (llava) | 0.528 | 0.348 | 0.448 |
 
-Every LLM's negative-class F1 collapses to roughly a third to a half of its positive-class F1. YOLO's does not — it holds within a couple of points. This is the same failure mode the project's core design already bets against (see README: *"training on negative classes fails catastrophically... the model cannot learn an absent object"*) — it turns out to be true of prompted VLMs as well as trained detectors, not just a training-data artifact. It's the practical case for HI-VIS's positive-only-detection-plus-association-logic architecture: rather than asking any model (trained or prompted) to directly recognize "no helmet," the system detects `person` and `helmet` independently and derives the violation.
+Every LLM's negative-class F1 collapses relative to its positive-class F1 — Gemini's least severely (0.801 → 0.439, still a ~45% relative drop), the local VLMs worst (roughly half to a third). YOLO's does not — it holds within a couple of points. This is the same failure mode the project's core design already bets against (see README: *"training on negative classes fails catastrophically... the model cannot learn an absent object"*) — it turns out to be true of prompted VLMs, cloud or local, as well as trained detectors, not just a training-data artifact. It's the practical case for HI-VIS's positive-only-detection-plus-association-logic architecture: rather than asking any model (trained or prompted) to directly recognize "no helmet," the system detects `person` and `helmet` independently and derives the violation.
+
+Gemini is the strongest VLM in the lineup by a clear margin — noticeably ahead of qwen3-vl (the previous best) on every axis, and the only VLM to hit a **perfect precision on `vest`** (1.00, tp=28/fp=0) — but it is still well short of YOLO everywhere, and its negative-class precision is still poor enough (0.18–0.29 on `no-gloves`/`no-vest`) that most of its "PPE missing" flags would be false alarms in production.
 
 ---
 
@@ -86,6 +94,20 @@ tp/fp/fn are counts over the 100-image sample; precision/recall/F1 are computed 
 | no-boots | 0 | 14 | 16 | 0.00 | 0.00 | nan |
 | no-vest | 9 | 22 | 15 | 0.29 | 0.38 | 0.33 |
 
+### gemini (gemini-3.6-flash)
+
+| class | tp | fp | fn | precision | recall | F1 |
+|---|---:|---:|---:|---:|---:|---:|
+| person | 48 | 51 | 1 | 0.48 | 0.98 | 0.65 |
+| helmet | 45 | 2 | 4 | 0.96 | 0.92 | 0.94 |
+| gloves | 27 | 10 | 6 | 0.73 | 0.82 | 0.77 |
+| boots | 25 | 10 | 10 | 0.71 | 0.71 | 0.71 |
+| vest | 28 | 0 | 4 | 1.00 | 0.88 | 0.93 |
+| no-helmet | 33 | 33 | 2 | 0.50 | 0.94 | 0.65 |
+| no-gloves | 13 | 58 | 5 | 0.18 | 0.72 | 0.29 |
+| no-boots | 12 | 29 | 4 | 0.29 | 0.75 | 0.42 |
+| no-vest | 20 | 59 | 4 | 0.25 | 0.83 | 0.39 |
+
 ### ollama (llava)
 
 | class | tp | fp | fn | precision | recall | F1 |
@@ -104,13 +126,22 @@ tp/fp/fn are counts over the 100-image sample; precision/recall/F1 are computed 
 
 ## Reading the numbers
 
-- **`person` recall is 1.00 (or near it) for every model, including the VLMs** — but every VLM pairs that with ~51 false positives on a 100-image sample (precision ≈ 0.48–0.49). All four VLMs report the same `fp=51` on `person`, which looks like a systematic behavior (e.g. the model defaulting to "person: yes" almost unconditionally) rather than four independent failure modes — worth a follow-up look at the raw `presence.csv` before trusting `person` counts from any VLM.
-- **On the classes the product actually gates on (`no-helmet`, `no-boots`, etc.), every VLM's precision is poor** — gemma4 and minicpm-v both score 0.00–0.18 precision on `no-boots`/`no-gloves`, meaning most of their "PPE missing" flags would be false alarms in production.
-- **qwen3-vl is the strongest VLM by a clear margin** (0.571 overall macro F1, 0.355 on negative classes) — meaningfully ahead of gemma4, minicpm-v, and ollama, but still well short of YOLO on every axis.
-- **YOLO's only imperfect class is `vest`** (F1 0.92, driven by 3 fn / 2 fp) — still the best score any model gets on that class, and far ahead of the 0.39–0.84 range the VLMs post there.
+- **`person` "false positives" are mostly a ground-truth gap, not a model error — confirmed, not just suspected.** All five VLMs (ollama, qwen3-vl, gemma4, minicpm-v, gemini) report the *same* `fp=51` on `person`, every time. Checking the actual labels: **51 of the 100 sampled images have PPE boxes (helmet/gloves/boots/etc.) but no `person` box at all** — e.g. an image labeled `{helmet, gloves, boots}` with a visibly PPE-wearing person in it, just never boxed as "person" by whoever annotated that source dataset. Every VLM correctly says "yes, there's a person" and is marked wrong by an incomplete label, not a real mistake. YOLO scores a clean 49/49 on `person` here because it was *trained* on this same (gapped) ground truth, not because it's more correct in any absolute sense — its perfect person score reflects consistency with the label set, not a stronger visual read. Treat every VLM's `person` precision/F1 in this report as an artifact of that gap rather than a real capability signal; the other 8 classes aren't affected by it.
+- **On the classes the product actually gates on (`no-helmet`, `no-boots`, etc.), every VLM's precision is poor** — gemma4 and minicpm-v both score 0.00–0.18 precision on `no-boots`/`no-gloves`, and even Gemini, the best of the five, only reaches 0.18–0.29 there.
+- **Gemini is the strongest VLM by a clear margin** (0.640 overall macro F1, 0.439 on negative classes) — meaningfully ahead of qwen3-vl (the previous best local/open model, 0.571/0.355), and the only model besides YOLO to hit perfect precision on any class (`vest`, 1.00). Being a larger, more expensively-run cloud model, this isn't a fully fair fight against the four ~4-9GB local Ollama models — but it's still nowhere near YOLO.
+- **YOLO's only imperfect class is `vest`** (F1 0.92, driven by 3 fn / 2 fp) — still the best score any model gets on that class, and far ahead of the 0.39–0.93 range the VLMs post there.
 
 ## Caveats
 
 - n = 100 is one held-out sample (seed 42); treat exact figures as directional, not final production metrics — see README's stated thresholds (Head Protection recall > 0.95, Foot Protection recall > 0.85, mAP@50 > 0.80) for the bar YOLO is actually held to.
 - This is a **presence/absence classification** task for the VLMs (no bounding boxes — see `supports_grounding: false` in the run's `run_manifest.json`), not object detection; YOLO is being compared on the same coarse presence signal here, not on its full localization ability.
 - `minicpm-v`'s `no-boots` F1 is `nan`: it never once correctly flagged a genuine no-boots case (tp=0), while still raising 14 false alarms — precision and recall are both 0.00, so F1 is undefined (0/0) rather than a real zero score.
+- Gemini and YOLO were scored in a separate run from the other four VLMs (`20260831_merged_n100_seed42_yolo-gemini/` vs. `20260828_..._yolo-ollama-qwen3-vl-gemma4-minicpm-v/`) — both draw the identical 100-image/seed-42 sample, and YOLO's numbers landed byte-identical across both runs (a deterministic checkpoint on the same images, as expected), so the two runs are directly comparable despite being separate invocations.
+
+---
+
+## Prompt-style comparison (Gemini): descriptive vs. structured
+
+Separately from the scored comparison above, `scripts/gemini_prompt_comparison.py` ran Gemini over a small unscored sample (12 images, seed 42) with two different prompts, to see what a free-text "site record" description looks like next to the strict-JSON prompt everything above is scored on. See `runs/llm/20260831_075116_merged_gemini_prompt_comparison_n12_seed42/prompt_comparison.csv` and section 3 of `ModelComparison.ipynb` for the full side-by-side.
+
+There's no ground truth for prose, so this isn't scored — but the qualitative difference is worth noting: the descriptive prompt reliably produces a fluent, specific one-to-two-sentence summary (headcount, setting, activity, an explicit safety/risk call) that would drop straight into a site log — e.g., for the `frame00201` sample, it noted the roughly eight workers present all had hard hats on, but flagged the dim, dusty, machinery-heavy setting itself as an operational/tripping hazard — versus the structured prompt's bare `{"person": true, "helmet": true, "gloves": false, ...}` for the same image. The descriptive prompt is more useful as a human-readable record; the structured prompt is what the scored comparison above actually depends on, since it's the only format with a per-class boolean to check against ground truth.

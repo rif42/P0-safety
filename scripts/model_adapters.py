@@ -157,6 +157,107 @@ class OllamaAdapter:
         return [Detection(class_name=c, present=present) for c, present in presence.items()]
 
 
+class GeminiAdapter:
+    """Cloud, gated behind --include-cloud in compare_models.py. Presence/
+    classification only, via a direct REST call (no google-genai SDK
+    dependency, matching OllamaAdapter's raw-`requests` style). Needs
+    GEMINI_API_KEY in the environment — not supplied by this scaffold, and
+    never written to disk or committed.
+
+    Default model is gemini-3.6-flash: gemini-2.5-flash (the prior default
+    guess) returned a hard 404 as of this writing — "no longer available
+    to new users" — with the API's own error message naming 3.6-flash as
+    the replacement. Verified live against the real endpoint, not assumed."""
+
+    name = "gemini"
+    supports_grounding = False
+    queryable_classes = ALL_CLASSES
+
+    API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+
+    def __init__(self, model="gemini-3.6-flash", prompt_template=DEFAULT_PROMPT_TEMPLATE, api_key=None):
+        import os
+
+        self.model = model
+        self.prompt_template = prompt_template
+        self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
+        if not self.api_key:
+            raise RuntimeError("GeminiAdapter needs GEMINI_API_KEY set in the environment (or api_key= passed in).")
+
+    def _generate(self, image_path, text_prompt, max_retries=5):
+        import time
+
+        import requests
+
+        mime_type = mimetypes.guess_type(str(image_path))[0] or "image/jpeg"
+        with open(image_path, "rb") as f:
+            image_b64 = base64.standard_b64encode(f.read()).decode("utf-8")
+
+        url = f"{self.API_BASE}/{self.model}:generateContent?key={self.api_key}"
+        body = {
+            "contents": [
+                {
+                    "parts": [
+                        {"inline_data": {"mime_type": mime_type, "data": image_b64}},
+                        {"text": text_prompt},
+                    ]
+                }
+            ],
+            # "low" thinking noticeably cuts latency/cost for this task
+            # (verified: ~112 thoughts tokens on a trivial prompt at
+            # default vs. ~69 at "low"); thinkingBudget:0 was rejected
+            # outright (400 INVALID_ARGUMENT) on this model, so "low" is
+            # the actual floor, not a guess.
+            "generationConfig": {"thinkingConfig": {"thinkingLevel": "low"}},
+        }
+        # 429 (rate limit), 5xx (transient server overload), and network-level
+        # timeouts/connection drops are all worth a retry — all observed live
+        # from this endpoint under a 100-image run, not hypothetical.
+        # Anything else (400/403/404) is a real problem and should raise
+        # immediately rather than retry into the same wall 5 times.
+        last_exc = None
+        data = None
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, json=body, timeout=180)
+            except requests.exceptions.RequestException as exc:
+                last_exc = exc
+                time.sleep(min(2**attempt, 30))
+                continue
+            if response.status_code == 429 or response.status_code >= 500:
+                last_exc = requests.exceptions.HTTPError(
+                    f"{response.status_code} on attempt {attempt + 1}/{max_retries}", response=response
+                )
+                time.sleep(min(2**attempt, 30))
+                continue
+            response.raise_for_status()
+            data = response.json()
+            break
+        if data is None:
+            raise last_exc
+        candidates = data.get("candidates") or []
+        if not candidates:
+            return ""
+        parts = candidates[0].get("content", {}).get("parts", [])
+        return "".join(p.get("text", "") for p in parts)
+
+    def predict(self, image_path):
+        text = self._generate(image_path, render_prompt(self.prompt_template, self.queryable_classes))
+        presence = parse_presence_json(text, self.queryable_classes)
+        if presence is None:
+            return None
+        return [Detection(class_name=c, present=present) for c, present in presence.items()]
+
+    def describe(self, image_path, prompt):
+        """Free-text mode for prompts that aren't the structured-JSON
+        presence task (e.g. a plain-English site-record description) —
+        deliberately outside the Detection/predict() interface, since
+        there's no per-class boolean to score against ground truth here.
+        Used by the descriptive-prompt comparison, not by
+        compare_models.py's scored pipeline."""
+        return self._generate(image_path, prompt)
+
+
 class ClaudeAdapter:
     """Cloud, gated behind --include-cloud in compare_models.py. Presence/
     classification only. Needs ANTHROPIC_API_KEY (or an `ant auth login`
@@ -212,4 +313,5 @@ ADAPTERS = {
     "gemma4": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "gemma4:e4b"},
     "minicpm-v": {"cls": OllamaAdapter, "is_cloud": False, "default_model": "minicpm-v:8b"},
     "claude": {"cls": ClaudeAdapter, "is_cloud": True, "default_model": "claude-haiku-4-5"},
+    "gemini": {"cls": GeminiAdapter, "is_cloud": True, "default_model": "gemini-3.6-flash"},
 }
