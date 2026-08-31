@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+html{scroll-behavior:smooth}
+html,body{margin:0;padding:0;background:#141414}
+a{color:inherit}
+*{box-sizing:border-box}
+@keyframes hvScan{0%{top:-4px;opacity:1}32%{top:calc(100% - 2px);opacity:1}36%{opacity:0}100%{top:calc(100% - 2px);opacity:0}}
+@keyframes hvA{0%,5%{opacity:0}8%{opacity:1}94%{opacity:1}100%{opacity:0}}
+@keyframes hvB{0%,10%{opacity:0}13%{opacity:1}94%{opacity:1}100%{opacity:0}}
+@keyframes hvC{0%,16%{opacity:0}19%{opacity:1}94%{opacity:1}100%{opacity:0}}
+@keyframes hvD{0%,26%{opacity:0}29%{opacity:1}94%{opacity:1}100%{opacity:0}}
+@keyframes hvBlink{0%,55%{opacity:1}56%,100%{opacity:0.15}}
+@keyframes hvMarquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes hvPulse{0%,100%{background:#3B3200}50%{background:#5C4E00}}
+</style>
+</helmet>
+<div style="font-family:'IBM Plex Sans',system-ui,sans-serif;color:#141414;font-size:15px;line-height:1.5;background:#E4E5E2">
+
+  <nav style="position:sticky;top:0;z-index:50;background:#141414;color:#FFFFFF;display:flex;align-items:center;gap:18px;padding:0 28px;height:52px">
+    <div style="background:#EFE600;color:#141414;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;letter-spacing:1px;padding:2px 9px 3px;line-height:1">HI-VIS</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:#8D8F8A">P0-SAFETY · LE WAGON BATCH #2303</div>
+    <div style="margin-left:auto;display:flex;gap:2px;font-size:12.5px;font-weight:600">
+      <a href="#product" style="color:#D8D9D4;text-decoration:none;padding:6px 10px" style-hover="color:#EFE600">Product</a>
+      <a href="#progression" style="color:#D8D9D4;text-decoration:none;padding:6px 10px" style-hover="color:#EFE600">Progression</a>
+      <a href="#audit" style="color:#EFE600;text-decoration:none;padding:6px 10px;border:1px solid #3A3B38" style-hover="border-color:#EFE600">The audit</a>
+      <a href="#call" style="color:#D8D9D4;text-decoration:none;padding:6px 10px" style-hover="color:#EFE600">The call</a>
+      <a href="#next" style="color:#D8D9D4;text-decoration:none;padding:6px 10px" style-hover="color:#EFE600">Next</a>
+      <a href="#team" style="color:#D8D9D4;text-decoration:none;padding:6px 10px" style-hover="color:#EFE600">Team</a>
+    </div>
+  </nav>
+
+  <header style="background:#141414;color:#FFFFFF;padding:60px 28px 52px;overflow:hidden" data-screen-label="Hero">
+    <div style="max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:44px;align-items:center">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#EFE600">AUTOMATED PPE COMPLIANCE DETECTION</div>
+        <h1 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:66px;line-height:0.96;letter-spacing:0.5px;margin:0;text-wrap:balance">THE SITE PHOTOS YOU ALREADY TAKE, TURNED INTO A CHECKED, DATED SAFETY RECORD.</h1>
+        <p style="margin:0;max-width:520px;font-size:16px;color:#C9CBC4">Drop in a folder. Get back who is in every photo, what PPE they are wearing, and what is <strong style="color:#FFFFFF">positively missing</strong>.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a href="#audit" style="display:inline-flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:1.5px;background:#EFE600;color:#141414;border:2px solid #EFE600;padding:11px 26px;text-decoration:none" style-hover="background:#141414;color:#EFE600">READ THE AUDIT
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 4v14"></path><path d="M6 12l6 6 6-6"></path></svg></a>
+          <a href="HI-VIS.dc.html" style="display:inline-flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:1.5px;background:transparent;color:#FFFFFF;border:2px solid #55564F;padding:11px 26px;text-decoration:none" style-hover="border-color:#FFFFFF">TRY THE INTERFACE
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg></a>
+        </div>
+        <div style="display:grid;grid-template-columns:auto auto auto auto;gap:0;justify-content:start;border-top:1px solid #3A3B38;padding-top:20px">
+          <div style="padding-right:26px;border-right:1px solid #3A3B38">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;line-height:1;font-variant-numeric:tabular-nums">{{hMap}}<span style="color:#EFE600">*</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#8D8F8A;margin-top:3px">mAP@50 · SHIPPED</div>
+          </div>
+          <div style="padding:0 26px;border-right:1px solid #3A3B38">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;line-height:1;font-variant-numeric:tabular-nums">{{hBase}}%</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#8D8F8A;margin-top:3px">ABOVE BASELINE</div>
+          </div>
+          <div style="padding:0 26px;border-right:1px solid #3A3B38">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;line-height:1;font-variant-numeric:tabular-nums">{{hImg}}<span style="font-size:28px"> IMG</span></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#8D8F8A;margin-top:3px">UNDER 5 SECONDS</div>
+          </div>
+          <div style="padding-left:26px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;line-height:1;color:#EFE600;font-variant-numeric:tabular-nums">{{hCont}}%</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#8D8F8A;margin-top:3px">OF VALIDATION CONTAMINATED</div>
+          </div>
+        </div>
+      </div>
+      <div style="min-width:0">
+        <div style="background:#0C0C0C;border:1px solid #3A3B38;padding:8px;position:relative">
+          <div style="position:relative;overflow:hidden">
+            <svg viewBox="0 0 640 430" style="display:block;width:100%;height:auto" role="img" aria-label="Illustrative detection overlay replay on an abstract site scene">
+              <rect x="0" y="0" width="640" height="430" fill="#54575B"></rect>
+              <rect x="0" y="298" width="640" height="132" fill="#44474A"></rect>
+              <rect x="30" y="60" width="90" height="240" fill="#3A3D40"></rect>
+              <rect x="500" y="30" width="16" height="270" fill="#5E6266"></rect>
+              <rect x="380" y="120" width="150" height="14" fill="#5E6266"></rect>
+              <rect x="150" y="200" width="70" height="100" fill="#3A3D40"></rect>
+              <g stroke-width="2" fill="none">
+                <g style="animation:hvB 7s linear infinite">
+                  <rect x="70" y="128" width="112" height="252" stroke="#F2F2F2"></rect>
+                  <rect x="70" y="366" width="86" height="14" fill="#F2F2F2"></rect>
+                  <text x="76" y="377" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#141414" stroke="none">person 0.97</text>
+                </g>
+                <g style="animation:hvA 7s linear infinite">
+                  <rect x="94" y="116" width="62" height="34" stroke="#3D9BE9"></rect>
+                  <rect x="94" y="100" width="86" height="16" fill="#3D9BE9"></rect>
+                  <text x="99" y="112" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#141414" stroke="none">helmet 0.94</text>
+                </g>
+                <g style="animation:hvC 7s linear infinite">
+                  <rect x="84" y="196" width="86" height="82" stroke="#2FBE6B"></rect>
+                  <rect x="84" y="180" width="72" height="16" fill="#2FBE6B"></rect>
+                  <text x="89" y="192" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#141414" stroke="none">vest 0.88</text>
+                </g>
+                <g style="animation:hvD 7s linear infinite">
+                  <rect x="80" y="352" width="90" height="26" stroke="#B07CFF"></rect>
+                  <rect x="80" y="336" width="80" height="16" fill="#B07CFF"></rect>
+                  <text x="85" y="348" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#141414" stroke="none">boots 0.72</text>
+                </g>
+                <g style="animation:hvB 7s linear infinite">
+                  <rect x="258" y="108" width="122" height="282" stroke="#F2F2F2"></rect>
+                </g>
+                <g style="animation:hvA 7s linear infinite">
+                  <rect x="286" y="94" width="66" height="38" stroke="#FF4D42" stroke-dasharray="7 4"></rect>
+                  <rect x="286" y="78" width="118" height="16" fill="#FF4D42"></rect>
+                  <text x="291" y="90" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#141414" stroke="none">no-helmet 0.79</text>
+                </g>
+                <g style="animation:hvC 7s linear infinite">
+                  <rect x="272" y="182" width="94" height="88" stroke="#2FBE6B"></rect>
+                  <rect x="272" y="166" width="72" height="16" fill="#2FBE6B"></rect>
+                  <text x="277" y="178" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#141414" stroke="none">vest 0.84</text>
+                </g>
+                <g style="animation:hvB 7s linear infinite">
+                  <rect x="452" y="150" width="104" height="230" stroke="#F2F2F2"></rect>
+                </g>
+                <g style="animation:hvA 7s linear infinite">
+                  <rect x="474" y="138" width="58" height="30" stroke="#3D9BE9"></rect>
+                  <rect x="474" y="122" width="86" height="16" fill="#3D9BE9"></rect>
+                  <text x="479" y="134" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#141414" stroke="none">helmet 0.91</text>
+                </g>
+                <g style="animation:hvD 7s linear infinite">
+                  <rect x="462" y="212" width="84" height="76" stroke="#FF8A00" stroke-dasharray="7 4"></rect>
+                  <rect x="462" y="196" width="104" height="16" fill="#FF8A00"></rect>
+                  <text x="467" y="208" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#141414" stroke="none">no-vest 0.66</text>
+                </g>
+              </g>
+            </svg>
+            <div style="position:absolute;left:0;right:0;height:3px;background:#EFE600;animation:hvScan 7s linear infinite"></div>
+          </div>
+          <div style="position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#EFE600;background:rgba(12,12,12,0.85);padding:4px 8px"><span style="width:8px;height:8px;background:#EFE600;display:inline-block;animation:hvBlink 1.2s steps(1) infinite"></span>DETECTION REPLAY</div>
+          <div style="position:absolute;top:16px;right:16px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:1px;color:#B9BBB4;background:rgba(12,12,12,0.8);padding:3px 7px">PLACEHOLDER SCENE — ILLUSTRATIVE</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#71736D;margin-top:8px">Dashed boxes are positive absence findings — no-helmet is a detection, not a gap.</div>
+      </div>
+    </div>
+  </header>
+
+  <sc-if value="{{showTicker}}" hint-placeholder-val="{{true}}">
+  <div style="background:#EFE600;color:#141414;overflow:hidden;border-top:3px solid #141414;border-bottom:3px solid #141414">
+    <div style="display:flex;width:max-content;animation:hvMarquee 30s linear infinite">
+      <div style="display:flex;align-items:center;gap:28px;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;letter-spacing:1px;white-space:nowrap">
+        <span>0.898 mAP@50*</span><span>▲</span><span>48% ABOVE BASELINE</span><span>▲</span><span>80 IMAGES IN UNDER 5 SECONDS</span><span>▲</span><span>9 CLASSES</span><span>▲</span><span>92,239 BOXES AUDITED</span><span>▲</span><span>59.4% OF VALIDATION CONTAMINATED</span><span>▲</span><span>WE SHIPPED THE LOWER SCORE</span><span>▲</span><span style="font-size:16px;font-weight:700">* ALL FIGURES UPPER BOUNDS — SEE THE AUDIT</span><span>▲</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:28px;padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;letter-spacing:1px;white-space:nowrap" aria-hidden="true">
+        <span>0.898 mAP@50*</span><span>▲</span><span>48% ABOVE BASELINE</span><span>▲</span><span>80 IMAGES IN UNDER 5 SECONDS</span><span>▲</span><span>9 CLASSES</span><span>▲</span><span>92,239 BOXES AUDITED</span><span>▲</span><span>59.4% OF VALIDATION CONTAMINATED</span><span>▲</span><span>WE SHIPPED THE LOWER SCORE</span><span>▲</span><span style="font-size:16px;font-weight:700">* ALL FIGURES UPPER BOUNDS — SEE THE AUDIT</span><span>▲</span>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <section id="product" data-screen-label="The product" style="background:#FFFFFF;padding:64px 28px;scroll-margin-top:52px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-30px;right:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:220px;line-height:1;color:rgba(20,20,20,0.05);pointer-events:none">01</div>
+    <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:30px;position:relative">
+      <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#71736D">01 — THE PRODUCT</span>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;letter-spacing:0.5px;margin:0;line-height:1">A REPORTING TOOL, NOT A CAMERA FEED</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:36px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;gap:0;justify-content:start">
+            <div style="padding-right:26px;border-right:1px solid #C4C6C0"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:54px;line-height:1;font-variant-numeric:tabular-nums">{{pDeaths}}</div><div style="font-size:11.5px;color:#4A4B47;max-width:140px;margin-top:4px">worker deaths in UK construction, 2025/26 — the deadliest sector</div></div>
+            <div style="padding:0 26px;border-right:1px solid #C4C6C0"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:54px;line-height:1;font-variant-numeric:tabular-nums">{{pShare}}%</div><div style="font-size:11.5px;color:#4A4B47;max-width:140px;margin-top:4px">of all UK worker fatalities, from ~6% of the workforce</div></div>
+            <div style="padding-left:26px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:54px;line-height:1;font-variant-numeric:tabular-nums">{{pRate}}×</div><div style="font-size:11.5px;color:#4A4B47;max-width:150px;margin-top:4px">the all-industry fatal injury rate — checked by one walk-round a day</div></div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#9B9D97">Source: HSE provisional fatal injury statistics, 1 July 2026.</div>
+          <div style="border:2px solid #141414;padding:16px 20px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:#71736D;margin-bottom:6px">THE PRODUCT DECISION THAT MATTERS</div>
+            <p style="margin:0;font-size:15px;font-weight:600">A compliance report needs a positive assertion of non-compliance, not the absence of an assertion. So no-helmet is a class the model detects — not an inference from silence.</p>
+          </div>
+          <div style="display:flex;gap:22px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A4B47">
+            <span><strong style="color:#141414">yolo26m_merged_150e</strong> · 42 MB</span><span>≈62 ms / image</span><span>confidence ≥ 0.35</span>
+          </div>
+        </div>
+        <div style="border:1px solid #C4C6C0">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:#71736D;padding:10px 14px;border-bottom:1px solid #E4E5E2">9 CLASSES — EVERY PPE ITEM IN A PRESENT AND AN ABSENT FORM</div>
+          <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:0;font-size:13px">
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;font-weight:600">person</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;grid-column:span 2;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px solid #9B9D97;display:inline-block"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">28,385 boxes</span></div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;font-weight:600">helmet</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px solid #3D9BE9;display:inline-block"></span>present</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px dashed #FF4D42;display:inline-block"></span>no-helmet</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;font-weight:600">gloves</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px solid #2AB5B0;display:inline-block"></span>present</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px dashed #FF4D42;display:inline-block"></span>no-gloves</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;font-weight:600">boots</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px solid #B07CFF;display:inline-block"></span>present</div>
+            <div style="padding:9px 14px;border-bottom:1px solid #F0F1EC;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px dashed #FF4D42;display:inline-block"></span>no-boots</div>
+            <div style="padding:9px 14px;font-weight:600">hi-vis vest</div>
+            <div style="padding:9px 14px;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px solid #2FBE6B;display:inline-block"></span>present</div>
+            <div style="padding:9px 14px;display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:2px dashed #FF8A00;display:inline-block"></span>no-vest</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="progression" data-screen-label="Progression" style="background:#E4E5E2;padding:64px 28px;scroll-margin-top:52px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-30px;right:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:220px;line-height:1;color:rgba(20,20,20,0.05);pointer-events:none">02</div>
+    <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:28px;position:relative">
+      <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#71736D">02 — THE PROGRESSION</span>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;letter-spacing:0.5px;margin:0;line-height:1">WE STARTED AT 0.61</h2>
+        <span style="font-size:14px;color:#4A4B47">Ten models · four datasets · three architectures · four days.</span>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:24px 28px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#71736D">mAP@50 BY RUN — SCALE STARTS AT ZERO · ALL UPPER BOUNDS*</div>
+          <div style="display:flex;gap:16px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#71736D">
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#141414;display:inline-block"></span>milestone</span>
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#EFE600;border:1px solid #141414;display:inline-block"></span>shipped</span>
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:#FFFFFF;border:1px dashed #C4291D;display:inline-block"></span>rejected</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="display:grid;grid-template-columns:250px 1fr 170px;gap:14px;align-items:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px">yolov8n_scratch</div>
+            <div style="height:24px;background:#F0F1EC;position:relative"><div style="height:100%;width:{{bw1}};background:#141414"></div><span style="position:absolute;left:calc(60.6% + 8px);top:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">0.606</span></div>
+            <div style="font-size:11px;color:#71736D">from scratch · 14.4 h</div>
+          </div>
+          <div style="display:grid;grid-template-columns:250px 1fr 170px;gap:14px;align-items:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px">yolov8n + COCO weights</div>
+            <div style="height:24px;background:#F0F1EC;position:relative"><div style="height:100%;width:{{bw2}};background:#141414"></div><span style="position:absolute;left:calc(81% + 8px);top:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">0.810</span></div>
+            <div style="font-size:11px;color:#71736D">transfer learning</div>
+          </div>
+          <div style="display:grid;grid-template-columns:250px 1fr 170px;gap:14px;align-items:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px">yolo26s_css_100e</div>
+            <div style="height:24px;background:#F0F1EC;position:relative"><div style="height:100%;width:{{bw3}};background:#141414"></div><span style="position:absolute;left:calc(86.5% + 8px);top:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">0.865</span></div>
+            <div style="font-size:11px;color:#71736D">new architecture · 1.3 h</div>
+          </div>
+          <div style="display:grid;grid-template-columns:250px 1fr 170px;gap:14px;align-items:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#C4291D">yolo26s_Altec_PPE_100e</div>
+            <div style="height:24px;background:#F0F1EC;position:relative"><div style="height:100%;width:{{bw4}};background:repeating-linear-gradient(45deg,#FFFFFF,#FFFFFF 4px,#E9B5B1 4px,#E9B5B1 8px);border:1px dashed #C4291D"></div><span style="position:absolute;left:calc(73.4% + 8px);top:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#C4291D">0.734</span></div>
+            <div style="font-size:11px;color:#C4291D">rejected — schema failure</div>
+          </div>
+          <div style="display:grid;grid-template-columns:250px 1fr 170px;gap:14px;align-items:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px">yolo26s_merged_100e</div>
+            <div style="height:24px;background:#F0F1EC;position:relative"><div style="height:100%;width:{{bw5}};background:#141414"></div><span style="position:absolute;left:calc(88.3% + 8px);top:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600">0.883</span></div>
+            <div style="font-size:11px;color:#71736D">3 datasets merged · 2.3 h</div>
+          </div>
+          <div style="display:grid;grid-template-columns:250px 1fr 170px;gap:14px;align-items:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600">yolo26m_merged_150e</div>
+            <div style="height:30px;background:#F0F1EC;position:relative"><div style="height:100%;width:{{bw6}};background:#EFE600;border:2px solid #141414"></div><span style="position:absolute;left:calc(89.8% + 8px);top:5px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600">0.898</span></div>
+            <div style="font-size:11px;font-weight:700">SHIPPED · 6.0 h</div>
+          </div>
+          <div style="display:grid;grid-template-columns:250px 1fr 170px;gap:14px;align-items:center">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#71736D">yolo26m_mergedpeople_150e</div>
+            <div style="height:24px;background:#F0F1EC;position:relative"><div style="height:100%;width:{{bw7}};background:#FFFFFF;border:1px dashed #C4291D"></div><span style="position:absolute;left:calc(90% + 8px);top:3px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#71736D">0.900</span></div>
+            <div style="font-size:11px;color:#C4291D">rejected — <a href="#call" style="color:#C4291D">see the call</a></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:20px 22px;display:flex;flex-direction:column;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#71736D">LEVER 1 — PRETRAINED WEIGHTS</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:56px;line-height:1;font-variant-numeric:tabular-nums">{{lev1}}</div>
+          <p style="margin:0;font-size:13px;color:#4A4B47">mAP, free. The largest single gain in the project — and the least glamorous.</p>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:20px 22px;display:flex;flex-direction:column;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#71736D">LEVER 2 — CURRENT ARCHITECTURE</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:56px;line-height:1;font-variant-numeric:tabular-nums">{{lev2}}</div>
+          <p style="margin:0;font-size:13px;color:#4A4B47">YOLOv8 → YOLO26. Tighter boxes (+0.091 at strict IoU), 11× faster to train.</p>
+        </div>
+        <div style="background:#141414;color:#FFFFFF;padding:20px 22px;display:flex;flex-direction:column;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#8D8F8A">LEVER 3 — THE DATA</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:56px;line-height:1;color:#EFE600">×3<span style="font-size:30px;color:#FFFFFF"> MERGED</span></div>
+          <p style="margin:0;font-size:13px;color:#C9CBC4">Three sources beat every single one. Then we audited the merge — <a href="#audit" style="color:#EFE600;font-weight:600">and everything changed ↓</a></p>
+        </div>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:18px 24px;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:24px;align-items:center">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#C4291D;margin-bottom:4px">EXHIBIT A — THE DATASET THAT FAILED</div>
+          <p style="margin:0;font-size:13.5px">Altec PPE: <strong>0.734</strong> with the recipe that scored 0.865 elsewhere. Cause: <strong>the same object taught as two classes.</strong></p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px">
+          <div style="display:grid;grid-template-columns:80px 1fr 52px;gap:10px;align-items:center"><span>Helmet</span><div style="height:14px;background:#F0F1EC"><div style="height:100%;width:{{aw1}};background:#9B9D97"></div></div><span>0.809</span></div>
+          <div style="display:grid;grid-template-columns:80px 1fr 52px;gap:10px;align-items:center"><span>helmet</span><div style="height:14px;background:#F0F1EC"><div style="height:100%;width:{{aw2}};background:#141414"></div></div><span>0.888</span></div>
+          <div style="display:grid;grid-template-columns:80px 1fr 52px;gap:10px;align-items:center"><span>Glasses</span><div style="height:14px;background:#F0F1EC"><div style="height:100%;width:{{aw3}};background:#9B9D97"></div></div><span>0.518</span></div>
+          <div style="display:grid;grid-template-columns:80px 1fr 52px;gap:10px;align-items:center"><span>glasses</span><div style="height:14px;background:#F0F1EC"><div style="height:100%;width:{{aw4}};background:#141414"></div></div><span>0.662</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="audit" data-screen-label="The audit" style="background:#141414;color:#FFFFFF;padding:72px 28px;scroll-margin-top:52px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-30px;right:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:220px;line-height:1;color:rgba(255,255,255,0.04);pointer-events:none">03</div>
+    <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:36px;position:relative">
+      <div style="display:flex;flex-direction:column;gap:18px;max-width:980px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#EFE600">03 — THE AUDIT · THE MOST VALUABLE THING WE FOUND</span>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:60px;letter-spacing:0.5px;margin:0;line-height:0.98;text-wrap:balance">FOUR DAYS IMPROVING THE MODEL. ONE AFTERNOON AUDITING THE DATA. <span style="background:#EFE600;color:#141414;padding:0 10px">THE AFTERNOON TAUGHT US MORE.</span></h2>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+        <div style="border:1px solid #3A3B38;padding:18px 20px;display:flex;flex-direction:column;gap:4px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:58px;line-height:1;color:#EFE600;font-variant-numeric:tabular-nums">{{f1n}}%</div><div style="font-size:12px;color:#C9CBC4">of validation images have a training near-duplicate</div></div>
+        <div style="border:1px solid #3A3B38;padding:18px 20px;display:flex;flex-direction:column;gap:4px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:58px;line-height:1;color:#EFE600;font-variant-numeric:tabular-nums">{{f2n}}%</div><div style="font-size:12px;color:#C9CBC4">of images can never carry a no-vest label</div></div>
+        <div style="border:1px solid #3A3B38;padding:18px 20px;display:flex;flex-direction:column;gap:4px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:58px;line-height:1;color:#EFE600;font-variant-numeric:tabular-nums">{{f3n}}%</div><div style="font-size:12px;color:#C9CBC4">of the only no-vest source is mosaic composites</div></div>
+        <div style="border:1px solid #3A3B38;padding:18px 20px;display:flex;flex-direction:column;gap:4px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:58px;line-height:1;color:#EFE600;font-variant-numeric:tabular-nums">{{f4n}}%</div><div style="font-size:12px;color:#C9CBC4">of people have a complete 4-item PPE decision</div></div>
+      </div>
+
+      <div style="background:#1D1E1B;border:1px solid #3A3B38;padding:26px 28px;display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:32px;align-items:center">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#EFE600">FINDING 1 — CRITICAL</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:34px;line-height:1">THE MODEL WAS TESTED ON PICTURES IT HAD ALREADY SEEN</div>
+          <p style="margin:0;font-size:14px;color:#C9CBC4">98,687 cross-split near-duplicate pairs — the CCTV source was split by <em>frame</em>, not by camera. <strong style="color:#FFFFFF">Every accuracy figure on this page is inflated by an unknown margin.</strong></p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+            <div style="display:grid;grid-template-columns:44px 1fr 150px;gap:12px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:12px">
+              <span>val</span><div style="height:20px;background:#2B2C29"><div style="height:100%;width:{{cValW}};background:#EFE600"></div></div><span>799 / 1,346 — 59.4%</span>
+            </div>
+            <div style="display:grid;grid-template-columns:44px 1fr 150px;gap:12px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:12px">
+              <span>test</span><div style="height:20px;background:#2B2C29"><div style="height:100%;width:{{cTestW}};background:#EFE600"></div></div><span>756 / 1,312 — 57.6%</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="position:relative;border:1px solid #3A3B38">
+                <svg viewBox="0 0 200 130" style="display:block;width:100%;height:auto"><rect width="200" height="130" fill="#54575B"></rect><rect y="92" width="200" height="38" fill="#44474A"></rect><rect x="12" y="18" width="30" height="74" fill="#3A3D40"></rect><rect x="150" y="10" width="8" height="82" fill="#5E6266"></rect><rect x="84" y="38" width="34" height="54" fill="none" stroke="#F2F2F2" stroke-width="1.6"></rect><rect x="92" y="32" width="18" height="10" fill="none" stroke="#3D9BE9" stroke-width="1.6"></rect></svg>
+                <div style="position:absolute;top:6px;left:6px;font-family:'IBM Plex Mono',monospace;font-size:9px;background:rgba(12,12,12,0.85);color:#B9BBB4;padding:2px 5px">04:41:42 PM</div>
+              </div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8D8F8A;text-align:center">15h_img_284 — <span style="color:#FFFFFF">train</span></div>
+            </div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;color:#EFE600;text-align:center;line-height:1.1">Δ<br>1 SEC</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="position:relative;border:1px solid #EFE600">
+                <svg viewBox="0 0 200 130" style="display:block;width:100%;height:auto"><rect width="200" height="130" fill="#54575B"></rect><rect y="92" width="200" height="38" fill="#44474A"></rect><rect x="12" y="18" width="30" height="74" fill="#3A3D40"></rect><rect x="150" y="10" width="8" height="82" fill="#5E6266"></rect><rect x="85" y="38" width="34" height="54" fill="none" stroke="#F2F2F2" stroke-width="1.6"></rect><rect x="93" y="32" width="18" height="10" fill="none" stroke="#3D9BE9" stroke-width="1.6"></rect></svg>
+                <div style="position:absolute;top:6px;left:6px;font-family:'IBM Plex Mono',monospace;font-size:9px;background:rgba(12,12,12,0.85);color:#EFE600;padding:2px 5px">04:41:43 PM</div>
+              </div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8D8F8A;text-align:center">15h_img_285 — <span style="color:#EFE600">test</span></div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#8D8F8A;text-align:center;font-family:'IBM Plex Mono',monospace">same camera · same person · same PPE state — reconstruction, placeholder scenes</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:14px">
+        <div style="background:#1D1E1B;border:1px solid #3A3B38;padding:24px 28px;display:flex;flex-direction:column;gap:12px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#EFE600">FINDING 2 — CRITICAL</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:30px;line-height:1">EVERY <span style="color:#EFE600">—</span> IS A CLASS THAT SOURCE NEVER ANNOTATED</div>
+          <p style="margin:0;font-size:13.5px;color:#C9CBC4">Merged under one label space, every dash becomes a silent false negative. <strong style="color:#FFFFFF">On four images in five, a correct no-vest prediction is punished.</strong></p>
+          <div style="overflow-x:auto">
+            <table style="border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:11px;width:100%;min-width:430px">
+              <thead><tr style="color:#8D8F8A;text-align:right"><th style="text-align:left;font-weight:500;padding:5px 8px 5px 0">instances</th><th style="font-weight:500;padding:5px 8px">anuragraj03</th><th style="font-weight:500;padding:5px 8px">ketakichalke</th><th style="font-weight:500;padding:5px 8px">snehilsanyal</th></tr></thead>
+              <tbody style="text-align:right">
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29">person</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">16,268</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">2,245</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">9,872</td></tr>
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29">helmet</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">9,097</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">1,734</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">3,334</td></tr>
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29">gloves</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">7,472</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">1,445</td><td style="padding:4px 8px;border-top:1px solid #2B2C29;color:#EFE600;animation:hvPulse 2.4s infinite">—</td></tr>
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29">boots</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">9,337</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">1,597</td><td style="padding:4px 8px;border-top:1px solid #2B2C29;color:#EFE600;animation:hvPulse 2.4s infinite">—</td></tr>
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29">vest</td><td style="padding:4px 8px;border-top:1px solid #2B2C29;color:#EFE600;animation:hvPulse 2.4s infinite">—</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">1,618</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">3,135</td></tr>
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29">no-helmet</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">5,438</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">485</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">2,427</td></tr>
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29">no-gloves</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">6,498</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">556</td><td style="padding:4px 8px;border-top:1px solid #2B2C29;color:#EFE600;animation:hvPulse 2.4s infinite">—</td></tr>
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29">no-boots</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">5,408</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">115</td><td style="padding:4px 8px;border-top:1px solid #2B2C29;color:#EFE600;animation:hvPulse 2.4s infinite">—</td></tr>
+                <tr><td style="text-align:left;padding:4px 8px 4px 0;border-top:1px solid #2B2C29;font-weight:600;color:#EFE600">no-vest</td><td style="padding:4px 8px;border-top:1px solid #2B2C29;color:#EFE600;animation:hvPulse 2.4s infinite">—</td><td style="padding:4px 8px;border-top:1px solid #2B2C29;color:#EFE600;animation:hvPulse 2.4s infinite">—</td><td style="padding:4px 8px;border-top:1px solid #2B2C29">4,158</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:#1D1E1B;border:1px solid #3A3B38;padding:22px 24px;display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#EFE600">FINDING 3 — HIGH</span>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1.05">NO-VEST TRAINS ON COLLAGES</div>
+            <p style="margin:0;font-size:13px;color:#C9CBC4">1,140 tiled composites — boxes landing on a bridge deck, a truck wheel, a phone screen. All 4,158 no-vest instances come from this source.</p>
+          </div>
+          <div style="background:#1D1E1B;border:1px solid #3A3B38;padding:22px 24px;display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#EFE600">FINDING 5 — MEDIUM</span>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1.05">A DRUMMER, LABELLED NO-HELMET</div>
+            <p style="margin:0;font-size:13px;color:#C9CBC4">Off-domain images taught the model that any bare head, anywhere, is a PPE breach — a direct attack on field precision.</p>
+          </div>
+          <div style="background:#1D1E1B;border:1px solid #3A3B38;padding:22px 24px;display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#EFE600">FINDING 4 — HIGH</span>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1.05">ITEMS DECIDED PER PERSON</div>
+            <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px">
+              <div style="display:grid;grid-template-columns:44px 1fr 58px;gap:10px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px"><span>0/4</span><div style="height:13px;background:#2B2C29"><div style="height:100%;width:{{cov0}};background:#71736D"></div></div><span>15.3%</span></div>
+              <div style="display:grid;grid-template-columns:44px 1fr 58px;gap:10px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px"><span>1/4</span><div style="height:13px;background:#2B2C29"><div style="height:100%;width:{{cov1}};background:#71736D"></div></div><span>47.0%</span></div>
+              <div style="display:grid;grid-template-columns:44px 1fr 58px;gap:10px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px"><span>2/4</span><div style="height:13px;background:#2B2C29"><div style="height:100%;width:{{cov2}};background:#71736D"></div></div><span>31.4%</span></div>
+              <div style="display:grid;grid-template-columns:44px 1fr 58px;gap:10px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px"><span>3/4</span><div style="height:13px;background:#2B2C29"><div style="height:100%;width:{{cov3}};background:#71736D"></div></div><span>4.3%</span></div>
+              <div style="display:grid;grid-template-columns:44px 1fr 58px;gap:10px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;color:#EFE600"><span>4/4</span><div style="height:13px;background:#2B2C29"><div style="height:100%;width:{{cov4}};background:#EFE600"></div></div><span>1.9%</span></div>
+            </div>
+            <p style="margin:0;font-size:12px;color:#8D8F8A">Per person is exactly what the product must do at inference.</p>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{showMethod}}" hint-placeholder-val="{{true}}">
+      <div style="border:1px solid #3A3B38;padding:20px 26px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1">THE METHOD GENERALISES</div>
+          <span style="font-size:12px;color:#8D8F8A">Runs in seconds on any merged detection dataset — and doubles as a regression test.</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12.5px">
+          <span style="border:1px solid #3A3B38;padding:6px 12px;color:#C9CBC4"><strong style="color:#EFE600">1</strong> source × class matrix first</span>
+          <span style="border:1px solid #3A3B38;padding:6px 12px;color:#C9CBC4"><strong style="color:#EFE600">2</strong> pair-decision rate, not class counts</span>
+          <span style="border:1px solid #3A3B38;padding:6px 12px;color:#C9CBC4"><strong style="color:#EFE600">3</strong> anchor on the person box</span>
+          <span style="border:1px solid #3A3B38;padding:6px 12px;color:#C9CBC4"><strong style="color:#EFE600">4</strong> validate the split before any metric</span>
+          <span style="border:1px solid #3A3B38;padding:6px 12px;color:#C9CBC4"><strong style="color:#EFE600">5</strong> open filtered images, not random ones</span>
+          <span style="border:1px solid #3A3B38;padding:6px 12px;color:#C9CBC4"><strong style="color:#EFE600">6</strong> keep a random sheet anyway</span>
+          <span style="border:1px solid #3A3B38;padding:6px 12px;color:#C9CBC4"><strong style="color:#EFE600">7</strong> re-run after every fix, diff the report</span>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+  </section>
+
+  <section id="call" data-screen-label="The call" style="background:#FFFFFF;padding:64px 28px;scroll-margin-top:52px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-30px;right:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:220px;line-height:1;color:rgba(20,20,20,0.05);pointer-events:none">04</div>
+    <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:28px;position:relative">
+      <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#71736D">04 — THE CALL</span>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;letter-spacing:0.5px;margin:0;line-height:1">WE SHIPPED THE MODEL WITH THE LOWER SCORE</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:stretch;max-width:1080px">
+        <div style="border:2px solid #141414;padding:22px 26px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600">yolo26m_merged_150e</span><span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:1px;background:#EFE600;padding:2px 10px;border:1px solid #141414">SHIPPED</span></div>
+          <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:74px;line-height:1;color:#1B7A3D">0.16</span><span style="font-size:12.5px;color:#4A4B47;max-width:150px">phantom-person rate — person predicted on background</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A4B47">mAP@50 0.898 · mAP@50-95 0.596</div>
+        </div>
+        <div style="display:flex;align-items:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:30px;color:#9B9D97">VS</div>
+        <div style="border:1px dashed #9B9D97;padding:22px 26px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#4A4B47">yolo26m_mergedpeople_150e</span><span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:1px;color:#C4291D;border:1px solid #C4291D;padding:2px 10px">REJECTED</span></div>
+          <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:74px;line-height:1;color:#C4291D">0.31</span><span style="font-size:12.5px;color:#4A4B47;max-width:150px">the false-positive person rate nearly doubled</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A4B47">mAP@50 0.900 ▲ · mAP@50-95 0.606 ▲ — won the leaderboard</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,6fr) minmax(0,6fr);gap:36px">
+        <p style="margin:0;font-size:15px;font-weight:600;max-width:560px">A missed detection is a gap in coverage. A false detection is a compliance flag raised against nobody — and a report full of phantom workers gets ignored.</p>
+        <div style="border-left:3px solid #EFE600;padding:2px 0 2px 16px;font-size:12.5px;color:#4A4B47">The honest footnote: the rejected model's person pass is itself incomplete (1,225 images with PPE boxes but no person box), so some of that 0.31 may be the dataset being wrong. Both readings support the same decision.</div>
+      </div>
+      <div style="border:1px solid #C4C6C0;padding:20px 26px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1">THE SHIPPED MODEL, CLASS BY CLASS</div>
+          <span style="font-size:12px;color:#71736D">AP@50, upper bounds. Cross-class confusion ≈ zero — errors go to background, which a threshold can manage. That is why 0.35 works.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 32px;font-family:'IBM Plex Mono',monospace;font-size:12px">
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>helmet</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c1}};background:#141414"></div></div><span>.959</span></div>
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>no-helmet</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c2}};background:#141414"></div></div><span>.922</span></div>
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>boots</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c3}};background:#141414"></div></div><span>.908</span></div>
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>no-boots</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c4}};background:#141414"></div></div><span>.905</span></div>
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>person</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c5}};background:#141414"></div></div><span>.904</span></div>
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>no-vest</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c6}};background:#141414"></div></div><span>.897</span></div>
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>vest</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c7}};background:#141414"></div></div><span>.889</span></div>
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>gloves</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c8}};background:#141414"></div></div><span>.880</span></div>
+          <div style="display:grid;grid-template-columns:82px 1fr 46px;gap:10px;align-items:center"><span>no-gloves</span><div style="height:13px;background:#F0F1EC"><div style="height:100%;width:{{c9}};background:#9B9D97"></div></div><span>.815</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="next" data-screen-label="What next" style="background:#E4E5E2;padding:64px 28px;scroll-margin-top:52px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-30px;right:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:220px;line-height:1;color:rgba(20,20,20,0.05);pointer-events:none">05</div>
+    <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:24px;position:relative">
+      <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#71736D">05 — WHAT WE'D DO NEXT</span>
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;letter-spacing:0.5px;margin:0;line-height:1">THEN RE-MEASURE, AND FIND OUT WHAT WE ACTUALLY BUILT</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+        <div style="background:#FFFFFF;border:1px solid #C4C6C0;border-top:4px solid #141414;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:#C4291D;font-weight:600">CRITICAL</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;line-height:1.05">RE-SPLIT BY CAMERA SESSION</div>
+          <p style="margin:0;font-size:12px;color:#4A4B47">The fix that makes every other number meaningful.</p>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #C4C6C0;border-top:4px solid #141414;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:#C4291D;font-weight:600">CRITICAL</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;line-height:1.05">MASK THE LOSS PER SOURCE</div>
+          <p style="margin:0;font-size:12px;color:#4A4B47">Stop punishing correct predictions of never-annotated classes.</p>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #C4C6C0;border-top:4px solid #9B9D97;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:#71736D;font-weight:600">HIGH</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;line-height:1.05">REBUILD THE MOSAIC SOURCE</div>
+          <p style="margin:0;font-size:12px;color:#4A4B47">Regenerate from the 2,801 base images; discard baked augmentations.</p>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #C4C6C0;border-top:4px solid #9B9D97;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:#71736D;font-weight:600">HIGH</span>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;line-height:1.05">MEASURE PER PERSON</div>
+          <p style="margin:0;font-size:12px;color:#4A4B47">Items-decided-per-person as the dataset metric; cull off-domain.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <a href="HI-VIS.dc.html" style="display:inline-flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:1.5px;background:#141414;color:#FFFFFF;border:2px solid #141414;padding:11px 26px;text-decoration:none" style-hover="background:#EFE600;color:#141414">SEE THE REPORTING INTERFACE
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg></a>
+        <span style="font-size:12.5px;color:#71736D">Interactive prototype — live confidence slider, exception log, CSV export.</span>
+      </div>
+    </div>
+  </section>
+
+  <footer id="team" data-screen-label="Team and caveats" style="background:#141414;color:#FFFFFF;padding:52px 28px 36px;scroll-margin-top:52px">
+    <div style="max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:24px">
+      <div style="display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:40px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="background:#EFE600;color:#141414;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:30px;letter-spacing:1px;padding:3px 12px 5px;line-height:1;align-self:flex-start">HI-VIS</div>
+          <div style="font-size:13.5px;color:#C9CBC4;max-width:380px">A ten-day computer vision project. Le Wagon Data Science &amp; AI, Batch #2303, Bali. Demo Day 4 September 2026.</div>
+          <div style="display:flex;flex-direction:column;gap:4px;font-size:14px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.5px;color:#8D8F8A;margin-bottom:2px">TEAM</span>
+            <span>David Miranda</span><span>Rifky Ariya</span><span>Joanna Gaudyn</span><span>Peter Gerhat</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;font-size:12.5px;color:#C9CBC4">
+            <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2B2C29;padding-bottom:6px"><span style="color:#8D8F8A">Dataset</span><span style="font-family:'IBM Plex Mono',monospace">13,284 images · 92,239 boxes</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2B2C29;padding-bottom:6px"><span style="color:#8D8F8A">Split</span><span style="font-family:'IBM Plex Mono',monospace">10,626 / 1,346 / 1,312</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2B2C29;padding-bottom:6px"><span style="color:#8D8F8A">Training</span><span style="font-family:'IBM Plex Mono',monospace">150 epochs · best at 130 · 6.0 h</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2B2C29;padding-bottom:6px"><span style="color:#8D8F8A">Input</span><span style="font-family:'IBM Plex Mono',monospace">640 × 640 · batch 18</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2B2C29;padding-bottom:6px"><span style="color:#8D8F8A">Framework</span><span style="font-family:'IBM Plex Mono',monospace">Ultralytics 8.4.127 · seed 0</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #2B2C29;padding-bottom:6px"><span style="color:#8D8F8A">Hardware</span><span style="font-family:'IBM Plex Mono',monospace">NVIDIA RTX 5080</span></div>
+          </div>
+          <div style="font-size:11.5px;color:#8D8F8A;line-height:1.6">All mAP, precision and recall figures were measured on the contaminated split and are upper bounds. Three public datasets, licences checked individually; no company, client or own-site photography used at any point. Compiled 28 August 2026.</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid #2B2C29;padding-top:16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#71736D">
+        <span>P0-SAFETY · yolo26m_merged_150e</span>
+        <span>25 workers didn't come home last year. The photos already exist.</span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;caveatRibbon&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Content&quot;}, &quot;auditMethod&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Content&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { p_hero: 0, p_product: 0, p_progression: 0, p_audit: 0, p_call: 0 };
+    this.anims = {};
+  }
+  startAnim(id, dur) {
+    if (this.anims[id]) return;
+    this.anims[id] = true;
+    const t0 = performance.now(), d = dur || 1400;
+    const tick = (t) => {
+      const raw = Math.min(1, (t - t0) / d);
+      const e = 1 - Math.pow(1 - raw, 3);
+      this.setState({ ['p_' + id]: e });
+      if (raw < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  componentDidMount() {
+    this.startAnim('hero', 1600);
+    this.obs = new IntersectionObserver((ents) => {
+      ents.forEach(en => {
+        if (en.isIntersecting) { this.startAnim(en.target.id, 1300); this.obs.unobserve(en.target); }
+      });
+    }, { threshold: 0.15 });
+    ['product', 'progression', 'audit', 'call'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) this.obs.observe(el);
+    });
+  }
+  componentWillUnmount() { if (this.obs) this.obs.disconnect(); }
+  renderVals() {
+    const s = this.state;
+    const w = (target, p) => (target * p).toFixed(1) + '%';
+    const hp = s.p_hero, pp = s.p_product, gp = s.p_progression, ap = s.p_audit, cp = s.p_call;
+    return {
+      showTicker: this.props.caveatRibbon ?? true,
+      showMethod: this.props.auditMethod ?? true,
+      hMap: (0.898 * hp).toFixed(3), hBase: Math.round(48 * hp), hImg: Math.round(80 * hp), hCont: (59.4 * hp).toFixed(1),
+      pDeaths: Math.round(25 * pp), pShare: Math.round(20 * pp), pRate: (4.8 * pp).toFixed(1),
+      bw1: w(60.6, gp), bw2: w(81, gp), bw3: w(86.5, gp), bw4: w(73.4, gp), bw5: w(88.3, gp), bw6: w(89.8, gp), bw7: w(90, gp),
+      lev1: '+' + (0.204 * gp).toFixed(3), lev2: '+' + (0.055 * gp).toFixed(3),
+      aw1: w(80.9, gp), aw2: w(88.8, gp), aw3: w(51.8, gp), aw4: w(66.2, gp),
+      f1n: (59.4 * ap).toFixed(1), f2n: (79.8 * ap).toFixed(1), f3n: (42.6 * ap).toFixed(1), f4n: (1.9 * ap).toFixed(1),
+      cValW: w(59.4, ap), cTestW: w(57.6, ap),
+      cov0: w(15.3, ap), cov1: w(47, ap), cov2: w(31.4, ap), cov3: w(4.3, ap), cov4: w(1.9, ap),
+      c1: w(95.9, cp), c2: w(92.2, cp), c3: w(90.8, cp), c4: w(90.5, cp), c5: w(90.4, cp), c6: w(89.7, cp), c7: w(88.9, cp), c8: w(88, cp), c9: w(81.5, cp)
+    };
+  }
+}
+</script>
+</body>
+</html>

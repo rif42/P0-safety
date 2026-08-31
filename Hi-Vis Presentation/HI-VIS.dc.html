@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#E4E5E2}
+a{color:#141414;text-decoration:underline}
+a:hover{color:#6B6400}
+*{box-sizing:border-box}
+@keyframes hvspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes hvstripe{from{background-position:0 0}to{background-position:28px 0}}
+#hv-thresh{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;cursor:pointer;margin:0}
+#hv-thresh::-webkit-slider-runnable-track{height:4px;background:#141414}
+#hv-thresh::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;background:#EFE600;border:3px solid #141414;margin-top:-9px;box-shadow:none;border-radius:0}
+#hv-thresh::-moz-range-track{height:4px;background:#141414}
+#hv-thresh::-moz-range-thumb{width:16px;height:16px;background:#EFE600;border:3px solid #141414;border-radius:0}
+</style>
+</helmet>
+<div style="min-height:100vh;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#141414;font-size:14px;line-height:1.45">
+  <header style="background:#141414;color:#FFFFFF;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;gap:16px">
+    <div style="display:flex;align-items:center;gap:14px;min-width:0">
+      <div style="background:#EFE600;color:#141414;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;letter-spacing:1px;padding:2px 10px 4px;line-height:1">HI-VIS</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:16px;letter-spacing:2.5px;color:#FFFFFF">PPE COMPLIANCE DETECTION</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8D8F8A;border-left:1px solid #3A3B38;padding-left:14px">YOLO26 · 6 classes</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.5px;color:#141414;background:#D8D9D4;padding:4px 8px">SAMPLE DATA — ILLUSTRATIVE</div>
+    </div>
+  </header>
+  <div style="background:#2B2C29;color:#B9BBB4;display:flex;align-items:center;gap:10px;padding:6px 24px;font-size:12px">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#7E807A">PROTOTYPE STATES</span>
+    <button onClick="{{demoEmpty}}" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;background:transparent;color:#D8D9D4;border:1px solid #55564F;padding:3px 10px;cursor:pointer" style-hover="border-color:#EFE600;color:#EFE600">Empty — before upload</button>
+    <button onClick="{{demoSim}}" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;background:transparent;color:#D8D9D4;border:1px solid #55564F;padding:3px 10px;cursor:pointer" style-hover="border-color:#EFE600;color:#EFE600">Run upload simulation</button>
+    <button onClick="{{demoResults}}" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;background:transparent;color:#D8D9D4;border:1px solid #55564F;padding:3px 10px;cursor:pointer" style-hover="border-color:#EFE600;color:#EFE600">Processed batch</button>
+    <span style="margin-left:auto;font-size:11px;color:#7E807A">Demo controls — not part of the product UI</span>
+  </div>
+
+  <sc-if value="{{isResultsView}}" hint-placeholder-val="{{true}}">
+  <main data-screen-label="Upload and results" style="max-width:1400px;margin:0 auto;padding:20px 24px 48px;display:flex;flex-direction:column;gap:16px">
+
+    <sc-if value="{{zoneEmpty}}" hint-placeholder-val="{{false}}">
+    <section style="background:#FFFFFF;border:2px dashed #141414;padding:56px 32px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v4h16v-4"></path></svg>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:30px;letter-spacing:0.5px;line-height:1">DROP SITE PHOTOS HERE</div>
+      <div style="color:#4A4B47;max-width:460px">Multiple images or a whole folder. Each photo is checked for hardhats, hi-vis vests and boots, person by person.</div>
+      <button onClick="{{demoSim}}" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;letter-spacing:1.5px;background:#EFE600;color:#141414;border:2px solid #141414;padding:10px 26px;cursor:pointer;margin-top:6px" style-hover="background:#141414;color:#EFE600">SELECT PHOTOS</button>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#71736D">JPG · PNG · HEIC — folders accepted</div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{zoneUploading}}" hint-placeholder-val="{{false}}">
+    <section style="background:#FFFFFF;border:1px solid #C4C6C0;padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;letter-spacing:0.5px;line-height:1;white-space:nowrap">UPLOADING {{upDoneCount}} OF 140 FILES</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A4B47">{{upOverallPct}}%</div>
+      </div>
+      <div style="height:8px;background:#E4E5E2;border:1px solid #141414"><div style="height:100%;background:#141414;width:{{upOverallWidth}}"></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <sc-for list="{{upRows}}" as="f" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:220px 1fr 90px 70px;align-items:center;gap:12px;font-size:12px">
+            <div style="font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{f.name}}</div>
+            <div style="height:6px;background:#E4E5E2"><div style="height:100%;background:{{f.barColor}};width:{{f.width}}"></div></div>
+            <div style="color:#71736D;text-align:right">{{f.size}}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;text-align:right;color:#4A4B47">{{f.pctLabel}}</div>
+          </div>
+        </sc-for>
+        <div style="font-size:12px;color:#71736D;margin-top:2px">…and 132 more files queued</div>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{zoneProcessing}}" hint-placeholder-val="{{false}}">
+    <section style="background:#FFFFFF;border:1px solid #C4C6C0;padding:20px 24px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:12px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2.4" style="animation:hvspin 0.9s linear infinite"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;letter-spacing:0.5px">ANALYSING PHOTOS — {{procCount}} OF 140</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;background:#141414;color:#EFE600;padding:4px 8px">YOLO26 · conf ≥ {{thresholdLabel}}</div>
+      </div>
+      <div style="height:8px;border:1px solid #141414;background-image:linear-gradient(45deg,#EFE600 25%,#141414 25%,#141414 50%,#EFE600 50%,#EFE600 75%,#141414 75%);background-size:28px 28px;animation:hvstripe 0.8s linear infinite"><div style="height:100%;background:#FFFFFF;margin-left:{{procWidth}};transition:margin-left 0.1s linear"></div></div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <sc-for list="{{procRows}}" as="q" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px">
+            <span style="font-family:'IBM Plex Mono',monospace;color:{{q.color}}">{{q.status}}</span>
+            <span style="font-family:'IBM Plex Mono',monospace">{{q.name}}</span>
+            <span style="color:#71736D">{{q.note}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+    </sc-if>
+
+    <sc-if value="{{zoneDone}}" hint-placeholder-val="{{true}}">
+    <section style="background:#FFFFFF;border:1px dashed #9B9D97;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.8"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 16v4h16v-4"></path></svg>
+      <div style="font-size:13px"><strong>Batch processed.</strong> Drop more photos here to add them to this record.</div>
+      <button onClick="{{demoSim}}" style="margin-left:auto;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;background:#FFFFFF;color:#141414;border:1px solid #141414;padding:5px 12px;cursor:pointer" style-hover="background:#141414;color:#FFFFFF">Add photos</button>
+    </section>
+    </sc-if>
+
+    <section style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px" data-screen-label="Summary strip">
+      <div style="background:#141414;color:#FFFFFF;padding:16px 20px 14px;display:flex;flex-direction:column;gap:2px">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#9B9D97">PHOTOS PROCESSED</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:56px;line-height:1">{{sumPhotos}}</div>
+        <div style="font-size:12px;color:#9B9D97">{{sumAssessedNote}}</div>
+      </div>
+      <div style="background:{{sumExcBg}};color:#141414;padding:16px 20px 14px;display:flex;flex-direction:column;gap:2px;border:1px solid #141414">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#3A3B30">PPE EXCEPTIONS FLAGGED</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2"><path d="M12 3L2 21h20L12 3z"></path><path d="M12 10v5"></path><path d="M12 18v0.5"></path></svg>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:56px;line-height:1">{{sumExceptions}}</div>
+        </div>
+        <div style="font-size:12px;color:#3A3B30">{{sumExcNote}}</div>
+      </div>
+      <div style="background:#FFFFFF;color:#141414;padding:16px 20px 14px;display:flex;flex-direction:column;gap:2px;border:1px solid #C4C6C0">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:#71736D">IMAGE COMPLIANCE</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1B7A3D" stroke-width="2.4"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:56px;line-height:1">{{sumRate}}</div>
+        </div>
+        <div style="font-size:12px;color:#71736D">{{sumRateNote}}</div>
+      </div>
+    </section>
+
+    <section style="background:#FFFFFF;border:1px solid #C4C6C0;padding:18px 24px;display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:8px 32px;align-items:center" data-screen-label="Confidence threshold">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;letter-spacing:0.5px">DETECTION CONFIDENCE THRESHOLD</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:22px">{{thresholdLabel}}</div>
+      </div>
+      <div style="grid-row:span 2;display:flex;flex-direction:column;gap:6px;justify-content:center">
+        <input id="hv-thresh" type="range" min="0.10" max="0.90" step="0.01" value="{{threshold}}" onChange="{{onThreshold}}" onInput="{{onThreshold}}" aria-label="Detection confidence threshold">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#71736D"><span style="white-space:nowrap">0.10 — catches more</span><span style="white-space:nowrap">default 0.35</span><span style="white-space:nowrap">0.90 — certainty only</span></div>
+      </div>
+      <div style="font-size:12.5px;color:#4A4B47;max-width:420px">Detections below this confidence are ignored. <strong>Lower</strong> catches more missing hardhats but raises false alarms; <strong>higher</strong> reports only what the model is sure of. Results below update live — currently <strong>{{liveExcNote}}</strong>.</div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:10px" data-screen-label="Results gallery">
+      <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;letter-spacing:0.5px;margin:0">RESULTS</h2>
+        <div style="font-size:12px;color:#71736D">{{galleryCountNote}}</div>
+        <div style="margin-left:auto;display:flex;gap:0">
+          <button onClick="{{gAll}}" style="font-size:12px;font-weight:{{gAllW}};background:{{gAllBg}};color:{{gAllFg}};border:1px solid #141414;padding:4px 12px;cursor:pointer">All photos</button>
+          <button onClick="{{gExc}}" style="font-size:12px;font-weight:{{gExcW}};background:{{gExcBg}};color:{{gExcFg}};border:1px solid #141414;border-left:none;padding:4px 12px;cursor:pointer">Exceptions only</button>
+        </div>
+      </div>
+      <sc-if value="{{hasTiles}}" hint-placeholder-val="{{true}}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax({{tileMin}},1fr));gap:12px">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="8">
+          <div onClick="{{t.open}}" role="button" tabIndex="0" style="background:#FFFFFF;border:1px solid #C4C6C0;cursor:pointer;display:flex;flex-direction:column" style-hover="border-color:#141414;outline:2px solid #141414">
+            <div style="position:relative;width:100%;aspect-ratio:4/3;background:#4A4D50;overflow:hidden">{{t.overlay}}</div>
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 9px">
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:0.5px;padding:2px 7px;background:{{t.badgeBg}};color:{{t.badgeFg}};border:1px solid {{t.badgeBd}};white-space:nowrap">{{t.badgeIcon}}{{t.badgeLabel}}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4B47;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{t.file}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+      <sc-if value="{{noTiles}}" hint-placeholder-val="{{false}}">
+      <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:36px;text-align:center;color:#71736D;font-size:13px">No photos in this batch yet. Results appear here as soon as processing finishes.</div>
+      </sc-if>
+      <sc-if value="{{hasMoreTiles}}" hint-placeholder-val="{{false}}">
+      <button onClick="{{showMoreTiles}}" style="align-self:center;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;background:#FFFFFF;color:#141414;border:1px solid #141414;padding:8px 22px;cursor:pointer" style-hover="background:#141414;color:#FFFFFF">{{showMoreLabel}}</button>
+      </sc-if>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:10px" data-screen-label="Exception log">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:26px;letter-spacing:0.5px;margin:0">EXCEPTION LOG</h2>
+        <select value="{{typeFilter}}" onChange="{{onTypeFilter}}" aria-label="Filter by exception type" style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;border:1px solid #141414;background:#FFFFFF;padding:5px 8px;border-radius:0">
+          <option value="all">All exception types</option>
+          <option value="hardhat">Hardhat — absence detected</option>
+          <option value="vest">Hi-vis vest — absence detected</option>
+        </select>
+        <select value="{{verdictFilter}}" onChange="{{onVerdictFilter}}" aria-label="Filter by verdict" style="font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;border:1px solid #141414;background:#FFFFFF;padding:5px 8px;border-radius:0">
+          <option value="noncompliant">Non-compliant only</option>
+          <option value="compliant">Compliant only</option>
+          <option value="all">All assessed persons</option>
+        </select>
+        <button onClick="{{exportCsv}}" style="margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;background:#141414;color:#FFFFFF;border:1px solid #141414;padding:8px 16px;cursor:pointer" style-hover="background:#EFE600;color:#141414">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
+          EXPORT CSV — EXCEPTION LOG
+        </button>
+      </div>
+      <div style="font-size:11.5px;color:#71736D;margin-top:-4px">Export includes date, time, person index, finding, confidence, verdict, the threshold in force and the rule set — suitable for attaching to a site safety report.</div>
+      <div style="background:#FFFFFF;border:1px solid #C4C6C0;overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;min-width:900px">
+          <thead>
+            <tr style="background:#141414;color:#FFFFFF;text-align:left">
+              <th style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:10.5px;letter-spacing:1px;padding:8px 12px">FILENAME</th>
+              <th style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:10.5px;letter-spacing:1px;padding:8px 12px">DATE</th>
+              <th style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:10.5px;letter-spacing:1px;padding:8px 12px">TIME</th>
+              <th style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:10.5px;letter-spacing:1px;padding:8px 12px">PERSON</th>
+              <th style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:10.5px;letter-spacing:1px;padding:8px 12px">FINDING</th>
+              <th style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:10.5px;letter-spacing:1px;padding:8px 12px;text-align:right">CONF</th>
+              <th style="padding:8px 12px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+              <tr onClick="{{r.open}}" style="border-top:1px solid #E4E5E2;cursor:pointer" style-hover="background:#F5F6EE">
+                <td style="font-family:'IBM Plex Mono',monospace;padding:7px 12px;white-space:nowrap">{{r.file}}</td>
+                <td style="padding:7px 12px;white-space:nowrap">{{r.date}}</td>
+                <td style="font-family:'IBM Plex Mono',monospace;padding:7px 12px">{{r.time}}</td>
+                <td style="padding:7px 12px;white-space:nowrap">{{r.person}}</td>
+                <td style="padding:7px 12px"><span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:{{r.findFg}}">{{r.findIcon}}{{r.finding}}</span></td>
+                <td style="font-family:'IBM Plex Mono',monospace;padding:7px 12px;text-align:right">{{r.conf}}</td>
+                <td style="padding:7px 12px;text-align:right;white-space:nowrap"><span style="font-size:11.5px;font-weight:600;text-decoration:underline">View image</span></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+        <sc-if value="{{rowsEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px;text-align:center;color:#71736D;font-size:13px">{{rowsEmptyNote}}</div>
+        </sc-if>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:#71736D">
+        <span>{{rowsCountNote}}</span>
+        <sc-if value="{{hasMoreRows}}" hint-placeholder-val="{{false}}"><button onClick="{{showMoreRows}}" style="font-size:12px;font-weight:600;background:#FFFFFF;border:1px solid #141414;color:#141414;padding:3px 10px;cursor:pointer" style-hover="background:#141414;color:#FFFFFF">Show more rows</button></sc-if>
+      </div>
+      <div style="font-size:11.5px;color:#71736D;border-top:1px solid #C4C6C0;padding-top:10px;margin-top:6px">Rule set: <strong>Hardhat and hi-vis vest required. Boots advisory.</strong> A person is non-compliant when the model makes a positive absence finding (NO-Hardhat / NO-Safety Vest) at or above the threshold. All figures are illustrative sample data.</div>
+    </section>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{isDetailView}}" hint-placeholder-val="{{false}}">
+  <main data-screen-label="Image detail" style="max-width:1400px;margin:0 auto;padding:16px 24px 48px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <button onClick="{{backToResults}}" style="display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;background:#FFFFFF;border:1px solid #141414;color:#141414;padding:7px 14px;cursor:pointer" style-hover="background:#141414;color:#FFFFFF">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 4l-8 8 8 8"></path></svg>
+        RESULTS
+      </button>
+      <div style="display:flex;align-items:baseline;gap:10px;min-width:0;flex-wrap:wrap">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;letter-spacing:0.5px;line-height:1">{{dFile}}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#4A4B47">· {{dDate}} · {{dTime}}</span>
+        <span style="font-size:12px;color:#71736D">{{dPosition}}</span>
+      </div>
+      <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:0.5px;padding:4px 10px;background:{{dBadgeBg}};color:{{dBadgeFg}};border:1px solid {{dBadgeBd}}">{{dBadgeIcon}}{{dBadgeLabel}}</span>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button onClick="{{goPrev}}" aria-label="Previous photo" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;background:#FFFFFF;border:1px solid #141414;color:#141414;padding:7px 12px;cursor:pointer" style-hover="background:#141414;color:#FFFFFF"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 4l-8 8 8 8"></path></svg>PREV</button>
+        <button onClick="{{goNext}}" aria-label="Next photo" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;background:#FFFFFF;border:1px solid #141414;color:#141414;padding:7px 12px;cursor:pointer" style-hover="background:#141414;color:#FFFFFF">NEXT<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 4l8 8-8 8"></path></svg></button>
+        <button onClick="{{goNextException}}" style="display:inline-flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:1px;background:#EFE600;border:2px solid #141414;color:#141414;padding:6px 14px;cursor:pointer" style-hover="background:#141414;color:#EFE600">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3L2 21h20L12 3z"></path><path d="M12 10v5"></path></svg>
+          NEXT EXCEPTION
+        </button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 384px;gap:14px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+        <div style="background:#141414;padding:10px;position:relative">
+          <div style="position:relative;width:100%;aspect-ratio:4/3;background:#4A4D50">{{detailOverlay}}</div>
+          <div style="position:absolute;top:16px;left:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#B9BBB4;background:rgba(20,20,20,0.75);padding:3px 7px">PLACEHOLDER IMAGERY — OVERLAY ILLUSTRATIVE</div>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:10px 14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600"><input type="checkbox" checked="{{showBoxes}}" onChange="{{toggleBoxes}}" style="width:16px;height:16px;accent-color:#141414">Show detection boxes</label>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:12px;color:#71736D">Isolate:</span>
+            <button onClick="{{clearPerson}}" style="font-size:12px;font-weight:{{isoAllW}};background:{{isoAllBg}};color:{{isoAllFg}};border:1px solid #141414;padding:3px 10px;cursor:pointer">All persons</button>
+            <sc-for list="{{isoChips}}" as="p" hint-placeholder-count="2">
+              <button onClick="{{p.select}}" style="font-size:12px;font-weight:{{p.w}};background:{{p.bg}};color:{{p.fg}};border:1px solid #141414;padding:3px 10px;cursor:pointer">{{p.label}}</button>
+            </sc-for>
+          </div>
+          <div style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#4A4B47">threshold {{thresholdLabel}} — set on results screen</div>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #C4C6C0;padding:8px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1px;color:#71736D">CLASS COLOURS</span>
+          <sc-for list="{{legend}}" as="l" hint-placeholder-count="6">
+            <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span style="width:12px;height:12px;border:2px solid {{l.color}};display:inline-block"></span>{{l.name}}</span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="background:#141414;color:#FFFFFF;padding:12px 16px">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:1.5px;color:#9B9D97;margin-bottom:4px">RULE SET APPLIED</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:0.3px;line-height:1.15">Hardhat and hi-vis vest required. Boots advisory.</div>
+          <div style="font-size:11.5px;color:#B9BBB4;margin-top:6px;line-height:1.5">Non-compliant = a positive absence finding (NO-Hardhat / NO-Safety Vest) at confidence ≥ {{thresholdLabel}}. Items the model cannot see are marked not visible and are not assessed.</div>
+        </div>
+
+        <sc-if value="{{dHasPersons}}" hint-placeholder-val="{{true}}">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{cards}}" as="c" hint-placeholder-count="2">
+            <div onClick="{{c.select}}" role="button" tabIndex="0" style="background:#FFFFFF;border:{{c.border}};cursor:pointer;padding:0" style-hover="border-color:#141414">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:{{c.headBg}};border-bottom:1px solid #E4E5E2">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="width:14px;height:14px;border:3px solid {{c.swatch}};display:inline-block"></span>
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:0.5px;color:{{c.headFg}}">{{c.title}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{c.headSub}}">person {{c.conf}}</span>
+                </div>
+                <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:3px 8px;background:{{c.badgeBg}};color:{{c.badgeFg}};border:1px solid {{c.badgeBd}};white-space:nowrap">{{c.badgeIcon}}{{c.badgeLabel}}</span>
+              </div>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{c.items}}" as="it" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:92px 1fr 52px;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid #F0F1EC">
+                    <div style="font-size:12.5px;font-weight:600">{{it.name}}<span style="font-weight:400;color:#9B9D97">{{it.tag}}</span></div>
+                    <div style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:{{it.fg}}">{{it.icon}}{{it.label}}</div>
+                    <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;color:{{it.confFg}}">{{it.conf}}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:8px 14px;font-size:11.5px;color:#71736D">{{c.note}}</div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{dNoPersons}}" hint-placeholder-val="{{false}}">
+        <div style="background:#FFFFFF;border:2px solid #141414;padding:18px 16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2"><path d="M12 3L2 21h20L12 3z"></path><path d="M12 10v5"></path><path d="M12 18v0.5"></path></svg>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;letter-spacing:0.5px;line-height:1">NO PERSON DETECTIONS</div>
+          </div>
+          <div style="font-size:13px;line-height:1.55">The model returned <strong>no Person boxes</strong> for this photo{{dNoPersonThresholdNote}}. It cannot be assessed against the rule set and is <strong>excluded from the compliance rate</strong>.</div>
+          <div style="font-size:12.5px;color:#4A4B47;line-height:1.55">Possible causes: nobody in frame · heavy occlusion · distance or motion blur · extreme lighting. This is different from a compliant result — record it as <strong>not assessed</strong> and review the photo manually.</div>
+          <sc-if value="{{dRecoverable}}" hint-placeholder-val="{{false}}">
+          <div style="font-size:12.5px;background:#F5F6EE;border:1px dashed #9B9D97;padding:8px 10px">Detections exist below the current threshold ({{thresholdLabel}}). Lowering the slider on the results screen may recover them.</div>
+          </sc-if>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+  </sc-if>
+
+  <footer style="max-width:1400px;margin:0 auto;padding:0 24px 28px;font-size:11px;color:#71736D;display:flex;gap:14px;flex-wrap:wrap">
+    <span>HI-VIS — PPE compliance detection</span><span>Model: YOLO26 object detection · classes: Person, Hardhat, NO-Hardhat, Safety Vest, NO-Safety Vest, Boots</span><span>All photographs, detections and figures are illustrative sample data.</span>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;demoState&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;results&quot;, &quot;options&quot;: [&quot;results&quot;, &quot;empty&quot;, &quot;uploading&quot;, &quot;processing&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Prototype&quot;}, &quot;tileDensity&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;comfortable&quot;, &quot;options&quot;: [&quot;comfortable&quot;, &quot;compact&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Gallery&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.images = this.generateBatch();
+    const demo = (props && props.demoState) || 'results';
+    this.state = {
+      view: 'results', uploadState: demo === 'results' ? 'done' : demo,
+      threshold: 0.35, galleryPages: 1, galleryFilter: 'all',
+      rowPages: 1, typeFilter: 'all', verdictFilter: 'noncompliant',
+      detailIdx: null, selectedPerson: null, showBoxes: true,
+      upFiles: [], procCount: 0
+    };
+  }
+  // ---------- data ----------
+  rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  generateBatch() {
+    const R = this.rng(20260828);
+    const months = { 24: '24 August 2026', 25: '25 August 2026', 26: '26 August 2026', 27: '27 August 2026', 28: '28 August 2026' };
+    const EXC = { 3: ['hardhat', 0.41], 11: ['vest', 0.52], 19: ['hardhat', 0.47], 25: ['vest', 0.66], 33: ['hardhat', 0.38], 40: ['vest', 0.58], 47: ['hardhat', 0.72], 58: ['vest', 0.44], 64: ['hardhat', 0.51], 71: ['vest', 0.63], 79: ['hardhat', 0.39], 88: ['vest', 0.55], 95: ['hardhat', 0.48], 102: ['vest', 0.68], 113: ['vest', 0.52], 121: ['hardhat', 0.43], 133: ['hardhat', 0.61] };
+    const FA = { 6: ['vest', 0.22], 15: ['hardhat', 0.31], 29: ['vest', 0.26], 37: ['hardhat', 0.33], 50: ['vest', 0.24], 62: ['hardhat', 0.29], 75: ['vest', 0.34], 86: ['hardhat', 0.27], 99: ['vest', 0.23], 107: ['hardhat', 0.32], 118: ['vest', 0.28], 130: ['hardhat', 0.25] };
+    const FAILURE = 41;
+    const imgs = [];
+    for (let k = 0; k < 140; k++) {
+      const day = 24 + Math.floor(k / 28);
+      const mins = 7 * 60 + (k % 28) * 19 + Math.floor(R() * 12);
+      let time = String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0');
+      if (k === 113) time = '09:14';
+      const img = { idx: k, file: 'IMG_' + (2101 + k) + '.jpg', date: months[day], time, persons: [], scene: Math.floor(R() * 1000) };
+      if (k !== FAILURE) {
+        let n = 1 + Math.floor(R() * 3); if (R() < 0.12) n = 4;
+        const excP = EXC[k] ? Math.floor(R() * n) : -1, faP = FA[k] ? Math.floor(R() * n) : -1;
+        for (let i = 0; i < n; i++) {
+          const w = 22 + R() * 12, h = 58 + R() * 26;
+          const x = 6 + i * (148 / n) + R() * (148 / n - w) * 0.8;
+          const y = 112 - h - R() * 12;
+          const p = { i, conf: +(0.55 + R() * 0.42).toFixed(2), box: [x, y, w, h], items: {} };
+          const mk = (kind) => {
+            let pos = +(0.45 + R() * 0.5).toFixed(2); if (pos > 0.96) pos = 0.96;
+            if (kind !== 'boots' && ((EXC[k] && i === excP && EXC[k][0] === kind) || (FA[k] && i === faP && FA[k][0] === kind))) {
+              const src = (EXC[k] && i === excP && EXC[k][0] === kind) ? EXC[k] : FA[k];
+              return { pos: null, neg: src[1] };
+            }
+            if (kind === 'boots') return R() < 0.72 ? { pos, neg: null } : { pos: null, neg: null };
+            if (R() < 0.08) return { pos: null, neg: null };
+            return { pos, neg: null };
+          };
+          p.items.hardhat = mk('hardhat'); p.items.vest = mk('vest'); p.items.boots = mk('boots');
+          img.persons.push(p);
+        }
+      }
+      imgs.push(img);
+    }
+    return imgs;
+  }
+  assess(img, t) {
+    const persons = img.persons.filter(p => p.conf >= t).map(p => {
+      const st = {};
+      ['hardhat', 'vest', 'boots'].forEach(kind => {
+        const d = p.items[kind];
+        if (d.neg !== null && d.neg >= t) st[kind] = { s: 'missing', conf: d.neg };
+        else if (d.pos !== null && d.pos >= t) st[kind] = { s: 'present', conf: d.pos };
+        else st[kind] = { s: 'notvisible', conf: null };
+      });
+      const bad = (st.hardhat.s === 'missing') || (st.vest.s === 'missing');
+      return { p, st, verdict: bad ? 'non' : 'ok' };
+    });
+    if (!persons.length) return { persons, verdict: 'none' };
+    return { persons, verdict: persons.some(x => x.verdict === 'non') ? 'non' : 'ok' };
+  }
+  findings(t) {
+    const out = [];
+    this.images.forEach(img => {
+      this.assess(img, t).persons.forEach(a => {
+        ['hardhat', 'vest'].forEach(kind => {
+          if (a.st[kind].s === 'missing') out.push({ img, person: a.p.i, kind, conf: a.st[kind].conf, verdict: a.verdict });
+        });
+      });
+    });
+    return out;
+  }
+  // ---------- svg helpers ----------
+  el(t, p, ...ch) { return React.createElement(t, p, ...ch); }
+  icon(kind, color, size) {
+    const s = size || 12, p = { width: s, height: s, viewBox: '0 0 24 24', fill: 'none', stroke: color || 'currentColor', strokeWidth: 3, style: { flex: 'none' } };
+    if (kind === 'check') return this.el('svg', p, this.el('path', { d: 'M4 12.5l5 5L20 6.5' }));
+    if (kind === 'cross') return this.el('svg', p, this.el('path', { d: 'M5 5l14 14M19 5L5 19' }));
+    if (kind === 'warn') return this.el('svg', { ...p, strokeWidth: 2.4 }, this.el('path', { d: 'M12 3L2 21h20L12 3z' }), this.el('path', { d: 'M12 10v5' }));
+    return this.el('svg', p, this.el('path', { d: 'M5 12h14' }));
+  }
+  classMeta() {
+    return {
+      person: { c: '#F2F2F2', n: 'Person' }, hardhat: { c: '#3D9BE9', n: 'Hardhat' }, nohardhat: { c: '#FF4D42', n: 'NO-Hardhat' },
+      vest: { c: '#2FBE6B', n: 'Safety Vest' }, novest: { c: '#FF8A00', n: 'NO-Safety Vest' }, boots: { c: '#B07CFF', n: 'Boots' }
+    };
+  }
+  itemBox(p, kind) {
+    const [x, y, w, h] = p.box;
+    if (kind === 'hardhat') return [x + w * 0.22, y - h * 0.02, w * 0.56, h * 0.16];
+    if (kind === 'vest') return [x + w * 0.05, y + h * 0.22, w * 0.9, h * 0.34];
+    return [x + w * 0.08, y + h * 0.86, w * 0.84, h * 0.14];
+  }
+  sceneRects(img) {
+    const R = this.rng(img.scene + 7), r = [];
+    r.push(this.el('rect', { key: 'sky', x: 0, y: 0, width: 160, height: 120, fill: '#54575B' }));
+    r.push(this.el('rect', { key: 'gnd', x: 0, y: 74 + R() * 14, width: 160, height: 50, fill: '#44474A' }));
+    for (let i = 0; i < 3; i++) r.push(this.el('rect', { key: 'b' + i, x: R() * 140, y: 8 + R() * 40, width: 14 + R() * 40, height: 20 + R() * 55, fill: i % 2 ? '#3A3D40' : '#5E6266' }));
+    return r;
+  }
+  overlaySvg(img, t, opts) {
+    const o = opts || {}, M = this.classMeta(), kids = [...this.sceneRects(img)];
+    const a = this.assess(img, t);
+    if (o.boxes !== false) a.persons.forEach(ap => {
+      const p = ap.p, sel = o.selected == null || o.selected === p.i, op = sel ? 1 : 0.14;
+      const g = [], lw = o.detail ? 0.9 : 1.1;
+      const box = (b, color, label, key, dash) => {
+        g.push(this.el('rect', { key, x: b[0], y: b[1], width: b[2], height: b[3], fill: 'none', stroke: color, strokeWidth: lw, strokeDasharray: dash || 'none' }));
+        if (o.detail && label) {
+          const tw = label.length * 1.72 + 2.4;
+          const ly = b[1] - 4.4 < 0 ? b[1] + 0.6 : b[1] - 4.4; // clamp: drop label inside the box instead of overlapping at y=0
+          g.push(this.el('rect', { key: key + 'lb', x: b[0], y: ly, width: tw, height: 4.4, fill: color }));
+          g.push(this.el('text', { key: key + 'lt', x: b[0] + 1.2, y: ly + 3.3, fontSize: 3.1, fontFamily: "'IBM Plex Mono',monospace", fontWeight: 600, fill: '#141414' }, label));
+        }
+      };
+      box(p.box, M.person.c, 'P' + (p.i + 1) + ' Person ' + p.conf.toFixed(2), 'p' + p.i);
+      ['hardhat', 'vest', 'boots'].forEach(kind => {
+        const st = ap.st[kind]; if (st.s === 'notvisible') return;
+        const neg = st.s === 'missing';
+        const meta = neg ? M[kind === 'hardhat' ? 'nohardhat' : 'novest'] : M[kind];
+        box(this.itemBox(p, kind), meta.c, meta.n + ' ' + st.conf.toFixed(2), 'p' + p.i + kind, neg ? '2.4 1.4' : null);
+      });
+      kids.push(this.el('g', {
+        key: 'g' + p.i, opacity: op, style: { cursor: o.detail ? 'pointer' : 'default', transition: 'opacity 0.15s' },
+        onClick: o.detail ? (e) => { e.stopPropagation(); this.setState(s => ({ selectedPerson: s.selectedPerson === p.i ? null : p.i })); } : undefined
+      }, ...g));
+    });
+    return this.el('svg', { viewBox: '0 0 160 120', preserveAspectRatio: 'xMidYMid slice', style: { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' } }, ...kids);
+  }
+  // ---------- demo simulation ----------
+  applyDemo(mode) {
+    clearInterval(this.timer);
+    if (mode === 'empty') this.setState({ view: 'results', uploadState: 'empty', galleryPages: 1, rowPages: 1 });
+    else if (mode === 'results') this.setState({ view: 'results', uploadState: 'done' });
+    else if (mode === 'uploading' || mode === 'sim') this.startUpload();
+    else if (mode === 'processing') this.startProcessing();
+  }
+  startUpload() {
+    const R = this.rng(99), files = [];
+    for (let i = 0; i < 8; i++) files.push({ name: this.images[i].file, size: (2.1 + R() * 3.4).toFixed(1) + ' MB', pct: 0, speed: 2.5 + R() * 6 });
+    this.setState({ view: 'results', uploadState: 'uploading', upFiles: files });
+    this.timer = setInterval(() => {
+      const done = this.state.upFiles.every(f => f.pct >= 100);
+      if (done) { clearInterval(this.timer); this.startProcessing(); return; }
+      this.setState(s => ({ upFiles: s.upFiles.map(f => ({ ...f, pct: Math.min(100, f.pct + f.speed + Math.random() * 4) })) }));
+    }, 90);
+  }
+  startProcessing() {
+    clearInterval(this.timer);
+    this.setState({ view: 'results', uploadState: 'processing', procCount: 0 });
+    this.timer = setInterval(() => {
+      this.setState(s => {
+        const n = Math.min(140, s.procCount + 1 + Math.floor(Math.random() * 3));
+        if (n >= 140) { clearInterval(this.timer); return { procCount: 140, uploadState: 'done' }; }
+        return { procCount: n };
+      });
+    }, 40);
+  }
+  componentDidMount() {
+    const d = this.props.demoState;
+    if (d === 'uploading' || d === 'processing') this.applyDemo(d);
+    this.keyHandler = (e) => {
+      if (this.state.view !== 'detail') return;
+      if (e.key === 'ArrowLeft') this.step(-1);
+      if (e.key === 'ArrowRight') this.step(1);
+      if (e.key === 'Escape') this.setState({ view: 'results' });
+    };
+    window.addEventListener('keydown', this.keyHandler);
+  }
+  componentWillUnmount() { clearInterval(this.timer); window.removeEventListener('keydown', this.keyHandler); }
+  componentDidUpdate(prev) { if (prev.demoState !== this.props.demoState) this.applyDemo(this.props.demoState || 'results'); }
+  // ---------- navigation ----------
+  openDetail(idx) { this.setState({ view: 'detail', detailIdx: idx, selectedPerson: null }); window.scrollTo(0, 0); }
+  step(d) { this.setState(s => ({ detailIdx: (s.detailIdx + d + 140) % 140, selectedPerson: null })); }
+  nextException() {
+    const t = this.state.threshold, cur = this.state.detailIdx == null ? -1 : this.state.detailIdx;
+    for (let k = 1; k <= 140; k++) { const i = (cur + k) % 140; if (this.assess(this.images[i], t).verdict === 'non') { this.openDetail(i); return; } }
+  }
+  exportCsv() {
+    const t = this.state.threshold, rows = [['filename', 'date', 'time', 'person', 'finding', 'confidence', 'person_verdict', 'threshold', 'rule_set']];
+    const rule = 'Hardhat and hi-vis vest required; boots advisory';
+    this.images.forEach(img => this.assess(img, t).persons.forEach(a => {
+      const miss = ['hardhat', 'vest'].filter(k => a.st[k].s === 'missing');
+      if (miss.length) miss.forEach(k => rows.push([img.file, img.date, img.time, 'Person ' + (a.p.i + 1), (k === 'hardhat' ? 'NO-Hardhat' : 'NO-Safety Vest') + ' — absence detected', a.st[k].conf.toFixed(2), 'non-compliant', t.toFixed(2), rule]));
+      else rows.push([img.file, img.date, img.time, 'Person ' + (a.p.i + 1), 'none — required PPE present', '', 'compliant', t.toFixed(2), rule]);
+    }));
+    const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'hivis-exception-log-28-august-2026-t' + t.toFixed(2).replace('.', '') + '.csv';
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+  // ---------- render ----------
+  renderVals() {
+    const s = this.state, t = s.threshold, M = this.classMeta();
+    const assessments = this.images.map(img => this.assess(img, t));
+    const assessed = assessments.filter(a => a.verdict !== 'none').length;
+    const nonCount = assessments.filter(a => a.verdict === 'non').length;
+    const noneCount = 140 - assessed;
+    const finds = this.findings(t);
+    const rate = assessed ? Math.round((assessed - nonCount) / assessed * 100) : 0;
+    const empty = s.uploadState !== 'done', done = s.uploadState === 'done';
+    const badge = (v) => v === 'non'
+      ? { badgeBg: '#C4291D', badgeFg: '#FFFFFF', badgeBd: '#C4291D', badgeIcon: this.icon('cross', '#FFFFFF', 10), badgeLabel: 'NON-COMPLIANT' }
+      : v === 'ok'
+        ? { badgeBg: '#FFFFFF', badgeFg: '#1B7A3D', badgeBd: '#1B7A3D', badgeIcon: this.icon('check', '#1B7A3D', 10), badgeLabel: 'COMPLIANT' }
+        : { badgeBg: '#E4E5E2', badgeFg: '#4A4B47', badgeBd: '#9B9D97', badgeIcon: this.icon('warn', '#4A4B47', 10), badgeLabel: 'NOT ASSESSED' };
+    // gallery
+    const filtered = this.images.filter((img, i) => s.galleryFilter === 'all' ? true : assessments[i].verdict !== 'ok');
+    const pageSize = 28, visible = filtered.slice(0, s.galleryPages * pageSize);
+    const tileDensity = this.props.tileDensity || 'comfortable';
+    const tiles = done ? visible.map(img => {
+      const b = badge(assessments[img.idx].verdict);
+      return { file: img.file, overlay: this.overlaySvg(img, t, {}), open: () => this.openDetail(img.idx), ...b };
+    }) : [];
+    // table
+    let rows = [];
+    if (done) {
+      if (s.verdictFilter === 'noncompliant') {
+        rows = finds.filter(f => s.typeFilter === 'all' || f.kind === s.typeFilter).map(f => ({
+          file: f.img.file, date: f.img.date, time: f.img.time, person: 'Person ' + (f.person + 1),
+          finding: (f.kind === 'hardhat' ? 'Hardhat — absence detected (NO-Hardhat)' : 'Hi-vis vest — absence detected (NO-Safety Vest)'),
+          findFg: '#C4291D', findIcon: this.icon('cross', '#C4291D', 10), conf: f.conf.toFixed(2), open: () => this.openDetail(f.img.idx)
+        }));
+      } else {
+        this.images.forEach((img, i) => assessments[i].persons.forEach(a => {
+          const isNon = a.verdict === 'non';
+          if (s.verdictFilter === 'compliant' && isNon) return;
+          if (s.verdictFilter === 'compliant' || s.verdictFilter === 'all') {
+            if (isNon) {
+              ['hardhat', 'vest'].forEach(k => { if (a.st[k].s !== 'missing') return; if (s.typeFilter !== 'all' && s.typeFilter !== k) return;
+                rows.push({ file: img.file, date: img.date, time: img.time, person: 'Person ' + (a.p.i + 1), finding: (k === 'hardhat' ? 'Hardhat — absence detected (NO-Hardhat)' : 'Hi-vis vest — absence detected (NO-Safety Vest)'), findFg: '#C4291D', findIcon: this.icon('cross', '#C4291D', 10), conf: a.st[k].conf.toFixed(2), open: () => this.openDetail(img.idx) }); });
+            } else if (s.typeFilter === 'all') {
+              rows.push({ file: img.file, date: img.date, time: img.time, person: 'Person ' + (a.p.i + 1), finding: 'None — required PPE present', findFg: '#1B7A3D', findIcon: this.icon('check', '#1B7A3D', 10), conf: Math.min(...['hardhat', 'vest'].map(k => a.st[k].conf || 1)).toFixed(2), open: () => this.openDetail(img.idx) });
+            }
+          }
+        }));
+      }
+    }
+    const rowCap = s.rowPages * 30, rowsShown = rows.slice(0, rowCap);
+    // detail
+    let detail = {};
+    if (s.view === 'detail' && s.detailIdx != null) {
+      const img = this.images[s.detailIdx], a = assessments[s.detailIdx], b = badge(a.verdict);
+      const stMeta = {
+        present: (c) => ({ fg: '#1B7A3D', icon: this.icon('check', '#1B7A3D', 11), label: 'PRESENT', conf: c.toFixed(2), confFg: '#141414' }),
+        missing: (c) => ({ fg: '#C4291D', icon: this.icon('cross', '#C4291D', 11), label: 'MISSING — ABSENCE DETECTED', conf: c.toFixed(2), confFg: '#C4291D' }),
+        notvisible: () => ({ fg: '#71736D', icon: this.icon('dash', '#71736D', 11), label: 'NOT VISIBLE — NOT ASSESSED', conf: '—', confFg: '#9B9D97' })
+      };
+      const names = { hardhat: 'Hardhat', vest: 'Hi-vis vest', boots: 'Boots' };
+      detail = {
+        dFile: img.file, dDate: img.date, dTime: img.time,
+        dPosition: 'Photo ' + (s.detailIdx + 1) + ' of 140',
+        ...Object.fromEntries(Object.entries(b).map(([k, v]) => ['d' + k.charAt(0).toUpperCase() + k.slice(1), v])),
+        dBadgeBg: b.badgeBg, dBadgeFg: b.badgeFg, dBadgeBd: b.badgeBd, dBadgeIcon: b.badgeIcon, dBadgeLabel: b.badgeLabel,
+        detailOverlay: this.overlaySvg(img, t, { detail: true, boxes: s.showBoxes, selected: s.selectedPerson }),
+        dHasPersons: a.persons.length > 0, dNoPersons: a.persons.length === 0,
+        dRecoverable: a.persons.length === 0 && img.persons.length > 0,
+        dNoPersonThresholdNote: img.persons.length === 0 ? ' at any confidence' : ' at confidence ≥ ' + t.toFixed(2),
+        isoChips: a.persons.map(ap => ({
+          label: 'P' + (ap.p.i + 1),
+          select: () => this.setState(st => ({ selectedPerson: st.selectedPerson === ap.p.i ? null : ap.p.i })),
+          bg: s.selectedPerson === ap.p.i ? '#141414' : '#FFFFFF', fg: s.selectedPerson === ap.p.i ? '#EFE600' : '#141414', w: s.selectedPerson === ap.p.i ? 700 : 400
+        })),
+        cards: a.persons.map(ap => {
+          const sel = s.selectedPerson === ap.p.i, cb = badge(ap.verdict);
+          const notes = [];
+          ['hardhat', 'vest'].forEach(k => { if (ap.st[k].s === 'notvisible') notes.push(names[k] + ' not visible — not assessed under the rule set'); });
+          if (ap.st.boots.s === 'notvisible') notes.push('Boots not visible (advisory only)');
+          return {
+            title: 'PERSON ' + (ap.p.i + 1), conf: ap.p.conf.toFixed(2), swatch: sel ? '#EFE600' : '#F2F2F2',
+            border: sel ? '2px solid #141414' : '1px solid #C4C6C0',
+            headBg: sel ? '#141414' : '#F5F6EE', headFg: sel ? '#FFFFFF' : '#141414', headSub: sel ? '#9B9D97' : '#71736D',
+            badgeBg: cb.badgeBg, badgeFg: cb.badgeFg, badgeBd: cb.badgeBd, badgeIcon: cb.badgeIcon, badgeLabel: cb.badgeLabel,
+            select: () => this.setState(st => ({ selectedPerson: st.selectedPerson === ap.p.i ? null : ap.p.i })),
+            note: notes.length ? notes.join(' · ') : (ap.verdict === 'non' ? 'Verdict from rule: required item positively absent at ≥ ' + t.toFixed(2) : 'Verdict from rule: all required PPE present at ≥ ' + t.toFixed(2)),
+            items: ['hardhat', 'vest', 'boots'].map(k => ({ name: names[k], tag: k === 'boots' ? ' (advisory)' : '', ...stMeta[ap.st[k].s](ap.st[k].conf) }))
+          };
+        })
+      };
+    }
+    return {
+      isResultsView: s.view === 'results', isDetailView: s.view === 'detail',
+      demoEmpty: () => this.applyDemo('empty'), demoSim: () => this.applyDemo('sim'), demoResults: () => this.applyDemo('results'),
+      zoneEmpty: empty, zoneUploading: s.uploadState === 'uploading', zoneProcessing: s.uploadState === 'processing', zoneDone: done,
+      upRows: s.upFiles.map(f => ({ name: f.name, size: f.size, width: Math.round(f.pct) + '%', pctLabel: f.pct >= 100 ? 'done' : Math.round(f.pct) + '%', barColor: f.pct >= 100 ? '#1B7A3D' : '#141414' })),
+      upDoneCount: s.upFiles.filter(f => f.pct >= 100).length, upOverallPct: Math.round(s.upFiles.reduce((a, f) => a + f.pct, 0) / Math.max(1, s.upFiles.length)),
+      upOverallWidth: Math.round(s.upFiles.reduce((a, f) => a + f.pct, 0) / Math.max(1, s.upFiles.length)) + '%',
+      procCount: s.procCount, procWidth: (100 - Math.round(s.procCount / 140 * 100)) + '%',
+      procRows: [0, 1, 2].map(o => { const i = Math.min(139, s.procCount + o); return o === 0 ? { status: '▸ RUN', color: '#141414', name: this.images[i].file, note: 'detecting 6 classes…' } : { status: 'QUEUE', color: '#9B9D97', name: this.images[i].file, note: '' }; }),
+      sumPhotos: empty ? (s.uploadState === 'processing' ? String(s.procCount) : '—') : '140',
+      sumAssessedNote: empty ? (s.uploadState === 'processing' ? 'Processing — figures update when the batch completes' : s.uploadState === 'uploading' ? 'Upload in progress' : 'No photos uploaded yet') : assessed + ' assessed · ' + noneCount + ' with no person detections',
+      sumExceptions: empty ? '—' : String(finds.length), sumExcBg: empty ? '#FFFFFF' : '#EFE600',
+      sumExcNote: empty ? 'Figures appear when processing completes' : nonCount + ' photos with at least one exception',
+      sumRate: empty ? '—' : rate + '%', sumRateNote: empty ? 'Awaiting first batch' : (assessed - nonCount) + ' of ' + assessed + ' assessed photos fully compliant',
+      threshold: t, thresholdLabel: t.toFixed(2),
+      onThreshold: (e) => this.setState({ threshold: parseFloat(e.target.value), galleryPages: 1, rowPages: 1 }),
+      liveExcNote: empty ? 'no batch loaded' : finds.length + ' exceptions across ' + assessed + ' assessed photos',
+      galleryCountNote: empty ? '' : 'Showing ' + tiles.length + ' of ' + filtered.length + (s.galleryFilter === 'all' ? ' photos' : ' photos with exceptions or no detections') + ' · boxes drawn at threshold ' + t.toFixed(2),
+      gAll: () => this.setState({ galleryFilter: 'all', galleryPages: 1 }), gExc: () => this.setState({ galleryFilter: 'exc', galleryPages: 1 }),
+      gAllBg: s.galleryFilter === 'all' ? '#141414' : '#FFFFFF', gAllFg: s.galleryFilter === 'all' ? '#FFFFFF' : '#141414', gAllW: s.galleryFilter === 'all' ? 700 : 400,
+      gExcBg: s.galleryFilter === 'exc' ? '#141414' : '#FFFFFF', gExcFg: s.galleryFilter === 'exc' ? '#FFFFFF' : '#141414', gExcW: s.galleryFilter === 'exc' ? 700 : 400,
+      tileMin: tileDensity === 'compact' ? '160px' : '205px',
+      tiles, hasTiles: done && tiles.length > 0, noTiles: !done,
+      hasMoreTiles: done && filtered.length > tiles.length,
+      showMoreTiles: () => this.setState(st => ({ galleryPages: st.galleryPages + 1 })),
+      showMoreLabel: 'Show more (' + (filtered.length - tiles.length) + ' remaining)',
+      typeFilter: s.typeFilter, onTypeFilter: (e) => this.setState({ typeFilter: e.target.value, rowPages: 1 }),
+      verdictFilter: s.verdictFilter, onVerdictFilter: (e) => this.setState({ verdictFilter: e.target.value, rowPages: 1 }),
+      rows: rowsShown, rowsEmpty: done && rows.length === 0,
+      rowsEmptyNote: s.verdictFilter === 'noncompliant' ? 'No exceptions at threshold ' + t.toFixed(2) + ' with this filter.' : 'No rows match the current filters.',
+      rowsCountNote: done ? 'Showing ' + rowsShown.length + ' of ' + rows.length + ' rows at threshold ' + t.toFixed(2) : 'No batch processed yet — the log fills in as photos are analysed.',
+      hasMoreRows: rows.length > rowsShown.length,
+      showMoreRows: () => this.setState(st => ({ rowPages: st.rowPages + 1 })),
+      exportCsv: () => this.exportCsv(),
+      legend: [M.person, M.hardhat, M.nohardhat, M.vest, M.novest, M.boots].map(m => ({ name: m.n, color: m.c })),
+      backToResults: () => this.setState({ view: 'results' }),
+      goPrev: () => this.step(-1), goNext: () => this.step(1), goNextException: () => this.nextException(),
+      showBoxes: s.showBoxes, toggleBoxes: (e) => this.setState({ showBoxes: e.target.checked }),
+      clearPerson: () => this.setState({ selectedPerson: null }),
+      isoAllBg: s.selectedPerson == null ? '#141414' : '#FFFFFF', isoAllFg: s.selectedPerson == null ? '#EFE600' : '#141414', isoAllW: s.selectedPerson == null ? 700 : 400,
+      ...detail
+    };
+  }
+}
+</script>
+</body>
+</html>
