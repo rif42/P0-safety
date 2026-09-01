@@ -23,7 +23,7 @@ visible rather than silently baked into the metrics. The live feed also
 draws the dataset's own ground-truth boxes on each thumbnail, so the gap
 (or lack of one) is visible at a glance too, not just in the numbers.
 
-Pause/resume: same story as live_compare.py — a "Pause" click aborts the
+Pause/resume: same story as llm_comparison.py — a "Pause" click aborts the
 running script the same way Streamlit's native Stop does (no cleanup hook
 either way), so what makes a paused run resumable is the checkpoint
 already on disk (person_counts.csv/person_items.csv, written every 10
@@ -40,10 +40,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 import yaml
 from PIL import Image, ImageDraw
+
+alt.themes.enable("none")
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_ROOT))
@@ -63,13 +66,36 @@ from model_adapters import ADAPTERS, CHECKLIST_ITEMS, DEFAULT_PROMPT_TEMPLATE  #
 import view_helpers as vh
 
 st.markdown(vh.HV_STYLE_CSS, unsafe_allow_html=True)
-st.markdown(vh.header_html("PERSON CHECKLIST COMPARISON", "how many people, and what are they wearing?"),
+st.markdown(vh.header_html("LLM vs YOLO (PERSON DETECTION)", "how many people, and what are they wearing?"),
             unsafe_allow_html=True)
 
+INK = "#141414"
 MUTED = "#71736D"
+FAINT = "#C4C6C0"
 GT_BOX_COLOR = "#1B7A3D"
+POSITIVE_GREEN = "#1B7A3D"  # matches this app's existing compliant=green convention
+NEGATIVE_RED = "#B02A20"    # matches this app's existing non-compliant=red convention
+CHART_FONT = "IBM Plex Sans, sans-serif"
 SERIES = ["person"] + CHECKLIST_ITEMS + [f"no-{item}" for item in CHECKLIST_ITEMS]
 CLASS_NAMES = yaml.safe_load((MERGED_ROOT / "data.yaml").read_text())["names"]
+
+
+def stat_tile(label, value, note, bg=INK, fg="#FFFFFF", border=None):
+    border_css = f"border:1px solid {border};" if border else ""
+    return f"""
+    <div style="background:{bg};color:{fg};{border_css}padding:16px 20px 14px">
+      <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:{'#9B9D97' if bg == INK else MUTED}">{label}</div>
+      <div class="hv-h1" style="font-size:44px;line-height:1;color:{fg}">{value}</div>
+      <div style="font-size:12px;color:{'#9B9D97' if bg == INK else MUTED}">{note}</div>
+    </div>"""
+
+
+def model_chip(name):
+    bg = INK if name == "yolo" else "#FFFFFF"
+    fg = "#FFFFFF" if name == "yolo" else INK
+    border = INK if name == "yolo" else FAINT
+    return (f'<span class="hv-mono" style="display:inline-block;font-size:10.5px;padding:3px 8px;'
+            f'background:{bg};color:{fg};border:1px solid {border};margin:2px 4px 2px 0;white-space:nowrap">{name}</span>')
 
 st.caption(
     "Every model gets one prompt: count the people, then check helmet/vest/gloves/boots for "
@@ -155,7 +181,7 @@ def enhance_gt(gt_count, model_counts_by_model):
 
 # ---------------------------------------------------------------------------
 # run history — finished runs, and paused ones that can be resumed. Filtered
-# to kind=="checklist" so this page's runs and live_compare.py's don't show
+# to kind=="checklist" so this page's runs and llm_comparison.py's don't show
 # up in each other's lists — both write run_config.json/run_manifest.json.
 # ---------------------------------------------------------------------------
 
@@ -231,6 +257,22 @@ def load_existing_checklist_rows(run_dir):
 # shared rendering
 # ---------------------------------------------------------------------------
 
+def ratio_chip(item, count, total):
+    """Green = every detected person has this item, red = nobody does,
+    yellow (this app's existing attention/exception color) = some do —
+    quicker to scan than a bare "2/5" the way the old plain-text line was."""
+    if total == 0:
+        bg, fg = "#E4E5E2", MUTED
+    elif count == total:
+        bg, fg = POSITIVE_GREEN, "#FFFFFF"
+    elif count == 0:
+        bg, fg = NEGATIVE_RED, "#FFFFFF"
+    else:
+        bg, fg = "#EFE600", INK
+    return (f'<span class="hv-mono" style="display:inline-block;font-size:10px;padding:2px 7px;'
+            f'margin:2px 3px 2px 0;background:{bg};color:{fg};white-space:nowrap">{item} {count}/{total}</span>')
+
+
 def render_file_card(feed, model_names, file_stem, buf):
     with feed:
         cols = st.columns([1, 3])
@@ -240,17 +282,25 @@ def render_file_card(feed, model_names, file_stem, buf):
             cols[0].image(draw_gt_overlay(img_path, gt_boxes) if gt_boxes else str(img_path), width="stretch")
             cols[0].caption(f"ground truth: {len(gt_boxes)} box(es)" if gt_boxes else "no ground-truth boxes for this image")
         with cols[1]:
-            st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED}">{file_stem}</div>',
+            st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin-bottom:4px">{file_stem}</div>',
                         unsafe_allow_html=True)
             for name in model_names:
                 counts = buf.get(name)
                 if counts is None:
-                    st.markdown(f'<div><b>{name}</b>: <span style="color:{MUTED}">parse error</span></div>',
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
+                        f'{model_chip(name)}<span style="color:{MUTED};font-size:11px">parse error</span></div>',
+                        unsafe_allow_html=True,
+                    )
                     continue
-                items_line = " · ".join(f"{item} {counts[item]}/{counts['person']}" for item in CHECKLIST_ITEMS)
-                st.markdown(f"<div><b>{name}</b>: {counts['person']} people — {items_line}</div>",
-                            unsafe_allow_html=True)
+                n = counts["person"]
+                items_chips = "".join(ratio_chip(item, counts[item], n) for item in CHECKLIST_ITEMS)
+                st.markdown(
+                    f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">'
+                    f'{model_chip(name)}<b class="hv-h1" style="font-size:16px">{n}</b>'
+                    f'<span style="font-size:11px;color:{MUTED}">people</span>{items_chips}</div>',
+                    unsafe_allow_html=True,
+                )
         st.markdown("<hr style='margin:6px 0'>", unsafe_allow_html=True)
 
 
@@ -292,7 +342,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
     feed = st.container()
 
     # Replay whatever this run already has on disk (a resume) before the
-    # live loop continues — same file-boundary logic as live_compare.py: a
+    # live loop continues — same file-boundary logic as llm_comparison.py: a
     # fully-covered file gets its final card now, a file caught mid-way
     # seeds file_buf/current_file so the loop below merges into it.
     file_buf = {}
@@ -494,37 +544,60 @@ per_image = pd.DataFrame(per_image_rows)
 # --- headline: how often the labels undercount, and where ------------------
 person_rows = per_image[per_image["series"] == "person"]
 n_flagged = int(person_rows["flagged"].sum())
-t1, t2, t3 = st.columns(3)
-t1.metric("Images scored", len(sampled_files))
-t2.metric("Person-count flagged", n_flagged,
-          help="Images where the model consensus claims MORE people than our labels have a Person box for.")
-t3.metric("Flagged rate", f"{n_flagged / len(sampled_files):.0%}" if sampled_files else "—")
+flag_rate = n_flagged / len(sampled_files) if sampled_files else 0.0
+st.markdown(
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px">'
+    + stat_tile("IMAGES SCORED", len(sampled_files), "test images in this run")
+    + stat_tile("PERSON-COUNT FLAGGED", n_flagged,
+                "images where model consensus > label's person count", bg="#FFFFFF", fg=INK, border=FAINT)
+    + stat_tile("FLAGGED RATE", f"{flag_rate:.0%}",
+                "how often the label likely undercounts people",
+                bg="#EFE600" if n_flagged else "#FFFFFF", fg=INK, border=None if n_flagged else FAINT)
+    + "</div>",
+    unsafe_allow_html=True,
+)
 
 if n_flagged:
-    st.subheader("Flagged images — label undercounts people vs. model consensus")
+    st.markdown('<div class="hv-h1" style="font-size:18px;margin-bottom:2px">FLAGGED IMAGES</div>', unsafe_allow_html=True)
+    st.caption("Label undercounts people vs. model consensus — the label count is likely wrong, not every model at once.")
     flagged_view = person_rows[person_rows["flagged"]][["file", "gt", "consensus", "effective_gt"]].rename(
         columns={"gt": "label person count", "consensus": "model consensus", "effective_gt": "effective (used below)"}
     )
-    st.dataframe(flagged_view, hide_index=True, width="stretch")
+    st.dataframe(
+        flagged_view, hide_index=True, width="stretch",
+        column_config={
+            "label person count": st.column_config.NumberColumn(),
+            "model consensus": st.column_config.NumberColumn(),
+            "effective (used below)": st.column_config.NumberColumn(help="max(label, consensus) — what's actually scored against"),
+        },
+    )
 
-    st.subheader("Which sources it's prone to")
+    st.markdown('<div class="hv-h1" style="font-size:18px;margin:18px 0 2px">WHICH SOURCES IT\'S PRONE TO</div>',
+                unsafe_allow_html=True)
     st.caption("Filename prefix before \"__\" identifies the original dataset a test image came from.")
     person_rows = person_rows.copy()
     person_rows["source"] = person_rows["file"].str.split("__").str[0]
-    by_source = person_rows.groupby("source").agg(images=("file", "count"), flagged=("flagged", "sum"))
-    by_source["flag_rate"] = (by_source["flagged"] / by_source["images"]).round(2)
-    st.dataframe(by_source.sort_values("flag_rate", ascending=False), width="stretch")
+    by_source = (
+        person_rows.groupby("source").agg(images=("file", "count"), flagged=("flagged", "sum"))
+        .assign(flag_rate=lambda d: d["flagged"] / d["images"])
+        .sort_values("flag_rate", ascending=False)
+    )
+    st.dataframe(
+        by_source, width="stretch",
+        column_config={"flag_rate": st.column_config.ProgressColumn("flag rate", format="%.0f%%", min_value=0, max_value=1)},
+    )
 else:
     st.caption("No images where model consensus exceeded the label's person count in this run.")
 
-st.divider()
+st.markdown("<hr style='margin:24px 0 18px'/>", unsafe_allow_html=True)
 
 # --- per-series accuracy against the ENHANCED ground truth ------------------
-st.subheader("Count accuracy per model (scored against the enhanced ground truth above)")
+st.markdown('<div class="hv-h1" style="font-size:20px;margin-bottom:2px">COUNT ACCURACY PER MODEL</div>', unsafe_allow_html=True)
 st.caption(
-    "Exact-match rate: fraction of images where the model's count equals the effective ground "
-    "truth exactly. Mean abs. error: average |model count − effective ground truth|, lower is "
-    "better. Only images the model actually answered (no parse failure) count toward either."
+    "Scored against the enhanced ground truth above. Exact-match rate: fraction of images where the "
+    "model's count equals it exactly — higher is better. Mean abs. error: average |model count − "
+    "effective ground truth| — lower is better. Only images the model actually answered (no parse "
+    "failure) count toward either."
 )
 macro_rows = []
 for series in SERIES:
@@ -544,13 +617,48 @@ macro = pd.DataFrame(macro_rows)
 if macro.empty:
     st.caption("No answered pairs to score yet.")
 else:
-    exact_pivot = macro.pivot(index="series", columns="model", values="exact_match_rate").reindex(SERIES)
-    st.caption("Exact-match rate by class (rows) and model (columns)")
-    st.bar_chart(exact_pivot, stack=False)  # grouped, not stacked — independent 0-1 rates, not parts of a whole
+    model_order = sorted(macro["model"].unique(), key=lambda m: (m != "yolo", m))
+    POSITIVE_SET = {"person", *CHECKLIST_ITEMS}
 
-    error_pivot = macro.pivot(index="series", columns="model", values="mean_abs_error").reindex(SERIES)
-    st.caption("Mean absolute count error by class (rows) and model (columns) — lower is better")
-    st.bar_chart(error_pivot, stack=False)
+    def series_bar(df, value_col, value_label, y_domain):
+        df = df.rename(columns={value_col: "value"}).copy()
+        df["group"] = df["series"].apply(lambda s: "Positive (present)" if s in POSITIVE_SET else "Negative (absent)")
+        bar = (
+            alt.Chart()
+            .mark_bar(size=14, cornerRadiusTopLeft=2, cornerRadiusTopRight=2)
+            .encode(
+                x=alt.X("series:N", title=None, sort=SERIES, axis=alt.Axis(labelAngle=-40, labelFontSize=10)),
+                y=alt.Y("value:Q", title=value_label, scale=alt.Scale(domain=y_domain)),
+                color=alt.Color("group:N", title=None,
+                                 scale=alt.Scale(domain=["Positive (present)", "Negative (absent)"], range=[INK, NEGATIVE_RED])),
+                tooltip=[alt.Tooltip("model:N", title="Model"), alt.Tooltip("series:N", title="Class"),
+                         alt.Tooltip("value:Q", title=value_label, format=".2f"), alt.Tooltip("n:Q", title="images")],
+            )
+        )
+        text = (
+            alt.Chart().mark_text(dy=-5, font=CHART_FONT, fontSize=9, color=INK)
+            .encode(x=alt.X("series:N", sort=SERIES, axis=None), y="value:Q", text=alt.Text("value:Q", format=".2f"))
+        )
+        return (
+            alt.layer(bar, text, data=df)
+            .properties(width=26 * len(SERIES), height=210)
+            .facet(column=alt.Column("model:N", title=None, sort=model_order,
+                                      header=alt.Header(labelFont=CHART_FONT, labelFontSize=12.5, labelColor=INK, labelOrient="bottom")))
+            .configure_view(strokeWidth=0)
+            .configure_axis(labelFont=CHART_FONT, titleFont=CHART_FONT, labelColor=MUTED, titleColor=INK,
+                             grid=False, domainColor=FAINT, tickColor=FAINT, labelFontSize=10.5, titleFontSize=11.5)
+            .configure_legend(labelFont=CHART_FONT, titleFont=CHART_FONT, labelColor=INK, titleColor=INK,
+                               labelFontSize=11.5, titleFontSize=11.5, orient="top", symbolType="square")
+        )
+
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 2px">EXACT-MATCH RATE</div>', unsafe_allow_html=True)
+    st.altair_chart(series_bar(macro, "exact_match_rate", "Exact-match rate", [0, 1.05]), width="stretch")
+
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:20px 0 2px">MEAN ABSOLUTE COUNT ERROR (lower is better)</div>',
+                unsafe_allow_html=True)
+    err_max = macro["mean_abs_error"].max()
+    st.altair_chart(series_bar(macro, "mean_abs_error", "Mean abs. error", [0, err_max * 1.15 if err_max else 1]),
+                     width="stretch")
 
     with st.expander("Full numbers"):
         st.dataframe(macro, hide_index=True, width="stretch")

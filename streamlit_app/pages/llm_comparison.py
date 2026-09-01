@@ -1,26 +1,40 @@
-"""HI-VIS — LLM/VLM vs. our trained YOLO detector, presented as two slides.
+"""HI-VIS — LLM/VLM vs. our trained YOLO detector, presence/absence only
+("person agnostic" — no per-person split, no boxes; see the Person
+Checklist page for the per-person comparison). One page, two halves:
 
-Slide 1 (ALL RUNS) is built live from every `runs/llm/*/run_manifest.json`
-on disk, plus any `prompt_comparison.csv` runs that have no manifest (the
-qualitative, unscored ones) — this is a survey of the whole comparison
-effort, not just the final numbers. Slide 2 (LATEST RUN) scores the most
-recent scored run (by manifest `created_at`) live from its `presence.csv`
-against `data/merged/labels_long.csv` + `data.yaml`, falling back to the
-baked-in numbers from `reports/llm_vs_yolo_comparison.md` if the ground
-truth files aren't present on this checkout (they're git-ignored, like the
-rest of `data/`) — same pattern `pages/demo.py` uses for missing weights:
-degrade with an explanation, never fake a result.
+1. RUN A NEW COMPARISON — same generator scripts/compare_models.py's CLI
+   uses (run_comparison_steps()), streamed live into this tab. Checkpoints
+   to runs/llm/ every 10 pairs; PAUSED RUNS below lists anything that got
+   interrupted (Pause button, or Streamlit's own Stop) so it can be picked
+   up again without re-spending API calls on work already done. Finishing
+   a run here clears the caches below so it shows up immediately, no
+   reload needed.
+2. REVIEW RESULTS — two slides. ALL RUNS is built live from every
+   `runs/llm/*/run_manifest.json` on disk, plus any `prompt_comparison.csv`
+   runs that have no manifest (the qualitative, unscored ones). LATEST RUN
+   scores the most recent scored run (by manifest `created_at`) live from
+   its `presence.csv` against `data/merged/labels_long.csv` + `data.yaml`,
+   falling back to the baked-in numbers from `reports/llm_vs_yolo_comparison.md`
+   if the ground truth files aren't present on this checkout (they're
+   git-ignored) — same pattern `pages/demo.py` uses for missing weights:
+   degrade with an explanation, never fake a result.
 
-Color: sequential black->white for the F1 heatmap (magnitude, one hue);
-categorical black-vs-muted-grey for "ours vs. every VLM" in the bar chart,
-with red reserved for negative-class bars specifically (matches this app's
-existing non-compliant=red convention) — never a rainbow, never color-only
-identity (every bar/cell is also directly labeled).
+Color: sequential black->white for the accuracy heatmap (magnitude, one
+hue); categorical black-vs-muted-grey for "ours vs. every VLM" in the bar
+chart, with red reserved for negative-class bars specifically (matches
+this app's existing non-compliant=red convention); green for a live run's
+positive-class chips (matches the compliant=green convention) — never a
+rainbow, never color-only identity (every bar/cell/chip is also directly
+labeled).
 """
 
 import glob
 import json
+import sys
+import time
+from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import altair as alt
 import pandas as pd
@@ -28,32 +42,33 @@ import streamlit as st
 import yaml
 from PIL import Image
 
+SCRIPTS_ROOT = Path(__file__).resolve().parents[2] / "scripts"
+sys.path.insert(0, str(SCRIPTS_ROOT))
+from compare_models import (  # noqa: E402
+    DATASET_NAME,
+    DEFAULT_YOLO_WEIGHTS,
+    MERGED_ROOT,
+    LLM_RUNS_ROOT as RUNS_LLM_ROOT,
+    build_adapter,
+    build_run_name,
+    image_path_for,
+    run_comparison_steps,
+    sample_test_images,
+)
+from gemini_prompt_comparison import DESCRIPTIVE_PROMPT  # noqa: E402
+from model_adapters import ADAPTERS, DEFAULT_PROMPT_TEMPLATE  # noqa: E402
+
 import view_helpers as vh
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-RUNS_LLM_ROOT = REPO_ROOT / "runs" / "llm"
-MERGED_ROOT = REPO_ROOT / "data" / "merged"
-MERGED_TEST_IMAGES = MERGED_ROOT / "test" / "images"
-
-
-def image_path_for(file_stem):
-    """Same lookup scripts/compare_models.py uses — duplicated locally (it's
-    three lines) rather than importing across into scripts/, which isn't on
-    this page's Python path and pulls in heavier module-level deps."""
-    for ext in (".jpg", ".jpeg", ".png", ".bmp"):
-        p = MERGED_TEST_IMAGES / f"{file_stem}{ext}"
-        if p.exists():
-            return p
-    return None
-
-
 st.markdown(vh.HV_STYLE_CSS, unsafe_allow_html=True)
-st.markdown(vh.header_html("LLM vs YOLO COMPARISON", "runs/llm/ — every comparison run"), unsafe_allow_html=True)
+st.markdown(vh.header_html("LLM vs YOLO (PERSON AGNOSTIC)", "presence/absence per class — runs/llm/"),
+            unsafe_allow_html=True)
 
 INK = "#141414"
 MUTED = "#71736D"
 FAINT = "#C4C6C0"
 NEGATIVE_RED = "#B02A20"
+POSITIVE_GREEN = "#1B7A3D"  # matches this app's existing compliant=green convention
 CHART_FONT = "IBM Plex Sans, sans-serif"
 alt.themes.enable("none")
 
@@ -96,9 +111,360 @@ def model_chip(name):
             f'background:{bg};color:{fg};border:1px solid {border};margin:2px 4px 2px 0;white-space:nowrap">{label}</span>')
 
 
-# ---------------------------------------------------------------------------
-# load every run on disk
-# ---------------------------------------------------------------------------
+def stat_tile(label, value, note, bg=INK, fg="#FFFFFF", border=None):
+    border_css = f"border:1px solid {border};" if border else ""
+    return f"""
+    <div style="background:{bg};color:{fg};{border_css}padding:16px 20px 14px">
+      <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:{'#9B9D97' if bg == INK else MUTED}">{label}</div>
+      <div class="hv-h1" style="font-size:44px;line-height:1;color:{fg}">{value}</div>
+      <div style="font-size:12px;color:{'#9B9D97' if bg == INK else MUTED}">{note}</div>
+    </div>"""
+
+
+# ===========================================================================
+# SECTION 1 — run a new comparison, live, in this tab
+# ===========================================================================
+
+st.markdown('<div class="hv-h1" style="font-size:20px;margin-bottom:2px">① RUN A NEW COMPARISON</div>',
+            unsafe_allow_html=True)
+st.caption(
+    "Same sampling + adapters as `scripts/compare_models.py`, run live in this tab — results stream in "
+    "below as each image finishes, and the REVIEW RESULTS section further down picks up the finished run "
+    "automatically. For an unattended overnight batch that survives closing this tab, use the CLI instead."
+)
+
+
+def list_paused_runs():
+    """A run this page started (run_config.json exists) but that never
+    finished (no run_manifest.json) — i.e. paused, or the tab got closed."""
+    rows = []
+    if not RUNS_LLM_ROOT.exists():
+        return rows
+    for d in sorted(RUNS_LLM_ROOT.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+        config_path = d / "run_config.json"
+        if not (d.is_dir() and config_path.exists() and not (d / "run_manifest.json").exists()):
+            continue
+        cfg = json.loads(config_path.read_text())
+        if cfg.get("kind", "presence") != "presence":
+            continue  # a checklist_compare.py run paused mid-way — that page lists its own
+        done_pairs = 0
+        presence_path = d / "presence.csv"
+        if presence_path.exists():
+            done_pairs = len(pd.read_csv(presence_path)[["file", "model"]].drop_duplicates())
+        rows.append({
+            "run_dir": d, "run_name": d.name, "models": cfg["model_names"],
+            "n_images": len(cfg["sampled_files"]), "done_pairs": done_pairs,
+            "total_pairs": len(cfg["sampled_files"]) * len(cfg["model_names"]),
+        })
+    return rows
+
+
+paused_runs = list_paused_runs()
+resume_clicked = None
+if paused_runs:
+    st.markdown(f'<div class="hv-h1" style="font-size:15px;margin:14px 0 6px">PAUSED RUNS ({len(paused_runs)})</div>',
+                unsafe_allow_html=True)
+    for p in paused_runs:
+        rc1, rc2 = st.columns([4, 1])
+        rc1.markdown(
+            f'<span class="hv-mono" style="font-size:12px">{p["run_name"]}</span> — '
+            f'<b>{p["done_pairs"]}/{p["total_pairs"]}</b> pairs done ({", ".join(model_chip(m) for m in p["models"])})',
+            unsafe_allow_html=True,
+        )
+        if rc2.button("▶ Resume", key=f"resume_{p['run_name']}"):
+            resume_clicked = p
+    st.divider()
+
+
+def chip(label, color):
+    return (
+        f'<span class="hv-mono" style="display:inline-block;font-size:10px;padding:2px 7px;'
+        f'margin:2px 3px 2px 0;background:{color};color:#FFFFFF;white-space:nowrap">{label}</span>'
+    )
+
+
+def render_card(feed, model_names, file_stem, buf):
+    """One row per finished image: thumbnail + every model's presence chips
+    (green = positive class detected, red = no-* class detected) and, if
+    collected, its free-text descriptive response — rendered once as soon as
+    every model in this run has finished that image, not once per model."""
+    with feed:
+        cols = st.columns([1, 3])
+        img_path = image_path_for(file_stem)
+        if img_path:
+            cols[0].image(str(img_path), width="stretch")
+        with cols[1]:
+            st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED}">{file_stem}</div>',
+                        unsafe_allow_html=True)
+            for name in model_names:
+                mb = buf.get(name)
+                if mb is None:
+                    continue
+                if mb["parse_error"]:
+                    chips = f'<span style="color:{MUTED};font-size:11px">parse error</span>'
+                else:
+                    chips = "".join(chip(c, POSITIVE_GREEN) for c in sorted(mb["positive"]))
+                    chips += "".join(chip(c, NEGATIVE_RED) for c in sorted(mb["negative"]))
+                    chips = chips or f'<span style="color:{MUTED};font-size:11px">nothing detected</span>'
+                st.markdown(f'<div style="margin-bottom:4px;display:flex;align-items:center;gap:6px">'
+                            f'{model_chip(name)}{chips}</div>', unsafe_allow_html=True)
+                if mb["descriptive"]:
+                    st.caption(mb["descriptive"])
+        st.markdown("<hr style='margin:6px 0'>", unsafe_allow_html=True)
+
+
+def buf_from_rows(model_names, presence_df, descriptive_df, file_stem):
+    """Rebuild render_card()'s per-model buf dict from already-checkpointed
+    rows — used to replay a resumed run's history before it continues."""
+    buf = {}
+    sub = presence_df[presence_df["file"] == file_stem]
+    for name in model_names:
+        model_rows = sub[sub["model"] == name]
+        if model_rows.empty:
+            continue
+        present = set(model_rows.loc[model_rows["present"] == True, "class_name"])  # noqa: E712
+        descriptive = None
+        if descriptive_df is not None:
+            hit = descriptive_df[(descriptive_df["file"] == file_stem) & (descriptive_df["model"] == name)]
+            if not hit.empty:
+                descriptive = hit.iloc[0]["response_text"]
+        buf[name] = {
+            "positive": {c for c in present if not c.startswith("no-")},
+            "negative": {c for c in present if c.startswith("no-")},
+            "parse_error": bool(model_rows["parse_error"].iloc[0]),
+            "descriptive": descriptive,
+        }
+    return buf
+
+
+def run_live(run_dir, run_name, model_names, args, sampled_files, adapters,
+             presence_rows, detection_rows, descriptive_rows, parse_failures, skip_pairs):
+    detections_path = run_dir / "detections.csv"
+    presence_path = run_dir / "presence.csv"
+    descriptive_path = run_dir / "descriptive_responses.csv"
+
+    progress_bar = st.progress(0.0)
+    status_line = st.empty()
+    st.button(
+        "⏸ Pause run", key="live_pause_btn",
+        help="Stops now — the checkpoint already on disk is safe. Pick it back up from PAUSED RUNS above.",
+    )
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 6px">RESULTS (live)</div>',
+                unsafe_allow_html=True)
+    feed = st.container()
+
+    # Replay whatever this run already has on disk (a resume) before the
+    # live loop below picks up with the remaining pairs. A file with every
+    # model already done gets its final card now; a file caught mid-way
+    # (paused between two of its models) seeds file_buf/current_file
+    # instead, so the live loop below merges its remaining models into the
+    # same card rather than rendering it twice.
+    file_buf = {}
+    current_file = None
+    if skip_pairs:
+        covered = {}
+        for f, m in skip_pairs:
+            covered.setdefault(f, set()).add(m)
+        presence_df = pd.DataFrame(presence_rows)
+        descriptive_df = pd.DataFrame(descriptive_rows) if descriptive_rows else None
+        for file_stem in sampled_files:
+            if file_stem not in covered:
+                continue
+            buf = buf_from_rows(model_names, presence_df, descriptive_df, file_stem)
+            if covered[file_stem] == set(model_names):
+                render_card(feed, model_names, file_stem, buf)
+            else:
+                current_file, file_buf = file_stem, buf
+
+    t_start = time.perf_counter()
+
+    for step in run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for,
+                                      descriptive_prompt=DESCRIPTIVE_PROMPT, skip_pairs=skip_pairs):
+        if step["skipped"] or step["resumed"]:
+            if not step["skipped"]:
+                progress_bar.progress(step["done"] / step["total"])
+            continue
+
+        if step["file"] != current_file:
+            if current_file is not None:
+                render_card(feed, model_names, current_file, file_buf)
+            current_file, file_buf = step["file"], {}
+
+        presence_rows.extend(step["presence_rows"])
+        detection_rows.extend(step["detection_rows"])
+        if step["descriptive_row"]:
+            descriptive_rows.append(step["descriptive_row"])
+        if step["parse_error"]:
+            parse_failures[step["model"]] += 1
+
+        present = {r["class_name"] for r in step["presence_rows"] if r["present"]}
+        file_buf[step["model"]] = {
+            "positive": {c for c in present if not c.startswith("no-")},
+            "negative": {c for c in present if c.startswith("no-")},
+            "parse_error": step["parse_error"],
+            "descriptive": step["descriptive_row"]["response_text"] if step["descriptive_row"] else None,
+        }
+
+        done, total = step["done"], step["total"]
+        progress_bar.progress(done / total)
+        per_model = " · ".join(f"{n}:{c}/{len(sampled_files)}" for n, c in step["done_per_model"].items())
+        status_line.markdown(f"**{done}/{total}** pairs · {time.perf_counter() - t_start:.0f}s elapsed — {per_model}")
+
+        if done % 10 == 0 or done == total:  # checkpoint: survive a paused/killed tab, not just a clean finish
+            pd.DataFrame(detection_rows).to_csv(detections_path, index=False)
+            pd.DataFrame(presence_rows).to_csv(presence_path, index=False)
+            if descriptive_rows:
+                pd.DataFrame(descriptive_rows).to_csv(descriptive_path, index=False)
+
+    if current_file is not None:
+        render_card(feed, model_names, current_file, file_buf)
+
+    manifest = {
+        "run_name": f"{run_name}_COMPLETE",
+        "status": "COMPLETE",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "dataset_name": DATASET_NAME,
+        "n_images_requested": len(sampled_files),
+        "n_images_sampled": len(sampled_files),
+        "seed": args.seed,
+        "models": model_names,
+        "queryable_classes": {n: adapters[n].queryable_classes for n in model_names},
+        "supports_grounding": {n: adapters[n].supports_grounding for n in model_names},
+        "prompt_template": args.prompt_template,
+        "config": vars(args),
+        "parse_failures": parse_failures,
+        "sampled_files": sampled_files,
+        "descriptive_prompt": DESCRIPTIVE_PROMPT if descriptive_rows else None,
+    }
+    final_dir = RUNS_LLM_ROOT / f"{run_name}_COMPLETE"
+    run_dir.rename(final_dir)
+    pd.DataFrame(detection_rows).to_csv(final_dir / "detections.csv", index=False)
+    pd.DataFrame(presence_rows).to_csv(final_dir / "presence.csv", index=False)
+    if descriptive_rows:
+        pd.DataFrame(descriptive_rows).to_csv(final_dir / "descriptive_responses.csv", index=False)
+    (final_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2))
+
+    st.success(f"Done in {time.perf_counter() - t_start:.0f}s — saved to `runs/llm/{final_dir.name}/`. "
+               "REVIEW RESULTS below now includes it.")
+    if any(parse_failures.values()):
+        st.warning(f"Parse failures (excluded from presence scoring): {parse_failures}")
+
+
+def build_args(model_names):
+    return SimpleNamespace(
+        yolo_weights=str(DEFAULT_YOLO_WEIGHTS),
+        ollama_model=ADAPTERS["ollama"]["default_model"],
+        qwen3_vl_model=ADAPTERS["qwen3-vl"]["default_model"],
+        gemma4_model=ADAPTERS["gemma4"]["default_model"],
+        minicpm_v_model=ADAPTERS["minicpm-v"]["default_model"],
+        ollama_url="http://localhost:11434",
+        claude_model=ADAPTERS["claude"]["default_model"],
+        gemini_model=ADAPTERS["gemini"]["default_model"],
+        prompt_template=DEFAULT_PROMPT_TEMPLATE,
+        seed=None,  # filled in by the caller — kept here only so both run paths share one config shape
+    )
+
+
+def load_adapters(model_names, args):
+    adapters = {}
+    load_status = st.empty()
+    for name in model_names:
+        load_status.markdown(f"Loading `{name}`...")
+        adapters[name] = build_adapter(name, args)
+    load_status.markdown("Loaded: " + ", ".join(f"`{n}`" for n in adapters))
+    return adapters
+
+
+ran_this_load = False  # a fresh run or a resume just finished — caches below need clearing
+
+if resume_clicked is not None:
+    run_dir = resume_clicked["run_dir"]
+    cfg = json.loads((run_dir / "run_config.json").read_text())
+    model_names = cfg["model_names"]
+    sampled_files = cfg["sampled_files"]
+
+    args = build_args(model_names)
+    args.seed = cfg["seed"]
+    adapters = load_adapters(model_names, args)
+
+    presence_rows = pd.read_csv(run_dir / "presence.csv").to_dict("records") if (run_dir / "presence.csv").exists() else []
+    detection_rows = pd.read_csv(run_dir / "detections.csv").to_dict("records") if (run_dir / "detections.csv").exists() else []
+    descriptive_path = run_dir / "descriptive_responses.csv"
+    descriptive_rows = pd.read_csv(descriptive_path).to_dict("records") if descriptive_path.exists() else []
+
+    presence_df = pd.DataFrame(presence_rows)
+    skip_pairs = set(zip(presence_df.get("file", []), presence_df.get("model", [])))
+    parse_failures = {n: 0 for n in model_names}
+    if not presence_df.empty:
+        failed = presence_df[presence_df["parse_error"] == True]  # noqa: E712
+        for name, group in failed.groupby("model"):
+            parse_failures[name] = group["file"].nunique()
+
+    st.write(f"Resuming **{run_dir.name}** — {len(skip_pairs)}/{len(sampled_files) * len(model_names)} pairs already done.")
+    run_live(run_dir, run_dir.name, model_names, args, sampled_files, adapters,
+              presence_rows, detection_rows, descriptive_rows, parse_failures, skip_pairs)
+    ran_this_load = True
+else:
+    with st.form("live_run_config"):
+        c1, c2 = st.columns(2)
+        n_images = c1.slider("Images to sample", 1, 100, 20)
+        seed = c2.number_input("Seed", value=42, step=1)
+        model_names = st.multiselect(
+            "Models",
+            list(ADAPTERS),
+            default=["yolo", "ollama"],
+            help="ollama/qwen3-vl/gemma4/minicpm-v need Ollama running locally; claude/gemini call a paid API.",
+        )
+        cloud_in_selection = [m for m in model_names if ADAPTERS[m]["is_cloud"]]
+        # key= pins this checkbox's identity — without it, the auto-derived
+        # key includes the label text above, which embeds cloud_in_selection.
+        # Change which models are selected and the label (hence the
+        # "identity") changes too, so Streamlit treats it as a brand-new
+        # widget and resets it to value=False right when the form submits.
+        include_cloud = st.checkbox(
+            f"Allow cloud models ({', '.join(cloud_in_selection) or 'claude/gemini'}) — calls a paid API",
+            value=False, key="live_include_cloud",  # page-specific: session_state is shared across all pages
+        )
+        submitted = st.form_submit_button("Run comparison", type="primary")
+
+    if not submitted:
+        st.info("Pick models above and hit **Run comparison** — results stream in below as each image finishes.")
+    elif not model_names:
+        st.error("Pick at least one model.")
+    elif cloud_in_selection and not include_cloud:
+        st.error(f"{cloud_in_selection} need “Allow cloud models” checked — that's a deliberate cost guard.")
+    else:
+        args = build_args(model_names)
+        args.seed = seed
+
+        sampled_files = sample_test_images(n_images, seed)
+        st.write(f"Sampled **{len(sampled_files)}** test images.")
+
+        adapters = load_adapters(model_names, args)
+
+        run_name = build_run_name(n_images, seed, model_names)
+        run_dir = RUNS_LLM_ROOT / run_name
+        run_dir.mkdir(parents=True, exist_ok=True)
+        # Written before the loop starts, not after — this is what a paused
+        # run needs to be resumable at all (see list_paused_runs() above).
+        (run_dir / "run_config.json").write_text(json.dumps(
+            {"kind": "presence", "model_names": model_names, "sampled_files": sampled_files,
+             "seed": seed, "n_images": n_images},
+            indent=2,
+        ))
+        run_live(run_dir, run_name, model_names, args, sampled_files, adapters,
+                  [], [], [], {n: 0 for n in model_names}, set())
+        ran_this_load = True
+
+st.markdown("<hr style='margin:26px 0 18px'/>", unsafe_allow_html=True)
+
+# ===========================================================================
+# SECTION 2 — review results (every run, then the latest one in depth)
+# ===========================================================================
+
+st.markdown('<div class="hv-h1" style="font-size:20px;margin-bottom:10px">② REVIEW RESULTS</div>',
+            unsafe_allow_html=True)
+
 
 @st.cache_data
 def load_all_runs():
@@ -130,14 +496,9 @@ def load_all_runs():
     return runs.sort_values("created_at").reset_index(drop=True)
 
 
-all_runs = load_all_runs()
-
-# ---------------------------------------------------------------------------
-# live scoring of the latest scored run, with a baked-in fallback
-# ---------------------------------------------------------------------------
-
 @st.cache_data
 def score_latest_run():
+    all_runs = load_all_runs()
     scored_only = all_runs[all_runs["kind"] == "scored"]
     if scored_only.empty:
         return None, None
@@ -181,6 +542,13 @@ def score_latest_run():
                     tn += 1
             rows.append({"model": model, "class_name": cls, "tp": tp, "fp": fp, "fn": fn, "tn": tn})
     return pd.DataFrame(rows), latest_run_name
+
+
+if ran_this_load:
+    load_all_runs.clear()
+    score_latest_run.clear()
+
+all_runs = load_all_runs()
 
 
 def metrics_from_raw(raw_dict):
@@ -267,25 +635,16 @@ if slide == "① ALL RUNS":
     total_images_scored = int(all_runs.loc[all_runs["kind"] == "scored", "n_images"].sum())
     date_span = f'{all_runs["created_at"].min():%b %d} – {all_runs["created_at"].max():%b %d}'
 
-    st.markdown(f"""
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px">
-      <div style="background:#141414;color:#FFFFFF;padding:16px 20px 14px">
-        <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#9B9D97">COMPARISON RUNS</div>
-        <div class="hv-h1" style="font-size:48px;line-height:1;color:#FFFFFF">{n_runs}</div>
-        <div style="font-size:12px;color:#9B9D97">{date_span}, 2026</div>
-      </div>
-      <div style="background:#FFFFFF;color:#141414;border:1px solid #C4C6C0;padding:16px 20px 14px">
-        <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#71736D">VLMS TRIED AGAINST YOLO</div>
-        <div class="hv-h1" style="font-size:48px;line-height:1">{len(all_models_ever)}</div>
-        <div style="font-size:12px;color:#71736D">{", ".join(MODEL_LABEL.get(m, m) for m in all_models_ever)}</div>
-      </div>
-      <div style="background:#FFFFFF;color:#141414;border:1px solid #C4C6C0;padding:16px 20px 14px">
-        <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#71736D">IMAGES SCORED (SCORED RUNS)</div>
-        <div class="hv-h1" style="font-size:48px;line-height:1">{total_images_scored}</div>
-        <div style="font-size:12px;color:#71736D">across {(all_runs["kind"] == "scored").sum()} scored runs</div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px">'
+        + stat_tile("COMPARISON RUNS", n_runs, f"{date_span}, 2026")
+        + stat_tile("VLMS TRIED AGAINST YOLO", len(all_models_ever),
+                    ", ".join(MODEL_LABEL.get(m, m) for m in all_models_ever), bg="#FFFFFF", fg=INK, border=FAINT)
+        + stat_tile("IMAGES SCORED (SCORED RUNS)", total_images_scored,
+                    f'across {(all_runs["kind"] == "scored").sum()} scored runs', bg="#FFFFFF", fg=INK, border=FAINT)
+        + "</div>",
+        unsafe_allow_html=True,
+    )
 
     st.markdown('<div class="hv-h1" style="font-size:22px;margin-bottom:2px">EVERY RUN, IN ORDER</div>', unsafe_allow_html=True)
     st.caption("Bar length = images sampled. The lineup grew (and dropped experiments) run over run — see the model chips below each bar.")
@@ -363,29 +722,19 @@ else:
 
     tiles = ['<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px">']
     if yolo_overall is not None:
-        tiles.append(f"""
-          <div style="background:#141414;color:#FFFFFF;padding:16px 20px 14px">
-            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#9B9D97">YOLO26 (OURS) — ACCURACY / RECALL</div>
-            <div class="hv-h1" style="font-size:48px;line-height:1;color:#FFFFFF">{yolo_overall:.2f} / {yolo_recall:.2f}</div>
-            <div style="font-size:12px;color:#9B9D97">macro-averaged across all 9 classes</div>
-          </div>""")
+        tiles.append(stat_tile("YOLO26 (OURS) — ACCURACY / RECALL", f"{yolo_overall:.2f} / {yolo_recall:.2f}",
+                                "macro-averaged across all 9 classes"))
     if best_vlm is not None:
-        tiles.append(f"""
-          <div style="background:#FFFFFF;color:#141414;border:1px solid #C4C6C0;padding:16px 20px 14px">
-            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#71736D">BEST VLM ({best_vlm["model_label"].upper()}) — ACCURACY / RECALL</div>
-            <div class="hv-h1" style="font-size:48px;line-height:1">{best_vlm["overall"]:.2f} / {best_vlm_recall:.2f}</div>
-            <div style="font-size:12px;color:#71736D">strongest non-YOLO model in this run</div>
-          </div>""")
+        tiles.append(stat_tile(f'BEST VLM ({best_vlm["model_label"].upper()}) — ACCURACY / RECALL',
+                                f'{best_vlm["overall"]:.2f} / {best_vlm_recall:.2f}',
+                                "strongest non-YOLO model in this run", bg="#FFFFFF", fg=INK, border=FAINT))
     if yolo_recall is not None and best_vlm_recall is not None:
         yolo_neg_recall = macro_recall.loc[macro_recall["model"] == "yolo", "Negative (absent)"].iloc[0]
         vlm_neg_recall = macro_recall.loc[macro_recall["model"] == best_vlm["model"], "Negative (absent)"].iloc[0]
         gap_x = yolo_neg_recall / vlm_neg_recall if vlm_neg_recall else float("nan")
-        tiles.append(f"""
-          <div style="background:#EFE600;color:#141414;padding:16px 20px 14px">
-            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#3A3B30">RECALL GAP ON ABSENCE DETECTION</div>
-            <div class="hv-h1" style="font-size:48px;line-height:1">{gap_x:.1f}×</div>
-            <div style="font-size:12px;color:#3A3B30">YOLO's negative-class recall ({yolo_neg_recall:.2f}) vs. best VLM's ({vlm_neg_recall:.2f})</div>
-          </div>""")
+        tiles.append(stat_tile("RECALL GAP ON ABSENCE DETECTION", f"{gap_x:.1f}×",
+                                f"YOLO's negative-class recall ({yolo_neg_recall:.2f}) vs. best VLM's ({vlm_neg_recall:.2f})",
+                                bg="#EFE600", fg=INK))
     tiles.append("</div>")
     st.markdown("".join(tiles), unsafe_allow_html=True)
 
@@ -503,7 +852,8 @@ else:
               <div style="font-size:13px;line-height:1.5;color:#141414">
               Every non-YOLO model in this run reports the same false-positive count on <code>person</code> — that's
               not a coincidence; it's a labeling gap in the test set. Every VLM correctly says <i>"yes, there's a
-              person"</i> and gets marked wrong by an incomplete ground-truth box.
+              person"</i> and gets marked wrong by an incomplete ground-truth box. See the <b>LLM vs YOLO (person
+              detection)</b> page for a per-person comparison that corrects for this gap.
               </div>
               <div style="font-size:11.5px;color:#71736D;margin-top:10px">YOLO scores near-perfectly here only because it was
               <i>trained</i> on this same gapped label set — consistency with the labels, not a stronger read on the photo.</div>
