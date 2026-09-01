@@ -631,13 +631,25 @@ with st.expander(f"PREVIOUS RUNS ({len(past_runs)})", expanded=False):
         st.caption("No finished checklist runs yet.")
     else:
         for p in past_runs:
-            pc1, pc2 = st.columns([5, 1])
+            pc1, pc2, pc3 = st.columns([5, 1, 1])
             pc1.markdown(
                 f'<span class="hv-mono" style="font-size:12px">{p["run"]}</span> — '
                 f'{p["created_at"]} · {p["images"]} images · {p["models"]}',
                 unsafe_allow_html=True,
             )
-            if pc2.button("🗑 Delete", key=f"delete_past_{p['run']}"):
+            if pc2.button("Open", key=f"open_past_{p['run']}"):
+                manifest = json.loads((p["run_dir"] / "run_manifest.json").read_text())
+                model_names, sampled_files = manifest["models"], manifest["sampled_files"]
+                (_, _, _, _, people_by_pair, text_by_pair, descriptive_by_pair,
+                 latency_by_pair) = load_existing_checklist_rows(p["run_dir"])
+                st.session_state["checklist_last_run"] = {
+                    "model_names": model_names, "sampled_files": sampled_files,
+                    "gt_counts": load_gt_counts(tuple(sampled_files)),
+                    "people_by_pair": people_by_pair, "text_by_pair": text_by_pair,
+                    "descriptive_by_pair": descriptive_by_pair, "latency_by_pair": latency_by_pair,
+                }
+                st.rerun()
+            if pc3.button("🗑 Delete", key=f"delete_past_{p['run']}"):
                 delete_run(p["run_dir"])
                 st.rerun()
 
