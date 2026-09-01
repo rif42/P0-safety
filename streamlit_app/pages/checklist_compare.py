@@ -284,7 +284,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
     progress_bar = st.progress(0.0)
     status_line = st.empty()
     st.button(
-        "⏸ Pause run", key="pause_btn",
+        "⏸ Pause run", key="checklist_pause_btn",
         help="Stops now — the checkpoint already on disk is safe. Pick it back up from PAUSED RUNS above.",
     )
     st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 6px">RESULTS (live)</div>',
@@ -431,7 +431,7 @@ else:
         # checkbox and resets it to value=False right as the form submits.
         include_cloud = st.checkbox(
             f"Allow cloud models ({', '.join(cloud_in_selection) or 'claude/gemini'}) — calls a paid API",
-            value=False, key="include_cloud",
+            value=False, key="checklist_include_cloud",  # page-specific: session_state is shared across all pages
         )
         submitted = st.form_submit_button("Run checklist comparison", type="primary")
 
