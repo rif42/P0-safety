@@ -76,7 +76,6 @@ GT_BOX_COLOR = "#1B7A3D"
 POSITIVE_GREEN = "#1B7A3D"  # matches this app's existing compliant=green convention
 NEGATIVE_RED = "#B02A20"    # matches this app's existing non-compliant=red convention
 SERIES = ["person"] + CHECKLIST_ITEMS + [f"no-{item}" for item in CHECKLIST_ITEMS]
-POSITIVE_SET = {"person", *CHECKLIST_ITEMS}
 CLASS_NAMES = yaml.safe_load((MERGED_ROOT / "data.yaml").read_text())["names"]
 
 
@@ -277,24 +276,53 @@ def _num_cell(value):
     return f'<td style="padding:3px 8px;text-align:right;border-bottom:1px solid #E4E5E2">{value}</td>'
 
 
-DOT_MAX = 20  # cap so a genuinely crowded photo (15+ people) doesn't blow out the row width
+def _plain_cell(value):
+    """Centered, uncolored — for the ground-truth row, which isn't being
+    judged against anything so it never gets the green/red diff treatment."""
+    return f'<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2">{value}</td>'
 
 
-def _dot_cell(count, series):
-    """A count rendered as dots, not a number — color follows this app's
-    existing positive=ink / negative(no-*)=red convention, so a column's
-    meaning reads from color alone at a glance, not just its header. 0 is
-    a real, measured answer (not "no data"), so it gets a small muted dot
-    of its own rather than a blank cell."""
+def _hex_to_rgb(hexstr):
+    hexstr = hexstr.lstrip("#")
+    return tuple(int(hexstr[i:i + 2], 16) for i in (0, 2, 4))
+
+
+_GREEN_RGB = _hex_to_rgb(POSITIVE_GREEN)
+_RED_RGB = _hex_to_rgb(NEGATIVE_RED)
+
+
+def _diff_bg(count, reference):
+    """Green when count matches the reference (ground truth) exactly,
+    sliding to red the further off it is — a real gradient, not a fixed
+    palette, so "how wrong" is visible at a glance instead of just
+    "wrong/not wrong". None (either side missing — parse failure, or no
+    ground truth for this class) means "can't judge," not "bad": no color.
+
+    Error is relative to the reference (abs(diff) / max(reference, 1)), not
+    a fixed count — a single image's reference is small (0-5ish), so being
+    off by 1 there is a big, dramatic miss; an aggregate table's reference
+    is a sum across every image (dozens+), so the same absolute diff of 1
+    is trivial. One formula reads correctly at both scales without the
+    caller needing to know which table it's in."""
+    if count is None or reference is None:
+        return None
+    t = min(abs(count - reference) / max(reference, 1), 1.0)
+    r, g, b = (round(_GREEN_RGB[i] + (_RED_RGB[i] - _GREEN_RGB[i]) * t) for i in range(3))
+    return f"rgb({r},{g},{b})"
+
+
+def _count_cell(count, reference):
+    """The actual number, not dots — a cluster of 5+ dots reads as "a
+    blob," a number reads instantly. Colored by how close it is to the
+    ground truth (see _diff_bg()) so accuracy is visible without reading
+    two cells and doing the subtraction yourself."""
     if count is None:
-        return '<td style="padding:3px 6px;text-align:center;border-bottom:1px solid #E4E5E2">—</td>'
-    color = INK if series in POSITIVE_SET else NEGATIVE_RED
-    if count == 0:
-        dots, color = "·", MUTED
-    else:
-        dots = "•" * min(count, DOT_MAX) + ("+" if count > DOT_MAX else "")
-    return (f'<td style="padding:3px 6px;text-align:center;border-bottom:1px solid #E4E5E2;'
-            f'color:{color};letter-spacing:1px">{dots}</td>')
+        return f'<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2;color:{MUTED}">—</td>'
+    bg = _diff_bg(count, reference)
+    if bg is None:
+        return f'<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2">{count}</td>'
+    return (f'<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2;'
+            f'background:{bg};color:#FFFFFF;font-weight:600">{count}</td>')
 
 
 def _fmt_latency(seconds):
@@ -333,8 +361,9 @@ def _response_cell(raw_text, counts, descriptive_text):
 def render_file_card(feed, model_names, file_stem, buf, gt_counts):
     """Real HTML <table>, one row per model plus a final "ground truth"
     row — not a text caption under the thumbnail — columns = every series
-    as dots (person + each item's present/absent count), a total (the one
-    numeric column), latency, and a last "response" column (see
+    (person + each item's present/absent count) as a number colored green
+    -> red by how far it is from ground truth (see _count_cell()), a total
+    (diffed the same way), latency, and a last "response" column (see
     _response_cell())."""
     with feed:
         cols = st.columns([1, 3])
@@ -346,11 +375,14 @@ def render_file_card(feed, model_names, file_stem, buf, gt_counts):
             st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin-bottom:4px">{file_stem}</div>',
                         unsafe_allow_html=True)
 
+            gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
+            gt_total = sum(gt.values())
+
             head = (
                 '<tr style="border-bottom:1px solid #9B9D97">'
                 '<th style="padding:3px 8px;text-align:left">model</th>'
                 + "".join(f'<th style="padding:3px 6px;text-align:center">{s}</th>' for s in SERIES)
-                + '<th style="padding:3px 8px;text-align:right">total</th>'
+                + '<th style="padding:3px 8px;text-align:center">total</th>'
                 + '<th style="padding:3px 8px;text-align:right">latency</th>'
                 + '<th style="padding:3px 8px;text-align:left">response</th></tr>'
             )
@@ -361,21 +393,20 @@ def render_file_card(feed, model_names, file_stem, buf, gt_counts):
                 raw_text = entry.get("raw_text") if entry else None
                 descriptive_text = entry.get("descriptive_text") if entry else None
                 latency = entry.get("latency") if entry else None
-                cells = "".join(_dot_cell(counts[s] if counts else None, s) for s in SERIES)
-                total = sum(counts.values()) if counts else "—"
+                cells = "".join(_count_cell(counts[s] if counts else None, gt[s]) for s in SERIES)
+                total = sum(counts.values()) if counts else None
                 body_rows.append(
                     f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
-                    f'{cells}{_num_cell(f"<b>{total}</b>")}{_num_cell(_fmt_latency(latency))}'
+                    f'{cells}{_count_cell(total, gt_total)}{_num_cell(_fmt_latency(latency))}'
                     f'<td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">'
                     f'{_response_cell(raw_text, counts, descriptive_text)}</td></tr>'
                 )
 
-            gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
-            gt_cells = "".join(_dot_cell(gt[s], s) for s in SERIES)
+            gt_cells = "".join(_plain_cell(gt[s]) for s in SERIES)
             body_rows.append(
                 f'<tr style="background:#F0F1EC;font-weight:600">'
                 f'<td style="padding:3px 8px">ground truth</td>{gt_cells}'
-                f'{_num_cell(sum(gt.values()))}{_num_cell("—")}<td style="padding:3px 8px">—</td></tr>'
+                f'{_plain_cell(gt_total)}{_num_cell("—")}<td style="padding:3px 8px">—</td></tr>'
             )
 
             st.markdown(
@@ -725,28 +756,35 @@ model_order = sorted(model_names, key=lambda m: (m != "yolo", m))
 st.markdown('<div class="hv-h1" style="font-size:20px;margin-bottom:2px">RESULTS vs. GROUND TRUTH</div>', unsafe_allow_html=True)
 st.caption(
     "Total count per class, summed across every scored image — each model's own answer, plus the "
-    "\"ground truth (effective)\" row (max of the label and the model consensus — see above). Darker "
-    "= higher count within that column."
+    "\"ground truth (effective)\" row (max of the label and the model consensus — see above). Green = "
+    "matches ground truth exactly, sliding to red the further off it is."
 )
-count_rows_table = []
+gt_totals = {series: int(per_image.loc[per_image["series"] == series, "effective_gt"].sum()) for series in SERIES}
+count_head = (
+    '<tr style="border-bottom:1px solid #9B9D97"><th style="padding:3px 8px;text-align:left">model</th>'
+    + "".join(f'<th style="padding:3px 6px;text-align:center">{s}</th>' for s in SERIES) + "</tr>"
+)
+count_body = []
 for m in model_order:
-    row = {"model": m}
-    for series in SERIES:
-        row[series] = int(per_image.loc[per_image["series"] == series, f"m_{m}"].dropna().sum())
-    count_rows_table.append(row)
-count_rows_table.append({
-    "model": "ground truth (effective)",
-    **{series: int(per_image.loc[per_image["series"] == series, "effective_gt"].sum()) for series in SERIES},
-})
-count_table = pd.DataFrame(count_rows_table).set_index("model")[SERIES]
-st.dataframe(count_table.style.background_gradient(cmap="Greys", axis=0), width="stretch")
+    row_totals = {s: int(per_image.loc[per_image["series"] == s, f"m_{m}"].dropna().sum()) for s in SERIES}
+    cells = "".join(_count_cell(row_totals[s], gt_totals[s]) for s in SERIES)
+    count_body.append(f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(m)}</td>{cells}</tr>')
+count_body.append(
+    '<tr style="background:#F0F1EC;font-weight:600"><td style="padding:3px 8px">ground truth (effective)</td>'
+    + "".join(_plain_cell(gt_totals[s]) for s in SERIES) + "</tr>"
+)
+st.markdown(
+    f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">'
+    f'<thead>{count_head}</thead><tbody>{"".join(count_body)}</tbody></table>',
+    unsafe_allow_html=True,
+)
 
 # --- per-model, per-class accuracy against the ENHANCED ground truth --------------------------
 st.markdown('<div class="hv-h1" style="font-size:20px;margin:22px 0 2px">COUNT ACCURACY PER MODEL</div>', unsafe_allow_html=True)
 st.caption(
     "Scored per image against the enhanced ground truth above, then averaged. Exact-match rate: how "
-    "often the model's count is exactly right — higher (darker) is better. Mean abs. error: average "
-    "|model count − ground truth| — lower (darker, on the reversed scale below) is better. Only images "
+    "often the model's count is exactly right — green is better. Mean abs. error: average "
+    "|model count − ground truth| — green is better here too (a small error). Only images "
     "the model actually answered (no parse failure) count toward either."
 )
 macro_rows = []
@@ -770,13 +808,13 @@ else:
     exact_table = macro.pivot(index="model", columns="series", values="exact_match_rate").reindex(index=model_order, columns=SERIES)
     error_table = macro.pivot(index="model", columns="series", values="mean_abs_error").reindex(index=model_order, columns=SERIES)
 
-    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 2px">EXACT-MATCH RATE (higher/darker is better)</div>',
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 2px">EXACT-MATCH RATE (green = better)</div>',
                 unsafe_allow_html=True)
-    st.dataframe(exact_table.style.background_gradient(cmap="Greys", vmin=0, vmax=1).format("{:.2f}"), width="stretch")
+    st.dataframe(exact_table.style.background_gradient(cmap="RdYlGn", vmin=0, vmax=1).format("{:.2f}"), width="stretch")
 
-    st.markdown('<div class="hv-h1" style="font-size:15px;margin:20px 0 2px">MEAN ABSOLUTE COUNT ERROR (lower/darker is better)</div>',
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:20px 0 2px">MEAN ABSOLUTE COUNT ERROR (green = better)</div>',
                 unsafe_allow_html=True)
-    st.dataframe(error_table.style.background_gradient(cmap="Greys_r", vmin=0).format("{:.2f}"), width="stretch")
+    st.dataframe(error_table.style.background_gradient(cmap="RdYlGn_r", vmin=0).format("{:.2f}"), width="stretch")
 
     with st.expander("Full numbers (long form, with sample sizes)"):
         st.dataframe(macro, hide_index=True, width="stretch")
