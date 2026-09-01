@@ -226,63 +226,80 @@ def main():
     total = len(sampled_files) * len(model_names)
     done = 0
     t_start = time.perf_counter()
-
-    for file_stem in sampled_files:
-        image_path = image_path_for(file_stem)
-        if image_path is None:
-            print(f"warning: no image found for {file_stem}, skipping")
-            continue
-
-        for name, adapter in adapters.items():
-            done += 1
-            detections = adapter.predict(image_path)
-
-            if detections is None:  # unparseable model output
-                parse_failures[name] += 1
-                for cls in adapter.queryable_classes:
-                    presence_rows.append(
-                        {"file": file_stem, "model": name, "class_name": cls, "present": None, "parse_error": True}
-                    )
-                continue
-
-            present_classes = {d.class_name for d in detections if d.present}
-            for cls in adapter.queryable_classes:
-                presence_rows.append(
-                    {
-                        "file": file_stem,
-                        "model": name,
-                        "class_name": cls,
-                        "present": cls in present_classes,
-                        "parse_error": False,
-                    }
-                )
-            for d in detections:
-                if d.bbox is None and not d.present:
-                    continue  # a chat-model "false" isn't a detection row
-                detection_rows.append(
-                    {
-                        "file": file_stem,
-                        "model": name,
-                        "class_name": d.class_name,
-                        "confidence": d.confidence,
-                        "x1": d.bbox[0] if d.bbox else None,
-                        "y1": d.bbox[1] if d.bbox else None,
-                        "x2": d.bbox[2] if d.bbox else None,
-                        "y2": d.bbox[3] if d.bbox else None,
-                    }
-                )
-
-            if done % 20 == 0 or done == total:
-                elapsed = time.perf_counter() - t_start
-                print(f"  {done}/{total} (image, model) pairs done, {elapsed:.0f}s elapsed")
-
     detections_path = run_dir / "detections.csv"
     presence_path = run_dir / "presence.csv"
+    interrupted = False
+
+    try:
+        for file_stem in sampled_files:
+            image_path = image_path_for(file_stem)
+            if image_path is None:
+                print(f"warning: no image found for {file_stem}, skipping")
+                continue
+
+            for name, adapter in adapters.items():
+                done += 1
+                detections = adapter.predict(image_path)
+
+                if detections is None:  # unparseable model output
+                    parse_failures[name] += 1
+                    for cls in adapter.queryable_classes:
+                        presence_rows.append(
+                            {"file": file_stem, "model": name, "class_name": cls, "present": None, "parse_error": True}
+                        )
+                    continue
+
+                present_classes = {d.class_name for d in detections if d.present}
+                for cls in adapter.queryable_classes:
+                    presence_rows.append(
+                        {
+                            "file": file_stem,
+                            "model": name,
+                            "class_name": cls,
+                            "present": cls in present_classes,
+                            "parse_error": False,
+                        }
+                    )
+                for d in detections:
+                    if d.bbox is None and not d.present:
+                        continue  # a chat-model "false" isn't a detection row
+                    detection_rows.append(
+                        {
+                            "file": file_stem,
+                            "model": name,
+                            "class_name": d.class_name,
+                            "confidence": d.confidence,
+                            "x1": d.bbox[0] if d.bbox else None,
+                            "y1": d.bbox[1] if d.bbox else None,
+                            "x2": d.bbox[2] if d.bbox else None,
+                            "y2": d.bbox[3] if d.bbox else None,
+                        }
+                    )
+
+                if done % 20 == 0 or done == total:
+                    elapsed = time.perf_counter() - t_start
+                    print(f"  {done}/{total} (image, model) pairs done, {elapsed:.0f}s elapsed")
+                    # checkpoint: survive a kill, not just a clean Ctrl+C
+                    pd.DataFrame(detection_rows).to_csv(detections_path, index=False)
+                    pd.DataFrame(presence_rows).to_csv(presence_path, index=False)
+    except KeyboardInterrupt:
+        interrupted = True
+        print(f"\ninterrupted at {done}/{total} pairs — writing partial results and scoring what we have")
+
+    status = "PARTIAL" if (interrupted or done < total) else "COMPLETE"
+    new_run_name = f"{run_name}_{status}"
+    new_run_dir = LLM_RUNS_ROOT / new_run_name
+    run_dir.rename(new_run_dir)
+    run_dir, run_name = new_run_dir, new_run_name
+    detections_path = run_dir / "detections.csv"
+    presence_path = run_dir / "presence.csv"
+
     pd.DataFrame(detection_rows).to_csv(detections_path, index=False)
     pd.DataFrame(presence_rows).to_csv(presence_path, index=False)
 
     manifest = {
         "run_name": run_name,
+        "status": status,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "dataset_name": DATASET_NAME,
         "n_images_requested": args.n_images,

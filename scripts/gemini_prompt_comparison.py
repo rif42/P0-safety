@@ -59,23 +59,36 @@ def main():
     total = len(sampled_files) * len(prompts)
     done = 0
     t_start = time.perf_counter()
-    for file_stem in sampled_files:
-        image_path = image_path_for(file_stem)
-        if image_path is None:
-            print(f"warning: no image found for {file_stem}, skipping")
-            continue
-        for prompt_name, prompt_text in prompts.items():
-            done += 1
-            text = adapter.describe(image_path, prompt_text)
-            rows.append({"file": file_stem, "prompt_name": prompt_name, "response_text": text.strip()})
-            print(f"  [{done}/{total}] {file_stem} / {prompt_name}: {text.strip()[:80]!r}")
-
-    run_name = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{DATASET_NAME}_gemini_prompt_comparison_n{len(sampled_files)}_seed{args.seed}"
-    run_dir = LLM_RUNS_ROOT / run_name
+    interrupted = False
+    # checkpoint dir created up front so a kill (not just Ctrl+C) still leaves partial rows on disk
+    run_stem = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{DATASET_NAME}_gemini_prompt_comparison_n{len(sampled_files)}_seed{args.seed}"
+    run_dir = LLM_RUNS_ROOT / run_stem
     run_dir.mkdir(parents=True, exist_ok=True)
     out_path = run_dir / "prompt_comparison.csv"
+
+    try:
+        for file_stem in sampled_files:
+            image_path = image_path_for(file_stem)
+            if image_path is None:
+                print(f"warning: no image found for {file_stem}, skipping")
+                continue
+            for prompt_name, prompt_text in prompts.items():
+                done += 1
+                text = adapter.describe(image_path, prompt_text)
+                rows.append({"file": file_stem, "prompt_name": prompt_name, "response_text": text.strip()})
+                print(f"  [{done}/{total}] {file_stem} / {prompt_name}: {text.strip()[:80]!r}")
+                if done % 10 == 0 or done == total:
+                    pd.DataFrame(rows).to_csv(out_path, index=False)
+    except KeyboardInterrupt:
+        interrupted = True
+        print(f"\ninterrupted at {done}/{total} — writing partial results")
+
+    status = "PARTIAL" if (interrupted or done < total) else "COMPLETE"
+    final_dir = LLM_RUNS_ROOT / f"{run_stem}_{status}"
+    run_dir.rename(final_dir)
+    out_path = final_dir / "prompt_comparison.csv"
     pd.DataFrame(rows).to_csv(out_path, index=False)
-    print(f"\nDone in {time.perf_counter() - t_start:.0f}s. Wrote {out_path} ({len(rows)} rows)")
+    print(f"\nDone in {time.perf_counter() - t_start:.0f}s ({status}). Wrote {out_path} ({len(rows)} rows)")
 
 
 if __name__ == "__main__":
