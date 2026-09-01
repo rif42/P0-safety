@@ -103,8 +103,10 @@ def parse_presence_json(text, classes):
 # Deliberately only the 4 positive items (no "no-X" fields): a person not
 # wearing an item already encodes its absence, so there's no separate
 # boolean to ask for. Used by streamlit_app/pages/checklist_compare.py via
-# each adapter's describe(), not predict() — there's no bbox/Detection
-# shape for "a list of people," so this never touches the presence pipeline.
+# each adapter's describe() for chat-style models, or people_from_detections()
+# below for a grounding model (YOLO) — both produce the same list-of-people
+# shape, so the rest of that page's scoring never needs to know which one
+# produced it.
 CHECKLIST_ITEMS = ["helmet", "vest", "gloves", "boots"]
 
 PERSON_CHECKLIST_PROMPT_TEMPLATE = (
@@ -138,6 +140,39 @@ def parse_person_checklist_json(text, items=CHECKLIST_ITEMS):
     if not isinstance(people, list):
         return None
     return [{item: bool(p.get(item, False)) if isinstance(p, dict) else False for item in items} for p in people]
+
+
+def _containment(item_box, container_box):
+    """Fraction of item_box's area that lies inside container_box — same
+    idea as streamlit_app/detector.py's _containment(), duplicated locally
+    since that module is tied to a different (demo-specific) YOLO weights
+    registry and vocabulary, not YOLOAdapter's merged-dataset model."""
+    ix1, iy1, ix2, iy2 = item_box
+    cx1, cy1, cx2, cy2 = container_box
+    ox1, oy1 = max(ix1, cx1), max(iy1, cy1)
+    ox2, oy2 = min(ix2, cx2), min(iy2, cy2)
+    ow, oh = max(0.0, ox2 - ox1), max(0.0, oy2 - oy1)
+    inter = ow * oh
+    item_area = max(0.0, ix2 - ix1) * max(0.0, iy2 - iy1)
+    return inter / item_area if item_area > 0 else 0.0
+
+
+def people_from_detections(detections, items=CHECKLIST_ITEMS, containment_thresh=0.5):
+    """The same per-person checklist shape parse_person_checklist_json()
+    returns, built from a grounding model's own real boxes instead of a
+    prompted answer: each detected person, plus any item box mostly
+    contained in it, counts as present. Lets YOLO run through the exact
+    same checklist scoring pipeline as every chat model, instead of being
+    left out because it has no describe()."""
+    persons = [d for d in detections if d.class_name == "person" and d.bbox is not None]
+    other = [d for d in detections if d.class_name != "person" and d.bbox is not None]
+    people = []
+    for p in persons:
+        people.append({
+            item: any(d.class_name == item and _containment(d.bbox, p.bbox) > containment_thresh for d in other)
+            for item in items
+        })
+    return people
 
 
 class YOLOAdapter:

@@ -268,15 +268,22 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     ("how many people, and for each: helmet/vest/gloves/boots?") — a
     different question shape (a list of people, not flat per-class
     booleans), so it's its own generator rather than a mode flag bolted
-    onto run_comparison_steps(). Every adapter passed in must have
-    .describe() (every chat-style adapter does; YOLO doesn't and isn't a
-    fit for this prompt anyway — callers exclude it from `adapters`).
+    onto run_comparison_steps(). Chat-style adapters answer via describe();
+    a grounding adapter (YOLO) has no describe(), so it answers via its own
+    predict() boxes instead, converted to the same shape by
+    people_from_detections() — same loop, same output shape, either way.
 
     Each step's `people` is the list scripts/model_adapters.py's
-    parse_person_checklist_json() returns, or None on a parse failure —
-    never a fabricated empty list, so "0 people" and "couldn't read the
-    answer" stay distinguishable downstream."""
-    from model_adapters import CHECKLIST_ITEMS, parse_person_checklist_json, render_checklist_prompt
+    parse_person_checklist_json() (or people_from_detections()) returns, or
+    None on a parse/detection failure — never a fabricated empty list, so
+    "0 people" and "couldn't read the answer" stay distinguishable
+    downstream."""
+    from model_adapters import (
+        CHECKLIST_ITEMS,
+        parse_person_checklist_json,
+        people_from_detections,
+        render_checklist_prompt,
+    )
 
     items = items or CHECKLIST_ITEMS
     prompt = render_checklist_prompt(items)
@@ -305,8 +312,12 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
                 }
                 continue
 
-            text = adapter.describe(image_path, prompt)
-            people = parse_person_checklist_json(text, items)
+            if hasattr(adapter, "describe"):
+                text = adapter.describe(image_path, prompt)
+                people = parse_person_checklist_json(text, items)
+            else:  # grounding model (YOLO) — no free-text interface, use its own boxes
+                detections = adapter.predict(image_path)
+                people = people_from_detections(detections, items) if detections is not None else None
             yield {
                 "file": file_stem, "model": name, "done": done, "total": total,
                 "done_per_model": dict(done_per_model), "skipped": False, "resumed": False, "people": people,
