@@ -1,0 +1,135 @@
+{
+  "run_name": "20260901_093513_merged_n5_seed42_yolo-ollama-qwen3-vl-gemma4-minicpm-v-claude-gemini_COMPLETE",
+  "status": "COMPLETE",
+  "created_at": "2026-09-01T09:41:19.562417+00:00",
+  "dataset_name": "merged",
+  "n_images_requested": 5,
+  "n_images_sampled": 5,
+  "seed": 42,
+  "models": [
+    "yolo",
+    "ollama",
+    "qwen3-vl",
+    "gemma4",
+    "minicpm-v",
+    "claude",
+    "gemini"
+  ],
+  "queryable_classes": {
+    "yolo": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "ollama": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "qwen3-vl": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "gemma4": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "minicpm-v": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "claude": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "gemini": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ]
+  },
+  "supports_grounding": {
+    "yolo": true,
+    "ollama": false,
+    "qwen3-vl": false,
+    "gemma4": false,
+    "minicpm-v": false,
+    "claude": false,
+    "gemini": false
+  },
+  "prompt_template": "You are reviewing a construction-site photo for PPE compliance. For each of these classes: {class_list} \u2014 report whether AT LEAST ONE INSTANCE is visible anywhere in the image. A 'no-X' class means a visible person who is clearly missing that item (e.g. 'no-helmet' = a visible person with no helmet on).\nRespond with ONLY a JSON object, no markdown fences, no other text, in exactly this shape (one boolean per class listed above):\n{json_shape}",
+  "config": {
+    "yolo_weights": "/Users/swyna/Developer/LeWagon/P0-safety/runs/detect/yolo26s_merged_100e/weights/best.pt",
+    "ollama_model": "llava",
+    "qwen3_vl_model": "qwen3-vl:4b",
+    "gemma4_model": "gemma4:e4b",
+    "minicpm_v_model": "minicpm-v:8b",
+    "ollama_url": "http://localhost:11434",
+    "claude_model": "claude-haiku-4-5",
+    "gemini_model": "gemini-3.6-flash",
+    "prompt_template": "You are reviewing a construction-site photo for PPE compliance. For each of these classes: {class_list} \u2014 report whether AT LEAST ONE INSTANCE is visible anywhere in the image. A 'no-X' class means a visible person who is clearly missing that item (e.g. 'no-helmet' = a visible person with no helmet on).\nRespond with ONLY a JSON object, no markdown fences, no other text, in exactly this shape (one boolean per class listed above):\n{json_shape}"
+  },
+  "parse_failures": {
+    "yolo": 0,
+    "ollama": 0,
+    "qwen3-vl": 0,
+    "gemma4": 0,
+    "minicpm-v": 0,
+    "claude": 0,
+    "gemini": 0
+  },
+  "sampled_files": [
+    "anuragraj03__frame00021_png.rf.6f750430bf2c2ad4d0d34dd36a9377d0",
+    "anuragraj03__frame1364_jpg.rf.b1f3f9c23e4d85340bd0e0275f4027a4",
+    "ketakichalke-boots__image904",
+    "snehilsanyal-main__video_CDC-YOUTUBE_mp4-50_jpg.rf.4912d4cb665e1ab8243c28d9c3039ae8",
+    "snehilsanyal-main__youtube-480_jpg.rf.faf443d4d10cc97074f6a80225f0ac29"
+  ],
+  "descriptive_prompt": "Describe this construction site photograph in one or two plain sentences for a site record: what the scene is, roughly how many people are visible and what they appear to be doing, and the setting. Describe only what is visible. Assess safety, compliance or risk. No preamble, no bullet points."
+}
