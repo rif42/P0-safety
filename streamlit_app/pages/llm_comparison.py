@@ -197,9 +197,15 @@ def add_prf1(df):
     # Accuracy and recall are our main metrics. Precision/F1 stay as
     # secondary diagnostic columns (e.g. explaining why accuracy is high but
     # recall is low), not the headline numbers.
-    df["accuracy"] = (df["tp"] + df["tn"]) / total.replace(0, pd.NA)
-    df["recall"] = df["tp"] / (df["tp"] + df["fn"]).replace(0, pd.NA)
-    df["precision"] = df["tp"] / (df["tp"] + df["fp"]).replace(0, pd.NA)
+    # float("nan"), not pd.NA — replace() on an int64 column upcasts it to
+    # object dtype for pd.NA (mixed int/NA), and .astype(float) below then
+    # calls Python's float() per element, which chokes on pd.NA ("float()
+    # argument must be a string or a real number, not 'NAType'"). A real
+    # NaN upcasts the column to float64 instead, which astype(float) (and
+    # normal division) handles natively.
+    df["accuracy"] = (df["tp"] + df["tn"]) / total.replace(0, float("nan"))
+    df["recall"] = df["tp"] / (df["tp"] + df["fn"]).replace(0, float("nan"))
+    df["precision"] = df["tp"] / (df["tp"] + df["fp"]).replace(0, float("nan"))
     for col in ("accuracy", "recall", "precision"):
         df[col] = df[col].astype(float)
     denom = df["precision"] + df["recall"]
