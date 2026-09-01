@@ -74,18 +74,70 @@ def render_prompt(template, classes):
     )
 
 
-def parse_presence_json(text, classes):
-    """Returns dict[class_name -> bool], or None if the response couldn't be
-    parsed as JSON at all (caller should record this as a parse failure, not
-    as "model said false everywhere")."""
+def _extract_json(text):
+    """First `{...}` blob in text, parsed — or None if there isn't one or it
+    doesn't parse. Shared by every JSON-shaped parser below so there's one
+    place that knows how model text (markdown fences, chatter, ...) gets
+    turned into a JSON object."""
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if not match:
         return None
     try:
-        data = json.loads(match.group(0))
+        return json.loads(match.group(0))
     except json.JSONDecodeError:
         return None
+
+
+def parse_presence_json(text, classes):
+    """Returns dict[class_name -> bool], or None if the response couldn't be
+    parsed as JSON at all (caller should record this as a parse failure, not
+    as "model said false everywhere")."""
+    data = _extract_json(text)
+    if not isinstance(data, dict):
+        return None
     return {c: bool(data.get(c, False)) for c in classes}
+
+
+# Per-person checklist prompt: "how many people, and for each, which items?"
+# — a second query shape alongside the flat per-image presence one above.
+# Deliberately only the 4 positive items (no "no-X" fields): a person not
+# wearing an item already encodes its absence, so there's no separate
+# boolean to ask for. Used by streamlit_app/pages/checklist_compare.py via
+# each adapter's describe(), not predict() — there's no bbox/Detection
+# shape for "a list of people," so this never touches the presence pipeline.
+CHECKLIST_ITEMS = ["helmet", "vest", "gloves", "boots"]
+
+PERSON_CHECKLIST_PROMPT_TEMPLATE = (
+    "You are reviewing a construction-site photo for PPE compliance. "
+    "Count every distinct person visible in the image — even partially "
+    "visible ones. For EACH person, report whether they are wearing/using "
+    "each of: {class_list}.\n"
+    "Respond with ONLY a JSON object, no markdown fences, no other text, "
+    "in exactly this shape — one entry per person, an empty list if you "
+    "see nobody:\n"
+    '{{"people": [{json_shape}, ...]}}'
+)
+
+
+def render_checklist_prompt(items=CHECKLIST_ITEMS):
+    return PERSON_CHECKLIST_PROMPT_TEMPLATE.format(
+        class_list=", ".join(items),
+        json_shape="{" + ", ".join(f'"{c}": true/false' for c in items) + "}",
+    )
+
+
+def parse_person_checklist_json(text, items=CHECKLIST_ITEMS):
+    """Returns a list of dict[item -> bool], one per person the model claims
+    to see (an empty list is a real, meaningful "saw nobody" answer) — or
+    None if the response couldn't be read as {"people": [...]} at all
+    (a parse failure, kept distinct from "0 people")."""
+    data = _extract_json(text)
+    if not isinstance(data, dict):
+        return None
+    people = data.get("people")
+    if not isinstance(people, list):
+        return None
+    return [{item: bool(p.get(item, False)) if isinstance(p, dict) else False for item in items} for p in people]
 
 
 class YOLOAdapter:
@@ -140,7 +192,7 @@ class OllamaAdapter:
         self.base_url = base_url.rstrip("/")
         self.prompt_template = prompt_template
 
-    def predict(self, image_path):
+    def _generate(self, image_path, text_prompt):
         import requests
 
         with open(image_path, "rb") as f:
@@ -150,7 +202,7 @@ class OllamaAdapter:
             f"{self.base_url}/api/generate",
             json={
                 "model": self.model,
-                "prompt": render_prompt(self.prompt_template, self.queryable_classes),
+                "prompt": text_prompt,
                 "images": [image_b64],
                 "stream": False,
                 "format": "json",
@@ -161,13 +213,23 @@ class OllamaAdapter:
         data = response.json()
         # Reasoning models (e.g. qwen3-vl) can emit their entire answer inside
         # Ollama's "thinking" field and leave "response" empty if they never
-        # produce a distinct post-thinking answer — try both.
-        presence = parse_presence_json(data.get("response", ""), self.queryable_classes)
-        if presence is None:
-            presence = parse_presence_json(data.get("thinking", ""), self.queryable_classes)
+        # produce a distinct post-thinking answer — try both, prefer "response".
+        return data.get("response", "") or data.get("thinking", "")
+
+    def predict(self, image_path):
+        text = self._generate(image_path, render_prompt(self.prompt_template, self.queryable_classes))
+        presence = parse_presence_json(text, self.queryable_classes)
         if presence is None:
             return None  # caller records this as a parse failure
         return [Detection(class_name=c, present=present) for c, present in presence.items()]
+
+    def describe(self, image_path, prompt):
+        """Free-text/other-JSON-shape mode, same rationale as Claude/Gemini's
+        describe() — outside predict()'s fixed presence schema. Used by the
+        per-person checklist comparison, which asks a differently-shaped
+        question ("how many people, and for each...") than the flat
+        per-class presence prompt predict() is locked to."""
+        return self._generate(image_path, prompt)
 
 
 class GeminiAdapter:

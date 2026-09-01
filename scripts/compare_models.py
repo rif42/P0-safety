@@ -263,6 +263,56 @@ def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for,
             }
 
 
+def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, items=None, skip_pairs=None):
+    """Sibling to run_comparison_steps() for the per-person checklist prompt
+    ("how many people, and for each: helmet/vest/gloves/boots?") — a
+    different question shape (a list of people, not flat per-class
+    booleans), so it's its own generator rather than a mode flag bolted
+    onto run_comparison_steps(). Every adapter passed in must have
+    .describe() (every chat-style adapter does; YOLO doesn't and isn't a
+    fit for this prompt anyway — callers exclude it from `adapters`).
+
+    Each step's `people` is the list scripts/model_adapters.py's
+    parse_person_checklist_json() returns, or None on a parse failure —
+    never a fabricated empty list, so "0 people" and "couldn't read the
+    answer" stay distinguishable downstream."""
+    from model_adapters import CHECKLIST_ITEMS, parse_person_checklist_json, render_checklist_prompt
+
+    items = items or CHECKLIST_ITEMS
+    prompt = render_checklist_prompt(items)
+    skip_pairs = skip_pairs or set()
+    total = len(sampled_files) * len(adapters)
+    done = 0
+    done_per_model = {name: 0 for name in adapters}
+
+    for file_stem in sampled_files:
+        image_path = image_path_for(file_stem)
+        if image_path is None:
+            yield {
+                "file": file_stem, "model": None, "done": done, "total": total,
+                "done_per_model": dict(done_per_model), "skipped": True, "resumed": False, "people": None,
+            }
+            continue
+
+        for name, adapter in adapters.items():
+            done += 1
+            done_per_model[name] += 1
+
+            if (file_stem, name) in skip_pairs:
+                yield {
+                    "file": file_stem, "model": name, "done": done, "total": total,
+                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": True, "people": None,
+                }
+                continue
+
+            text = adapter.describe(image_path, prompt)
+            people = parse_person_checklist_json(text, items)
+            yield {
+                "file": file_stem, "model": name, "done": done, "total": total,
+                "done_per_model": dict(done_per_model), "skipped": False, "resumed": False, "people": people,
+            }
+
+
 def build_adapter(model_name, args):
     if model_name not in ADAPTERS:
         raise SystemExit(f"Unknown model '{model_name}'. Available: {', '.join(ADAPTERS)}")
