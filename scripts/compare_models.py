@@ -168,13 +168,76 @@ def image_path_for(file_stem):
     return None
 
 
+def _predict_one(name, adapter, file_stem, image_path, descriptive_prompt):
+    """The actual per-(file, model) work: one predict() call (+ one
+    describe() call if requested), turned into rows. Pulled out of
+    run_comparison_steps()'s loop so it can run inside a worker thread —
+    every model call here is I/O-bound (a local Ollama HTTP call or a
+    cloud API request), so threads genuinely overlap them instead of
+    fighting over the GIL."""
+    detections = adapter.predict(image_path)
+
+    presence_rows = []
+    detection_rows = []
+    parse_error = detections is None
+    if parse_error:  # unparseable model output
+        for cls in adapter.queryable_classes:
+            presence_rows.append(
+                {"file": file_stem, "model": name, "class_name": cls, "present": None, "parse_error": True}
+            )
+    else:
+        present_classes = {d.class_name for d in detections if d.present}
+        for cls in adapter.queryable_classes:
+            presence_rows.append(
+                {
+                    "file": file_stem,
+                    "model": name,
+                    "class_name": cls,
+                    "present": cls in present_classes,
+                    "parse_error": False,
+                }
+            )
+        for d in detections:
+            if d.bbox is None and not d.present:
+                continue  # a chat-model "false" isn't a detection row
+            detection_rows.append(
+                {
+                    "file": file_stem,
+                    "model": name,
+                    "class_name": d.class_name,
+                    "confidence": d.confidence,
+                    "x1": d.bbox[0] if d.bbox else None,
+                    "y1": d.bbox[1] if d.bbox else None,
+                    "x2": d.bbox[2] if d.bbox else None,
+                    "y2": d.bbox[3] if d.bbox else None,
+                }
+            )
+
+    descriptive_row = None
+    if descriptive_prompt and hasattr(adapter, "describe"):
+        text = adapter.describe(image_path, descriptive_prompt)
+        descriptive_row = {"file": file_stem, "model": name, "response_text": text.strip()}
+
+    return parse_error, presence_rows, detection_rows, descriptive_row
+
+
 def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for, descriptive_prompt=None, skip_pairs=None):
-    """Drives every (file, model) prediction call one at a time, yielding a
-    step dict after each — so a caller can checkpoint, render, or bail
-    between calls instead of only seeing anything once the whole loop
-    finishes. Shared by main() below and streamlit_app/pages/live_compare.py,
-    so the actual inference-and-row-building logic lives in exactly one
-    place.
+    """Drives every (file, model) prediction call, yielding a step dict as
+    each one finishes — so a caller can checkpoint, render, or bail instead
+    of only seeing anything once the whole loop finishes. Shared by main()
+    below and streamlit_app/pages/llm_comparison.py, so the actual
+    inference-and-row-building logic (_predict_one() above) lives in
+    exactly one place.
+
+    Every model for a given image is fired off concurrently (a thread per
+    model, via ThreadPoolExecutor) — they're independent I/O-bound calls
+    (local Ollama HTTP, or a cloud API), so this is a real wall-clock win,
+    not just busywork; the next image only starts once every model has
+    answered for the current one, so the checkpoint/skip_pairs bookkeeping
+    below stays exactly as simple as the fully-sequential version was.
+    # ponytail: one pool for the whole run, sized to len(adapters) — plenty
+    # for this use case (a handful of models); revisit if a run ever wants
+    # dozens of models at once.
 
     `descriptive_prompt`, if given, also calls .describe() on any adapter
     that has one (claude, gemini) — same free-text/unscored capture
@@ -186,81 +249,64 @@ def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for,
     step carrying the counters forward. This is what makes resuming a
     paused Live Comparison run actually save the API calls it's resuming
     past, not just re-do them silently."""
+    import concurrent.futures
+
     skip_pairs = skip_pairs or set()
     total = len(sampled_files) * len(adapters)
     done = 0
     done_per_model = {name: 0 for name in adapters}
 
-    for file_stem in sampled_files:
-        image_path = image_path_for(file_stem)
-        if image_path is None:
-            yield {
-                "file": file_stem, "model": None, "done": done, "total": total,
-                "done_per_model": dict(done_per_model), "skipped": True, "resumed": False, "parse_error": False,
-                "presence_rows": [], "detection_rows": [], "descriptive_row": None,
-            }
-            continue
-
-        for name, adapter in adapters.items():
-            done += 1
-            done_per_model[name] += 1
-
-            if (file_stem, name) in skip_pairs:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(adapters))) as pool:
+        for file_stem in sampled_files:
+            image_path = image_path_for(file_stem)
+            if image_path is None:
                 yield {
-                    "file": file_stem, "model": name, "done": done, "total": total,
-                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": True, "parse_error": False,
+                    "file": file_stem, "model": None, "done": done, "total": total,
+                    "done_per_model": dict(done_per_model), "skipped": True, "resumed": False, "parse_error": False,
                     "presence_rows": [], "detection_rows": [], "descriptive_row": None,
                 }
                 continue
 
-            detections = adapter.predict(image_path)
+            futures = {}
+            for name, adapter in adapters.items():
+                if (file_stem, name) in skip_pairs:
+                    done += 1
+                    done_per_model[name] += 1
+                    yield {
+                        "file": file_stem, "model": name, "done": done, "total": total,
+                        "done_per_model": dict(done_per_model), "skipped": False, "resumed": True, "parse_error": False,
+                        "presence_rows": [], "detection_rows": [], "descriptive_row": None,
+                    }
+                    continue
+                future = pool.submit(_predict_one, name, adapter, file_stem, image_path, descriptive_prompt)
+                futures[future] = name
 
-            presence_rows = []
-            detection_rows = []
-            parse_error = detections is None
-            if parse_error:  # unparseable model output
-                for cls in adapter.queryable_classes:
-                    presence_rows.append(
-                        {"file": file_stem, "model": name, "class_name": cls, "present": None, "parse_error": True}
-                    )
-            else:
-                present_classes = {d.class_name for d in detections if d.present}
-                for cls in adapter.queryable_classes:
-                    presence_rows.append(
-                        {
-                            "file": file_stem,
-                            "model": name,
-                            "class_name": cls,
-                            "present": cls in present_classes,
-                            "parse_error": False,
-                        }
-                    )
-                for d in detections:
-                    if d.bbox is None and not d.present:
-                        continue  # a chat-model "false" isn't a detection row
-                    detection_rows.append(
-                        {
-                            "file": file_stem,
-                            "model": name,
-                            "class_name": d.class_name,
-                            "confidence": d.confidence,
-                            "x1": d.bbox[0] if d.bbox else None,
-                            "y1": d.bbox[1] if d.bbox else None,
-                            "x2": d.bbox[2] if d.bbox else None,
-                            "y2": d.bbox[3] if d.bbox else None,
-                        }
-                    )
+            for future in concurrent.futures.as_completed(futures):
+                name = futures[future]
+                done += 1
+                done_per_model[name] += 1
+                parse_error, presence_rows, detection_rows, descriptive_row = future.result()
+                yield {
+                    "file": file_stem, "model": name, "done": done, "total": total,
+                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": False, "parse_error": parse_error,
+                    "presence_rows": presence_rows, "detection_rows": detection_rows, "descriptive_row": descriptive_row,
+                }
 
-            descriptive_row = None
-            if descriptive_prompt and hasattr(adapter, "describe"):
-                text = adapter.describe(image_path, descriptive_prompt)
-                descriptive_row = {"file": file_stem, "model": name, "response_text": text.strip()}
 
-            yield {
-                "file": file_stem, "model": name, "done": done, "total": total,
-                "done_per_model": dict(done_per_model), "skipped": False, "resumed": False, "parse_error": parse_error,
-                "presence_rows": presence_rows, "detection_rows": detection_rows, "descriptive_row": descriptive_row,
-            }
+def _checklist_predict_one(name, adapter, image_path, prompt, items):
+    """Per-(file, model) work for run_checklist_steps() below, pulled out
+    so it can run inside a worker thread — same rationale as _predict_one()
+    above."""
+    from model_adapters import parse_person_checklist_json, people_from_detections
+
+    raw_text = None
+    if hasattr(adapter, "describe"):
+        raw_text = adapter.describe(image_path, prompt)
+        people = parse_person_checklist_json(raw_text, items)
+    else:  # grounding model (YOLO) — no free-text interface, use its own boxes
+        detections = adapter.predict(image_path)
+        people = people_from_detections(detections, items) if detections is not None else None
+    return people, raw_text
 
 
 def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, items=None, skip_pairs=None):
@@ -273,17 +319,18 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     predict() boxes instead, converted to the same shape by
     people_from_detections() — same loop, same output shape, either way.
 
+    Every model for a given image runs concurrently (a thread per model),
+    same reasoning as run_comparison_steps() — independent I/O-bound calls,
+    a real wall-clock win.
+
     Each step's `people` is the list scripts/model_adapters.py's
     parse_person_checklist_json() (or people_from_detections()) returns, or
     None on a parse/detection failure — never a fabricated empty list, so
     "0 people" and "couldn't read the answer" stay distinguishable
     downstream."""
-    from model_adapters import (
-        CHECKLIST_ITEMS,
-        parse_person_checklist_json,
-        people_from_detections,
-        render_checklist_prompt,
-    )
+    import concurrent.futures
+
+    from model_adapters import CHECKLIST_ITEMS, render_checklist_prompt
 
     items = items or CHECKLIST_ITEMS
     prompt = render_checklist_prompt(items)
@@ -292,40 +339,41 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     done = 0
     done_per_model = {name: 0 for name in adapters}
 
-    for file_stem in sampled_files:
-        image_path = image_path_for(file_stem)
-        if image_path is None:
-            yield {
-                "file": file_stem, "model": None, "done": done, "total": total,
-                "done_per_model": dict(done_per_model), "skipped": True, "resumed": False,
-                "people": None, "raw_text": None,
-            }
-            continue
-
-        for name, adapter in adapters.items():
-            done += 1
-            done_per_model[name] += 1
-
-            if (file_stem, name) in skip_pairs:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(adapters))) as pool:
+        for file_stem in sampled_files:
+            image_path = image_path_for(file_stem)
+            if image_path is None:
                 yield {
-                    "file": file_stem, "model": name, "done": done, "total": total,
-                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": True,
+                    "file": file_stem, "model": None, "done": done, "total": total,
+                    "done_per_model": dict(done_per_model), "skipped": True, "resumed": False,
                     "people": None, "raw_text": None,
                 }
                 continue
 
-            raw_text = None
-            if hasattr(adapter, "describe"):
-                raw_text = adapter.describe(image_path, prompt)
-                people = parse_person_checklist_json(raw_text, items)
-            else:  # grounding model (YOLO) — no free-text interface, use its own boxes
-                detections = adapter.predict(image_path)
-                people = people_from_detections(detections, items) if detections is not None else None
-            yield {
-                "file": file_stem, "model": name, "done": done, "total": total,
-                "done_per_model": dict(done_per_model), "skipped": False, "resumed": False,
-                "people": people, "raw_text": raw_text,
-            }
+            futures = {}
+            for name, adapter in adapters.items():
+                if (file_stem, name) in skip_pairs:
+                    done += 1
+                    done_per_model[name] += 1
+                    yield {
+                        "file": file_stem, "model": name, "done": done, "total": total,
+                        "done_per_model": dict(done_per_model), "skipped": False, "resumed": True,
+                        "people": None, "raw_text": None,
+                    }
+                    continue
+                future = pool.submit(_checklist_predict_one, name, adapter, image_path, prompt, items)
+                futures[future] = name
+
+            for future in concurrent.futures.as_completed(futures):
+                name = futures[future]
+                done += 1
+                done_per_model[name] += 1
+                people, raw_text = future.result()
+                yield {
+                    "file": file_stem, "model": name, "done": done, "total": total,
+                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": False,
+                    "people": people, "raw_text": raw_text,
+                }
 
 
 def build_adapter(model_name, args):
