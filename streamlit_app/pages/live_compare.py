@@ -107,6 +107,8 @@ def list_paused_runs():
         if not (d.is_dir() and config_path.exists() and not (d / "run_manifest.json").exists()):
             continue
         cfg = json.loads(config_path.read_text())
+        if cfg.get("kind", "presence") != "presence":
+            continue  # a checklist_compare.py run paused mid-way — that page lists its own
         done_pairs = 0
         presence_path = d / "presence.csv"
         if presence_path.exists():
@@ -389,7 +391,7 @@ if resume_clicked is not None:
 
 with st.form("live_run_config"):
     c1, c2 = st.columns(2)
-    n_images = c1.slider("Images to sample", 5, 100, 20)
+    n_images = c1.slider("Images to sample", 1, 100, 20)
     seed = c2.number_input("Seed", value=42, step=1)
     model_names = st.multiselect(
         "Models",
@@ -398,9 +400,15 @@ with st.form("live_run_config"):
         help="ollama/qwen3-vl/gemma4/minicpm-v need Ollama running locally; claude/gemini call a paid API.",
     )
     cloud_in_selection = [m for m in model_names if ADAPTERS[m]["is_cloud"]]
+    # key= pins this checkbox's identity — without it, the auto-derived key
+    # includes the label text above, which embeds cloud_in_selection. Change
+    # which models are selected and the label (hence the "identity") changes
+    # too, so Streamlit treats it as a brand-new widget and resets it to
+    # value=False right when the form is submitted — the exact "I checked
+    # it, hit Run, and it unchecked itself" bug this was.
     include_cloud = st.checkbox(
         f"Allow cloud models ({', '.join(cloud_in_selection) or 'claude/gemini'}) — calls a paid API",
-        value=False,
+        value=False, key="include_cloud",
     )
     submitted = st.form_submit_button("Run comparison", type="primary")
 
@@ -428,7 +436,8 @@ run_dir.mkdir(parents=True, exist_ok=True)
 # Written before the loop starts, not after — this is what a paused run
 # needs to be resumable at all (see list_paused_runs() above).
 (run_dir / "run_config.json").write_text(json.dumps(
-    {"model_names": model_names, "sampled_files": sampled_files, "seed": seed, "n_images": n_images}, indent=2
+    {"kind": "presence", "model_names": model_names, "sampled_files": sampled_files, "seed": seed, "n_images": n_images},
+    indent=2,
 ))
 
 run_live(run_dir, run_name, model_names, args, sampled_files, adapters,
