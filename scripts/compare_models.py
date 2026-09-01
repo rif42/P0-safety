@@ -293,12 +293,15 @@ def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for,
                 }
 
 
-def _checklist_predict_one(name, adapter, image_path, prompt, items):
+def _checklist_predict_one(name, adapter, image_path, prompt, items, descriptive_prompt=None):
     """Per-(file, model) work for run_checklist_steps() below, pulled out
     so it can run inside a worker thread — same rationale as _predict_one()
-    above."""
+    above. `latency` times only the checklist call itself (the thing being
+    compared) — the optional extra descriptive_prompt call afterward is a
+    bonus capture, not part of that number."""
     from model_adapters import parse_person_checklist_json, people_from_detections
 
+    t0 = time.perf_counter()
     raw_text = None
     if hasattr(adapter, "describe"):
         raw_text = adapter.describe(image_path, prompt)
@@ -306,10 +309,17 @@ def _checklist_predict_one(name, adapter, image_path, prompt, items):
     else:  # grounding model (YOLO) — no free-text interface, use its own boxes
         detections = adapter.predict(image_path)
         people = people_from_detections(detections, items) if detections is not None else None
-    return people, raw_text
+    latency = time.perf_counter() - t0
+
+    descriptive_text = None
+    if descriptive_prompt and hasattr(adapter, "describe"):
+        descriptive_text = adapter.describe(image_path, descriptive_prompt)
+
+    return people, raw_text, latency, descriptive_text
 
 
-def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, items=None, skip_pairs=None):
+def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, items=None,
+                         skip_pairs=None, descriptive_prompt=None):
     """Sibling to run_comparison_steps() for the per-person checklist prompt
     ("how many people, and for each: helmet/vest/gloves/boots?") — a
     different question shape (a list of people, not flat per-class
@@ -319,6 +329,12 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     predict() boxes instead, converted to the same shape by
     people_from_detections() — same loop, same output shape, either way.
 
+    `descriptive_prompt`, if given, also calls .describe() with it on any
+    adapter that has one — same free-text/unscored capture
+    run_comparison_steps() does, so the checklist comparison isn't missing
+    the descriptive-prompt side chat models can answer too; None (the
+    default) skips it entirely, so existing callers are unaffected.
+
     Every model for a given image runs concurrently (a thread per model),
     same reasoning as run_comparison_steps() — independent I/O-bound calls,
     a real wall-clock win.
@@ -327,7 +343,8 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     parse_person_checklist_json() (or people_from_detections()) returns, or
     None on a parse/detection failure — never a fabricated empty list, so
     "0 people" and "couldn't read the answer" stay distinguishable
-    downstream."""
+    downstream. `latency` is the wall-clock seconds the checklist call
+    itself took."""
     import concurrent.futures
 
     from model_adapters import CHECKLIST_ITEMS, render_checklist_prompt
@@ -346,7 +363,7 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
                 yield {
                     "file": file_stem, "model": None, "done": done, "total": total,
                     "done_per_model": dict(done_per_model), "skipped": True, "resumed": False,
-                    "people": None, "raw_text": None,
+                    "people": None, "raw_text": None, "latency": None, "descriptive_text": None,
                 }
                 continue
 
@@ -358,21 +375,21 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
                     yield {
                         "file": file_stem, "model": name, "done": done, "total": total,
                         "done_per_model": dict(done_per_model), "skipped": False, "resumed": True,
-                        "people": None, "raw_text": None,
+                        "people": None, "raw_text": None, "latency": None, "descriptive_text": None,
                     }
                     continue
-                future = pool.submit(_checklist_predict_one, name, adapter, image_path, prompt, items)
+                future = pool.submit(_checklist_predict_one, name, adapter, image_path, prompt, items, descriptive_prompt)
                 futures[future] = name
 
             for future in concurrent.futures.as_completed(futures):
                 name = futures[future]
                 done += 1
                 done_per_model[name] += 1
-                people, raw_text = future.result()
+                people, raw_text, latency, descriptive_text = future.result()
                 yield {
                     "file": file_stem, "model": name, "done": done, "total": total,
                     "done_per_model": dict(done_per_model), "skipped": False, "resumed": False,
-                    "people": people, "raw_text": raw_text,
+                    "people": people, "raw_text": raw_text, "latency": latency, "descriptive_text": descriptive_text,
                 }
 
 
