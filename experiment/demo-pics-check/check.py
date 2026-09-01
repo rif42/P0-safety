@@ -8,6 +8,7 @@ Models:
 
 Output: experiment/demo-pics-check/output/
   - output/<model>/{typical,challenging}/*_pred.jpg  (annotated + model label)
+  - output/<model>/{typical,challenging}/*_pred.json (per-image labels: [{key, conf, box}])
   - output/<model>/results.json + summary.csv
   - output/compare/{typical,challenging}/*_grid2x2.jpg (2x2, model name per quadrant)
 """
@@ -23,7 +24,7 @@ import numpy as np
 from ultralytics import YOLO
 
 ROOT = Path(__file__).resolve().parents[2]  # E:/work/P0-safety
-SRC = ROOT / "demo-pics/challenging"
+SRC = ROOT / "demo-pics"
 OUT = Path(__file__).resolve().parent / "output"
 
 MODELS = {
@@ -113,24 +114,32 @@ def run_model(model_name: str, weight: Path, images: list[Path]):
 
         annotate_and_save(r, save_path, model_name)
 
-        dets: list[dict] = []
+        # per-image labels in pasted format: [{"key", "conf", "box":[x1,y1,x2,y2] normalized 0-1}]
+        h, w = r.orig_shape  # (h, w)
+        labels: list[dict] = []
         if r.boxes is not None and len(r.boxes) > 0:
             xyxy = r.boxes.xyxy.cpu().numpy()
             conf = r.boxes.conf.cpu().numpy()
             cls = r.boxes.cls.cpu().numpy().astype(int)
             for i in range(len(cls)):
-                dets.append(
+                x1, y1, x2, y2 = xyxy[i].tolist()
+                labels.append(
                     {
-                        "xyxy": [float(x) for x in xyxy[i].tolist()],
+                        "key": model.names[int(cls[i])],
                         "conf": float(conf[i]),
-                        "cls_id": int(cls[i]),
-                        "cls_name": model.names[int(cls[i])],
+                        "box": [float(x1 / w), float(y1 / h), float(x2 / w), float(y2 / h)],
                     }
                 )
 
-        results_all.append({"image": str(rel).replace("\\", "/"), "detections": dets})
-        rows.append({"image": str(rel).replace("\\", "/"), "count": len(dets)})
-        print(f"  {rel}: {len(dets)} dets")
+        # sidecar per-image json (same array as pasted example)
+        json_path = save_path.with_suffix(".json")
+        json_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(json_path, "w", encoding="utf-8") as jf:
+            json.dump(labels, jf, indent=2, ensure_ascii=False)
+
+        results_all.append({"image": str(rel).replace("\\", "/"), "detections": labels})
+        rows.append({"image": str(rel).replace("\\", "/"), "count": len(labels)})
+        print(f"  {rel}: {len(labels)} dets")
 
     with open(model_out / "results.json", "w", encoding="utf-8") as f:
         json.dump(results_all, f, indent=2, ensure_ascii=False)
