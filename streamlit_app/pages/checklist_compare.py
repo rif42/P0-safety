@@ -34,6 +34,7 @@ this page started that never got a run_manifest.json.
 
 import html
 import json
+import shutil
 import statistics
 import sys
 import time
@@ -59,6 +60,7 @@ from compare_models import (  # noqa: E402
     run_checklist_steps,
     sample_test_images,
 )
+from gemini_prompt_comparison import DESCRIPTIVE_PROMPT  # noqa: E402
 from model_adapters import ADAPTERS, CHECKLIST_ITEMS, DEFAULT_PROMPT_TEMPLATE  # noqa: E402
 
 import view_helpers as vh
@@ -74,7 +76,12 @@ GT_BOX_COLOR = "#1B7A3D"
 POSITIVE_GREEN = "#1B7A3D"  # matches this app's existing compliant=green convention
 NEGATIVE_RED = "#B02A20"    # matches this app's existing non-compliant=red convention
 SERIES = ["person"] + CHECKLIST_ITEMS + [f"no-{item}" for item in CHECKLIST_ITEMS]
+POSITIVE_SET = {"person", *CHECKLIST_ITEMS}
 CLASS_NAMES = yaml.safe_load((MERGED_ROOT / "data.yaml").read_text())["names"]
+
+
+def delete_run(run_dir):
+    shutil.rmtree(run_dir, ignore_errors=True)
 
 
 def stat_tile(label, value, note, bg=INK, fg="#FFFFFF", border=None):
@@ -194,7 +201,7 @@ def list_past_checklist_runs():
         if m.get("kind") != "checklist":
             continue
         rows.append({
-            "run": d.name, "created_at": m.get("created_at", "")[:19].replace("T", " "),
+            "run_dir": d, "run": d.name, "created_at": m.get("created_at", "")[:19].replace("T", " "),
             "images": m.get("n_images_sampled"), "models": ", ".join(m.get("models", [])),
         })
     return rows
@@ -224,24 +231,31 @@ def list_paused_checklist_runs():
 
 
 def load_existing_checklist_rows(run_dir):
-    """Reconstruct count_rows/item_rows/text_rows/people_by_pair/text_by_pair
-    from a paused run's checkpoint — people_by_pair also doubles as the
-    resume's skip_pairs (every (file, model) key in it was already asked,
-    parse failure or not; a failure isn't retried automatically here, same
-    as everywhere else in this codebase)."""
+    """Reconstruct count_rows/item_rows/text_rows/descriptive_rows/
+    people_by_pair/text_by_pair/descriptive_by_pair/latency_by_pair from a
+    paused run's checkpoint — people_by_pair also doubles as the resume's
+    skip_pairs (every (file, model) key in it was already asked, parse
+    failure or not; a failure isn't retried automatically here, same as
+    everywhere else in this codebase)."""
     counts_path = run_dir / "person_counts.csv"
     items_path = run_dir / "person_items.csv"
     text_path = run_dir / "raw_responses.csv"
+    descriptive_path = run_dir / "descriptive_responses.csv"
     count_rows = pd.read_csv(counts_path).to_dict("records") if counts_path.exists() else []
     items_df = pd.read_csv(items_path) if items_path.exists() else pd.DataFrame()
     item_rows = items_df.to_dict("records")
     text_df = pd.read_csv(text_path) if text_path.exists() else pd.DataFrame()
     text_rows = text_df.to_dict("records")
     text_by_pair = {(r["file"], r["model"]): r["response_text"] for r in text_rows}
+    descriptive_df = pd.read_csv(descriptive_path) if descriptive_path.exists() else pd.DataFrame()
+    descriptive_rows = descriptive_df.to_dict("records")
+    descriptive_by_pair = {(r["file"], r["model"]): r["response_text"] for r in descriptive_rows}
 
     people_by_pair = {}
+    latency_by_pair = {}
     for row in count_rows:
         key = (row["file"], row["model"])
+        latency_by_pair[key] = row.get("latency") if not pd.isna(row.get("latency")) else None
         pc = row["person_count"]
         if pd.isna(pc):
             people_by_pair[key] = None
@@ -251,27 +265,77 @@ def load_existing_checklist_rows(run_dir):
             continue
         sub = items_df[(items_df["file"] == row["file"]) & (items_df["model"] == row["model"])].sort_values("person_idx")
         people_by_pair[key] = [{item: bool(r[item]) for item in CHECKLIST_ITEMS} for _, r in sub.iterrows()]
-    return count_rows, item_rows, text_rows, people_by_pair, text_by_pair
+    return (count_rows, item_rows, text_rows, descriptive_rows,
+            people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
 
 
 # ---------------------------------------------------------------------------
 # shared rendering
 # ---------------------------------------------------------------------------
 
-def _table_cell(value):
+def _num_cell(value):
     return f'<td style="padding:3px 8px;text-align:right;border-bottom:1px solid #E4E5E2">{value}</td>'
+
+
+DOT_MAX = 20  # cap so a genuinely crowded photo (15+ people) doesn't blow out the row width
+
+
+def _dot_cell(count, series):
+    """A count rendered as dots, not a number — color follows this app's
+    existing positive=ink / negative(no-*)=red convention, so a column's
+    meaning reads from color alone at a glance, not just its header. 0 is
+    a real, measured answer (not "no data"), so it gets a small muted dot
+    of its own rather than a blank cell."""
+    if count is None:
+        return '<td style="padding:3px 6px;text-align:center;border-bottom:1px solid #E4E5E2">—</td>'
+    color = INK if series in POSITIVE_SET else NEGATIVE_RED
+    if count == 0:
+        dots, color = "·", MUTED
+    else:
+        dots = "•" * min(count, DOT_MAX) + ("+" if count > DOT_MAX else "")
+    return (f'<td style="padding:3px 6px;text-align:center;border-bottom:1px solid #E4E5E2;'
+            f'color:{color};letter-spacing:1px">{dots}</td>')
+
+
+def _fmt_latency(seconds):
+    if seconds is None:
+        return "—"
+    return f"{seconds:.1f}s" if seconds >= 1 else f"{seconds * 1000:.0f}ms"
+
+
+def _response_cell(raw_text, counts, descriptive_text):
+    """Up to two <details> blocks: the structured checklist call (collapsed
+    once it parsed into real counts — the table already says everything it
+    says; auto-expanded when it didn't, since a parse failure is usually
+    free text explaining why) and, if this model also answered the
+    free-text DESCRIPTIVE_PROMPT, that response — always expanded, since
+    it's prose meant to be read, not JSON to confirm parsed correctly."""
+    parts = []
+    if raw_text:  # YOLO has none — it answers from boxes, not text
+        parsed_ok = counts is not None
+        safe_text = html.escape(raw_text)
+        parts.append(
+            f'<details{"" if parsed_ok else " open"}>'
+            f'<summary style="cursor:pointer;color:{MUTED};font-size:10px">'
+            f'{"checklist json" if parsed_ok else "⚠ unparsed"}</summary>'
+            f'<pre style="white-space:pre-wrap;font-size:10px;max-width:380px;margin:4px 0 0">{safe_text}</pre>'
+            "</details>"
+        )
+    if descriptive_text:
+        safe_desc = html.escape(descriptive_text)
+        parts.append(
+            f'<details open><summary style="cursor:pointer;color:{MUTED};font-size:10px">description</summary>'
+            f'<div style="font-size:10.5px;max-width:380px;margin:4px 0 0">{safe_desc}</div></details>'
+        )
+    return "".join(parts) or "—"
 
 
 def render_file_card(feed, model_names, file_stem, buf, gt_counts):
     """Real HTML <table>, one row per model plus a final "ground truth"
     row — not a text caption under the thumbnail — columns = every series
-    (person + each item's present/absent count) + a total, and a last
-    "response" column. YOLO has no text response (it answers from boxes),
-    so that cell is "—". A chat model's response is wrapped in <details>:
-    collapsed when it parsed into real counts (the table already says
-    everything it says), auto-expanded when it didn't (a genuine parse
-    failure is usually free text explaining why, worth seeing immediately
-    instead of hiding it behind a click)."""
+    as dots (person + each item's present/absent count), a total (the one
+    numeric column), latency, and a last "response" column (see
+    _response_cell())."""
     with feed:
         cols = st.columns([1, 3])
         img_path = image_path_for(file_stem)
@@ -285,8 +349,9 @@ def render_file_card(feed, model_names, file_stem, buf, gt_counts):
             head = (
                 '<tr style="border-bottom:1px solid #9B9D97">'
                 '<th style="padding:3px 8px;text-align:left">model</th>'
-                + "".join(f'<th style="padding:3px 8px;text-align:right">{s}</th>' for s in SERIES)
+                + "".join(f'<th style="padding:3px 6px;text-align:center">{s}</th>' for s in SERIES)
                 + '<th style="padding:3px 8px;text-align:right">total</th>'
+                + '<th style="padding:3px 8px;text-align:right">latency</th>'
                 + '<th style="padding:3px 8px;text-align:left">response</th></tr>'
             )
             body_rows = []
@@ -294,32 +359,23 @@ def render_file_card(feed, model_names, file_stem, buf, gt_counts):
                 entry = buf.get(name)
                 counts = entry["counts"] if entry else None
                 raw_text = entry.get("raw_text") if entry else None
-                cells = "".join(_table_cell(counts[s] if counts else "—") for s in SERIES)
+                descriptive_text = entry.get("descriptive_text") if entry else None
+                latency = entry.get("latency") if entry else None
+                cells = "".join(_dot_cell(counts[s] if counts else None, s) for s in SERIES)
                 total = sum(counts.values()) if counts else "—"
-                if raw_text:  # YOLO has none — it answers from boxes, not text
-                    parsed_ok = counts is not None
-                    safe_text = html.escape(raw_text)
-                    response = (
-                        f'<details{"" if parsed_ok else " open"}>'
-                        f'<summary style="cursor:pointer;color:{MUTED};font-size:10.5px">'
-                        f'{"json" if parsed_ok else "⚠ unparsed"}</summary>'
-                        f'<pre style="white-space:pre-wrap;font-size:10px;max-width:420px;margin:4px 0 0">{safe_text}</pre>'
-                        "</details>"
-                    )
-                else:
-                    response = "—"
                 body_rows.append(
                     f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
-                    f'{cells}{_table_cell(f"<b>{total}</b>")}'
-                    f'<td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{response}</td></tr>'
+                    f'{cells}{_num_cell(f"<b>{total}</b>")}{_num_cell(_fmt_latency(latency))}'
+                    f'<td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">'
+                    f'{_response_cell(raw_text, counts, descriptive_text)}</td></tr>'
                 )
 
             gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
-            gt_cells = "".join(_table_cell(gt[s]) for s in SERIES)
+            gt_cells = "".join(_dot_cell(gt[s], s) for s in SERIES)
             body_rows.append(
                 f'<tr style="background:#F0F1EC;font-weight:600">'
                 f'<td style="padding:3px 8px">ground truth</td>{gt_cells}'
-                f'{_table_cell(sum(gt.values()))}<td style="padding:3px 8px">—</td></tr>'
+                f'{_num_cell(sum(gt.values()))}{_num_cell("—")}<td style="padding:3px 8px">—</td></tr>'
             )
 
             st.markdown(
@@ -353,10 +409,12 @@ def load_adapters(model_names, args):
 
 
 def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
-                        count_rows, item_rows, text_rows, people_by_pair, text_by_pair, skip_pairs):
+                        count_rows, item_rows, text_rows, descriptive_rows,
+                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs):
     counts_path = run_dir / "person_counts.csv"
     items_path = run_dir / "person_items.csv"
     text_path = run_dir / "raw_responses.csv"
+    descriptive_path = run_dir / "descriptive_responses.csv"
 
     progress_bar = st.progress(0.0)
     status_line = st.empty()
@@ -382,7 +440,9 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             if file_stem not in covered:
                 continue
             buf = {m: {"counts": model_counts_for_people(people_by_pair.get((file_stem, m))),
-                       "raw_text": text_by_pair.get((file_stem, m))}
+                       "raw_text": text_by_pair.get((file_stem, m)),
+                       "descriptive_text": descriptive_by_pair.get((file_stem, m)),
+                       "latency": latency_by_pair.get((file_stem, m))}
                    for m in covered[file_stem]}
             if covered[file_stem] == set(model_names):
                 render_file_card(feed, model_names, file_stem, buf, gt_counts)
@@ -390,7 +450,8 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                 current_file, file_buf = file_stem, buf
 
     t_start = time.perf_counter()
-    for step in run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, skip_pairs=skip_pairs):
+    for step in run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for,
+                                     skip_pairs=skip_pairs, descriptive_prompt=DESCRIPTIVE_PROMPT):
         if step["skipped"]:
             continue
         if step["resumed"]:
@@ -403,17 +464,26 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             current_file, file_buf = step["file"], {}
 
         people = step["people"]
-        people_by_pair[(step["file"], step["model"])] = people
+        key = (step["file"], step["model"])
+        people_by_pair[key] = people
+        latency_by_pair[key] = step["latency"]
         count_rows.append({"file": step["file"], "model": step["model"],
-                            "person_count": len(people) if people is not None else None})
+                            "person_count": len(people) if people is not None else None,
+                            "latency": step["latency"]})
         if people:
             for idx, p in enumerate(people):
                 item_rows.append({"file": step["file"], "model": step["model"], "person_idx": idx, **p})
         if step["raw_text"]:
-            text_by_pair[(step["file"], step["model"])] = step["raw_text"]
+            text_by_pair[key] = step["raw_text"]
             text_rows.append({"file": step["file"], "model": step["model"], "response_text": step["raw_text"]})
+        if step["descriptive_text"]:
+            descriptive_by_pair[key] = step["descriptive_text"]
+            descriptive_rows.append({"file": step["file"], "model": step["model"], "response_text": step["descriptive_text"]})
 
-        file_buf[step["model"]] = {"counts": model_counts_for_people(people), "raw_text": step["raw_text"]}
+        file_buf[step["model"]] = {
+            "counts": model_counts_for_people(people), "raw_text": step["raw_text"],
+            "descriptive_text": step["descriptive_text"], "latency": step["latency"],
+        }
 
         done, total = step["done"], step["total"]
         progress_bar.progress(done / total)
@@ -425,6 +495,8 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             pd.DataFrame(item_rows).to_csv(items_path, index=False)
             if text_rows:
                 pd.DataFrame(text_rows).to_csv(text_path, index=False)
+            if descriptive_rows:
+                pd.DataFrame(descriptive_rows).to_csv(descriptive_path, index=False)
 
     if current_file is not None:
         render_file_card(feed, model_names, current_file, file_buf, gt_counts)
@@ -447,6 +519,8 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
     pd.DataFrame(item_rows).to_csv(final_dir / "person_items.csv", index=False)
     if text_rows:
         pd.DataFrame(text_rows).to_csv(final_dir / "raw_responses.csv", index=False)
+    if descriptive_rows:
+        pd.DataFrame(descriptive_rows).to_csv(final_dir / "descriptive_responses.csv", index=False)
     (final_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2))
     st.success(f"Done in {time.perf_counter() - t_start:.0f}s — saved to `runs/llm/{final_dir.name}/`.")
 
@@ -460,7 +534,16 @@ with st.expander(f"PREVIOUS RUNS ({len(past_runs)})", expanded=False):
     if not past_runs:
         st.caption("No finished checklist runs yet.")
     else:
-        st.dataframe(pd.DataFrame(past_runs), hide_index=True, width="stretch")
+        for p in past_runs:
+            pc1, pc2 = st.columns([5, 1])
+            pc1.markdown(
+                f'<span class="hv-mono" style="font-size:12px">{p["run"]}</span> — '
+                f'{p["created_at"]} · {p["images"]} images · {p["models"]}',
+                unsafe_allow_html=True,
+            )
+            if pc2.button("🗑 Delete", key=f"delete_past_{p['run']}"):
+                delete_run(p["run_dir"])
+                st.rerun()
 
 paused_runs = list_paused_checklist_runs()
 resume_clicked = None
@@ -468,14 +551,17 @@ if paused_runs:
     st.markdown(f'<div class="hv-h1" style="font-size:15px;margin:14px 0 6px">PAUSED RUNS ({len(paused_runs)})</div>',
                 unsafe_allow_html=True)
     for p in paused_runs:
-        rc1, rc2 = st.columns([4, 1])
+        rc1, rc2, rc3 = st.columns([4, 1, 1])
         rc1.markdown(
             f'<span class="hv-mono" style="font-size:12px">{p["run_name"]}</span> — '
             f'{p["done_pairs"]}/{p["total_pairs"]} pairs done ({", ".join(p["models"])})',
             unsafe_allow_html=True,
         )
-        if rc2.button("Resume", key=f"resume_{p['run_name']}"):
+        if rc2.button("▶ Resume", key=f"resume_{p['run_name']}"):
             resume_clicked = p
+        if rc3.button("🗑 Delete", key=f"delete_paused_{p['run_name']}"):
+            delete_run(p["run_dir"])
+            st.rerun()
     st.divider()
 
 # ---------------------------------------------------------------------------
@@ -492,12 +578,14 @@ if resume_clicked is not None:
 
     args = build_args(model_names)
     adapters = load_adapters(model_names, args)
-    count_rows, item_rows, text_rows, people_by_pair, text_by_pair = load_existing_checklist_rows(run_dir)
+    (count_rows, item_rows, text_rows, descriptive_rows,
+     people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair) = load_existing_checklist_rows(run_dir)
     skip_pairs = set(people_by_pair.keys())
 
     st.write(f"Resuming **{run_dir.name}** — {len(skip_pairs)}/{len(sampled_files) * len(model_names)} pairs already done.")
     run_checklist_live(run_dir, run_dir.name, model_names, sampled_files, adapters, seed, gt_counts,
-                        count_rows, item_rows, text_rows, people_by_pair, text_by_pair, skip_pairs)
+                        count_rows, item_rows, text_rows, descriptive_rows,
+                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs)
 else:
     with st.form("checklist_run_config"):
         c1, c2 = st.columns(2)
@@ -550,9 +638,11 @@ else:
          "seed": seed, "n_images": n_images},
         indent=2,
     ))
-    count_rows, item_rows, text_rows, people_by_pair, text_by_pair = [], [], [], {}, {}
+    count_rows, item_rows, text_rows, descriptive_rows = [], [], [], []
+    people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair = {}, {}, {}, {}
     run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
-                        count_rows, item_rows, text_rows, people_by_pair, text_by_pair, set())
+                        count_rows, item_rows, text_rows, descriptive_rows,
+                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, set())
 
 # ---------------------------------------------------------------------------
 # analysis — live, right below, common to both the resume and fresh paths
