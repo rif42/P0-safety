@@ -1,0 +1,115 @@
+{
+  "run_name": "20260827_091909_merged_n20_seed42_yolo-florence2-ollama-qwen3-vl-gemma4",
+  "created_at": "2026-08-27T09:19:09.684238+00:00",
+  "dataset_name": "merged",
+  "n_images_requested": 20,
+  "n_images_sampled": 20,
+  "seed": 42,
+  "models": [
+    "yolo",
+    "florence2",
+    "ollama",
+    "qwen3-vl",
+    "gemma4"
+  ],
+  "queryable_classes": {
+    "yolo": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "florence2": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest"
+    ],
+    "ollama": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "qwen3-vl": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "gemma4": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ]
+  },
+  "supports_grounding": {
+    "yolo": true,
+    "florence2": true,
+    "ollama": false,
+    "qwen3-vl": false,
+    "gemma4": false
+  },
+  "prompt_template": "You are reviewing a construction-site photo for PPE compliance. For each of these classes: {class_list} \u2014 report whether AT LEAST ONE INSTANCE is visible anywhere in the image. A 'no-X' class means a visible person who is clearly missing that item (e.g. 'no-helmet' = a visible person with no helmet on).\nRespond with ONLY a JSON object, no markdown fences, no other text, in exactly this shape (one boolean per class listed above):\n{json_shape}",
+  "config": {
+    "yolo_weights": "/Users/swyna/Developer/LeWagon/P0-safety/runs/detect/yolo26s_merged_100e/weights/best.pt",
+    "florence2_model": "microsoft/Florence-2-base",
+    "ollama_model": "llava",
+    "qwen3_vl_model": "qwen3-vl:4b",
+    "gemma4_model": "gemma4:e4b",
+    "ollama_url": "http://localhost:11434",
+    "claude_model": "claude-haiku-4-5",
+    "prompt_template": "You are reviewing a construction-site photo for PPE compliance. For each of these classes: {class_list} \u2014 report whether AT LEAST ONE INSTANCE is visible anywhere in the image. A 'no-X' class means a visible person who is clearly missing that item (e.g. 'no-helmet' = a visible person with no helmet on).\nRespond with ONLY a JSON object, no markdown fences, no other text, in exactly this shape (one boolean per class listed above):\n{json_shape}"
+  },
+  "parse_failures": {
+    "yolo": 0,
+    "florence2": 0,
+    "ollama": 0,
+    "qwen3-vl": 0,
+    "gemma4": 0
+  },
+  "sampled_files": [
+    "snehilsanyal-main__000415_jpg.rf.63b7e0293fb53612fdb4695fa0debfb7",
+    "snehilsanyal-main__000415_jpg.rf.6b9ff926deef3b67d6cb46c8bd2b2366",
+    "snehilsanyal-main__006012_jpg.rf.2300bacf07c885b49cd596a85e5adda3",
+    "snehilsanyal-main__135e-huxwryw6451820_jpg.rf.ee9ca43c493a451ed87dcea9c7b3e0c6",
+    "snehilsanyal-main__2008_008364_jpg.rf.0457e5579a2dcd24852278b5657b25b5",
+    "snehilsanyal-main__Apple-Tests-Face-ID-Feature-While-Wearing-a-Mask-Shorts_mp4-51_jpg.rf.6e4aebb6aa9899d08aa5771931f80607",
+    "snehilsanyal-main__IMG_3100_mp4-2_jpg.rf.bde377ae23066dfe925f09789c2bbdef",
+    "snehilsanyal-main__IMG_5024_mp4-4_jpg.rf.02dc33f0f0ffc6b8eab4a796f01b3e79",
+    "snehilsanyal-main__IMG_7211_PNG_jpg.rf.53137660a8abb36a2036583aebaccc01",
+    "snehilsanyal-main__class1_075_jpg.rf.a03d62c65431fdb47562593e28991d07",
+    "snehilsanyal-main__construction-253-_jpg.rf.c67e3fcf3be1e96d7fec63a327b585f7",
+    "snehilsanyal-main__image_560_jpg.rf.cec604e4e8173d635fc4c4170df9d739",
+    "snehilsanyal-main__maksssksksss795_png_jpg.rf.13d6bd52e2cd1552e43ff111641e7dd0",
+    "snehilsanyal-main__ppe_0018_jpg.rf.be66fabcc8627f60d963454b5a227095",
+    "snehilsanyal-main__video_CDC-YOUTUBE_mp4-50_jpg.rf.4912d4cb665e1ab8243c28d9c3039ae8",
+    "snehilsanyal-main__youtube-300_jpg.rf.96830f04e5e24cd4fd66dc852d2933be",
+    "snehilsanyal-main__youtube-480_jpg.rf.faf443d4d10cc97074f6a80225f0ac29",
+    "snehilsanyal-main__youtube-51_jpg.rf.3145d6b80394273089e6b3dbd86d3a2b",
+    "snehilsanyal-main__youtube-568_jpg.rf.49f1d5b90378ee7a8dbd85b799bfa32d",
+    "snehilsanyal-main__youtube-695_jpg.rf.4c25a8537275a63e5c32e0f48e03ad7c"
+  ]
+}

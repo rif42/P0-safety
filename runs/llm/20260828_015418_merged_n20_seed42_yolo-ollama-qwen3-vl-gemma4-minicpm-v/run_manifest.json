@@ -1,0 +1,119 @@
+{
+  "run_name": "20260828_015418_merged_n20_seed42_yolo-ollama-qwen3-vl-gemma4-minicpm-v",
+  "created_at": "2026-08-28T01:54:18.812431+00:00",
+  "dataset_name": "merged",
+  "n_images_requested": 20,
+  "n_images_sampled": 20,
+  "seed": 42,
+  "models": [
+    "yolo",
+    "ollama",
+    "qwen3-vl",
+    "gemma4",
+    "minicpm-v"
+  ],
+  "queryable_classes": {
+    "yolo": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "ollama": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "qwen3-vl": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "gemma4": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ],
+    "minicpm-v": [
+      "person",
+      "helmet",
+      "gloves",
+      "boots",
+      "vest",
+      "no-helmet",
+      "no-gloves",
+      "no-boots",
+      "no-vest"
+    ]
+  },
+  "supports_grounding": {
+    "yolo": true,
+    "ollama": false,
+    "qwen3-vl": false,
+    "gemma4": false,
+    "minicpm-v": false
+  },
+  "prompt_template": "You are reviewing a construction-site photo for PPE compliance. For each of these classes: {class_list} \u2014 report whether AT LEAST ONE INSTANCE is visible anywhere in the image. A 'no-X' class means a visible person who is clearly missing that item (e.g. 'no-helmet' = a visible person with no helmet on).\nRespond with ONLY a JSON object, no markdown fences, no other text, in exactly this shape (one boolean per class listed above):\n{json_shape}",
+  "config": {
+    "yolo_weights": "/Users/swyna/Developer/LeWagon/P0-safety/runs/detect/yolo26s_merged_100e/weights/best.pt",
+    "ollama_model": "llava",
+    "qwen3_vl_model": "qwen3-vl:4b",
+    "gemma4_model": "gemma4:e4b",
+    "minicpm_v_model": "minicpm-v:8b",
+    "ollama_url": "http://localhost:11434",
+    "claude_model": "claude-haiku-4-5",
+    "prompt_template": "You are reviewing a construction-site photo for PPE compliance. For each of these classes: {class_list} \u2014 report whether AT LEAST ONE INSTANCE is visible anywhere in the image. A 'no-X' class means a visible person who is clearly missing that item (e.g. 'no-helmet' = a visible person with no helmet on).\nRespond with ONLY a JSON object, no markdown fences, no other text, in exactly this shape (one boolean per class listed above):\n{json_shape}"
+  },
+  "parse_failures": {
+    "yolo": 0,
+    "ollama": 0,
+    "qwen3-vl": 0,
+    "gemma4": 0,
+    "minicpm-v": 0
+  },
+  "sampled_files": [
+    "anuragraj03__frame00021_png.rf.38d421896f6c4c90266c4580f83c69e1",
+    "anuragraj03__frame00021_png.rf.6351ffaa10ce9e287cc0f1d232aee57e",
+    "anuragraj03__frame00021_png.rf.6f750430bf2c2ad4d0d34dd36a9377d0",
+    "anuragraj03__frame00041_png.rf.6aef4165528a5eadb807bdc84365aa8d",
+    "anuragraj03__frame00201_png.rf.aac99eb08f965b47bf3a4e6925999a27",
+    "anuragraj03__frame00241_png.rf.339ca8aada3aec4a8734c8567282fa82",
+    "anuragraj03__frame00281_png.rf.5ad3ea5aa3d13b16c25137ed015da273",
+    "anuragraj03__frame00341_png.rf.245ece433cfcb149a31c1fcf649d5972",
+    "anuragraj03__frame1364_jpg.rf.b1f3f9c23e4d85340bd0e0275f4027a4",
+    "anuragraj03__goggle876594_jpg.rf.7cdb8fa8021a9d08762783629f1b6181",
+    "anuragraj03__img67_jpg.rf.84f4441aea49b0f852b55f49ee4e3712",
+    "anuragraj03__p11333_jpg.rf.9aebb6a91b961b5c43f3ef1131f7df83",
+    "anuragraj03__p65213137_jpg.rf.4ecc082cbb321021146d7e2cd25bab2a",
+    "ketakichalke-boots__image309",
+    "ketakichalke-boots__image904",
+    "snehilsanyal-main__IMG_5024_mp4-4_jpg.rf.02dc33f0f0ffc6b8eab4a796f01b3e79",
+    "snehilsanyal-main__autox6_mp4-80_jpg.rf.44eee52828ea57aaaac102dfbcc55e45",
+    "snehilsanyal-main__video_CDC-YOUTUBE_mp4-50_jpg.rf.4912d4cb665e1ab8243c28d9c3039ae8",
+    "snehilsanyal-main__youtube-480_jpg.rf.faf443d4d10cc97074f6a80225f0ac29",
+    "snehilsanyal-main__youtube-682_jpg.rf.1b6032eab51a0902f1d56ff7425c5f2a"
+  ]
+}

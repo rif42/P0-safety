@@ -135,6 +135,20 @@ RUN_INFO = {
     },
 }
 
+# Latest runs/llm/ comparison (presence-detection F1, not training epochs — a
+# different task shape than the YOLO runs below, so no epoch curves/confusion
+# matrix). Transcribed from reports/llm_vs_yolo_comparison.md same as
+# PER_CLASS below is transcribed from confusion matrices — update by hand if
+# scripts/compare_models.py is re-run.
+st.header("LLM / VLM comparison (latest run)")
+st.caption("runs/llm/20260831_merged_n100_seed42_yolo-gemini — 100 test images, presence/absence per class. Full breakdown: reports/llm_vs_yolo_comparison.md")
+LLM_COMPARISON = [
+    {"Model": "YOLO26 (ours)", "Overall F1": 0.96, "Positive-class F1": 0.96, "Negative-class F1": 0.95},
+    {"Model": "Gemini 3.6 Flash (API)", "Overall F1": 0.64, "Positive-class F1": 0.80, "Negative-class F1": 0.44},
+]
+st.dataframe(pd.DataFrame(LLM_COMPARISON), hide_index=True, width="stretch")
+st.divider()
+
 st.header("YOLO training runs")
 runs_to_show = []
 for key, info in RUN_INFO.items():
