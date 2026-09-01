@@ -67,11 +67,12 @@ POSITIVE_CLASSES = {"person", "helmet", "gloves", "boots", "vest"}
 # Fallback macro-level metrics — reports/llm_vs_yolo_comparison.md, used only
 # if data/merged/labels_long.csv (git-ignored) isn't present on this
 # checkout to score the latest run's presence.csv live.
+# (tp, fp, fn, tn) per class.
 _FALLBACK_RAW = {
-    "yolo":      {"person": (49, 0, 0), "helmet": (47, 1, 2), "gloves": (31, 0, 2), "boots": (32, 0, 3), "vest": (29, 2, 3),
-                  "no-helmet": (31, 2, 4), "no-gloves": (17, 1, 1), "no-boots": (16, 0, 0), "no-vest": (22, 1, 2)},
-    "gemini":    {"person": (48, 51, 1), "helmet": (45, 2, 4), "gloves": (27, 10, 6), "boots": (25, 10, 10), "vest": (28, 0, 4),
-                  "no-helmet": (33, 33, 2), "no-gloves": (13, 58, 5), "no-boots": (12, 29, 4), "no-vest": (20, 59, 4)},
+    "yolo":      {"person": (49, 0, 0, 51), "helmet": (47, 1, 2, 50), "gloves": (31, 0, 2, 67), "boots": (32, 0, 3, 65), "vest": (29, 2, 3, 66),
+                  "no-helmet": (31, 2, 4, 63), "no-gloves": (17, 1, 1, 81), "no-boots": (16, 0, 0, 84), "no-vest": (22, 1, 2, 75)},
+    "gemini":    {"person": (48, 51, 1, 0), "helmet": (45, 2, 4, 49), "gloves": (27, 10, 6, 57), "boots": (25, 10, 10, 55), "vest": (28, 0, 4, 68),
+                  "no-helmet": (33, 33, 2, 32), "no-gloves": (13, 58, 5, 24), "no-boots": (12, 29, 4, 55), "no-vest": (20, 59, 4, 17)},
 }
 
 
@@ -164,7 +165,7 @@ def score_latest_run():
         sub = presence[(presence["model"] == model) & (~presence["parse_error"])]
         sub_by_key = {(r.file, r.class_name): bool(r.present) for r in sub.itertuples()}
         for cls in sorted(sub["class_name"].unique()):
-            tp = fp = fn = 0
+            tp = fp = fn = tn = 0
             for f in sampled_files:
                 if (f, cls) not in sub_by_key:
                     continue
@@ -176,24 +177,31 @@ def score_latest_run():
                     fp += 1
                 elif not pred and actual:
                     fn += 1
-            rows.append({"model": model, "class_name": cls, "tp": tp, "fp": fp, "fn": fn})
+                else:
+                    tn += 1
+            rows.append({"model": model, "class_name": cls, "tp": tp, "fp": fp, "fn": fn, "tn": tn})
     return pd.DataFrame(rows), latest_run_name
 
 
 def metrics_from_raw(raw_dict):
     rows = []
     for model, classes in raw_dict.items():
-        for cls, (tp, fp, fn) in classes.items():
-            rows.append({"model": model, "class_name": cls, "tp": tp, "fp": fp, "fn": fn})
+        for cls, (tp, fp, fn, tn) in classes.items():
+            rows.append({"model": model, "class_name": cls, "tp": tp, "fp": fp, "fn": fn, "tn": tn})
     return pd.DataFrame(rows)
 
 
 def add_prf1(df):
     df = df.copy()
-    df["precision"] = df["tp"] / (df["tp"] + df["fp"]).replace(0, pd.NA)
+    total = df["tp"] + df["tn"] + df["fp"] + df["fn"]
+    # Accuracy and recall are our main metrics. Precision/F1 stay as
+    # secondary diagnostic columns (e.g. explaining why accuracy is high but
+    # recall is low), not the headline numbers.
+    df["accuracy"] = (df["tp"] + df["tn"]) / total.replace(0, pd.NA)
     df["recall"] = df["tp"] / (df["tp"] + df["fn"]).replace(0, pd.NA)
-    df["precision"] = df["precision"].astype(float)
-    df["recall"] = df["recall"].astype(float)
+    df["precision"] = df["tp"] / (df["tp"] + df["fp"]).replace(0, pd.NA)
+    for col in ("accuracy", "recall", "precision"):
+        df[col] = df[col].astype(float)
     denom = df["precision"] + df["recall"]
     df["f1"] = (2 * df["precision"] * df["recall"] / denom).where(denom > 0)
     df["model_label"] = df["model"].map(lambda m: MODEL_LABEL.get(m, m))
@@ -211,12 +219,21 @@ model_order_present = list(dict.fromkeys(metrics.sort_values("model")["model"]))
 MODEL_ORDER = sorted(model_order_present, key=lambda m: (m != "yolo", m != "gemini", m))
 MODEL_LABEL_ORDER = [MODEL_LABEL.get(m, m) for m in MODEL_ORDER]
 
-macro = (
-    metrics.groupby(["model", "model_label", "group"])["f1"].mean().reset_index()
-    .pivot(index=["model", "model_label"], columns="group", values="f1").reset_index()
-)
-macro["overall"] = metrics.groupby("model")["f1"].mean().reindex(macro["model"]).values
-macro = macro.set_index("model").loc[MODEL_ORDER].reset_index()
+# Macro (mean-of-classes) accuracy and recall — our two main metrics — split
+# by positive/negative class group, plus an overall (all-9-class) mean of
+# each. Precision/F1 aren't tabled at this macro level; they're still on the
+# per-class heatmap below for anyone who wants the detail.
+def macro_table(metric):
+    t = (
+        metrics.groupby(["model", "model_label", "group"])[metric].mean().reset_index()
+        .pivot(index=["model", "model_label"], columns="group", values=metric).reset_index()
+    )
+    t["overall"] = metrics.groupby("model")[metric].mean().reindex(t["model"]).values
+    return t.set_index("model").loc[MODEL_ORDER].reset_index()
+
+
+macro = macro_table("accuracy")
+macro_recall = macro_table("recall")
 
 # ---------------------------------------------------------------------------
 # slide switcher
@@ -335,30 +352,33 @@ else:
     best_vlm_row = macro[macro["model"] != "yolo"].assign(_o=lambda d: d["overall"]).sort_values("_o", ascending=False)
     best_vlm = best_vlm_row.iloc[0] if not best_vlm_row.empty else None
 
+    yolo_recall = macro_recall.loc[macro_recall["model"] == "yolo", "overall"].iloc[0] if "yolo" in macro_recall["model"].values else None
+    best_vlm_recall = macro_recall.loc[macro_recall["model"] == best_vlm["model"], "overall"].iloc[0] if best_vlm is not None else None
+
     tiles = ['<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px">']
     if yolo_overall is not None:
         tiles.append(f"""
           <div style="background:#141414;color:#FFFFFF;padding:16px 20px 14px">
-            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#9B9D97">YOLO26 (OURS) — OVERALL F1</div>
-            <div class="hv-h1" style="font-size:48px;line-height:1;color:#FFFFFF">{yolo_overall:.2f}</div>
+            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#9B9D97">YOLO26 (OURS) — ACCURACY / RECALL</div>
+            <div class="hv-h1" style="font-size:48px;line-height:1;color:#FFFFFF">{yolo_overall:.2f} / {yolo_recall:.2f}</div>
             <div style="font-size:12px;color:#9B9D97">macro-averaged across all 9 classes</div>
           </div>""")
     if best_vlm is not None:
         tiles.append(f"""
           <div style="background:#FFFFFF;color:#141414;border:1px solid #C4C6C0;padding:16px 20px 14px">
-            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#71736D">BEST VLM ({best_vlm["model_label"].upper()}) — OVERALL F1</div>
-            <div class="hv-h1" style="font-size:48px;line-height:1">{best_vlm["overall"]:.2f}</div>
+            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#71736D">BEST VLM ({best_vlm["model_label"].upper()}) — ACCURACY / RECALL</div>
+            <div class="hv-h1" style="font-size:48px;line-height:1">{best_vlm["overall"]:.2f} / {best_vlm_recall:.2f}</div>
             <div style="font-size:12px;color:#71736D">strongest non-YOLO model in this run</div>
           </div>""")
-    if yolo_overall is not None and best_vlm is not None:
-        yolo_neg = macro.loc[macro["model"] == "yolo", "Negative (absent)"].iloc[0]
-        vlm_neg = best_vlm["Negative (absent)"]
-        gap_x = yolo_neg / vlm_neg if vlm_neg else float("nan")
+    if yolo_recall is not None and best_vlm_recall is not None:
+        yolo_neg_recall = macro_recall.loc[macro_recall["model"] == "yolo", "Negative (absent)"].iloc[0]
+        vlm_neg_recall = macro_recall.loc[macro_recall["model"] == best_vlm["model"], "Negative (absent)"].iloc[0]
+        gap_x = yolo_neg_recall / vlm_neg_recall if vlm_neg_recall else float("nan")
         tiles.append(f"""
           <div style="background:#EFE600;color:#141414;padding:16px 20px 14px">
-            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#3A3B30">GAP ON ABSENCE DETECTION</div>
+            <div class="hv-mono" style="font-size:11px;letter-spacing:1.5px;color:#3A3B30">RECALL GAP ON ABSENCE DETECTION</div>
             <div class="hv-h1" style="font-size:48px;line-height:1">{gap_x:.1f}×</div>
-            <div style="font-size:12px;color:#3A3B30">YOLO's negative-class F1 ({yolo_neg:.2f}) vs. best VLM's ({vlm_neg:.2f})</div>
+            <div style="font-size:12px;color:#3A3B30">YOLO's negative-class recall ({yolo_neg_recall:.2f}) vs. best VLM's ({vlm_neg_recall:.2f})</div>
           </div>""")
     tiles.append("</div>")
     st.markdown("".join(tiles), unsafe_allow_html=True)
@@ -370,43 +390,50 @@ else:
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="hv-h1" style="font-size:22px;margin-bottom:2px">MACRO F1 BY MODEL</div>', unsafe_allow_html=True)
-    st.caption("Negative classes (no-helmet, no-boots, …) are where every VLM falls apart — YOLO barely notices the difference.")
-
-    bar_df = macro.melt(id_vars=["model", "model_label"], value_vars=["Positive (present)", "Negative (absent)"],
-                         var_name="group", value_name="f1").dropna(subset=["f1"])
-
-    bar = (
-        alt.Chart()
-        .mark_bar(size=16, cornerRadiusTopLeft=2, cornerRadiusTopRight=2)
-        .encode(
-            x=alt.X("group:N", title=None, axis=None),
-            y=alt.Y("f1:Q", title="Macro F1", scale=alt.Scale(domain=[0, 1.02])),
-            color=alt.Color("group:N", title=None,
-                             scale=alt.Scale(domain=["Positive (present)", "Negative (absent)"], range=[INK, NEGATIVE_RED])),
-            tooltip=[alt.Tooltip("model_label:N", title="Model"), alt.Tooltip("group:N", title="Class group"),
-                     alt.Tooltip("f1:Q", title="Macro F1", format=".3f")],
+    def macro_bar(table, metric_label):
+        """One row of grouped bars (positive vs. negative class group) per
+        model, for a single macro metric — used twice below (accuracy, then
+        recall), so the shape lives here once."""
+        df = table.melt(id_vars=["model", "model_label"], value_vars=["Positive (present)", "Negative (absent)"],
+                         var_name="group", value_name="value").dropna(subset=["value"])
+        bar = (
+            alt.Chart()
+            .mark_bar(size=16, cornerRadiusTopLeft=2, cornerRadiusTopRight=2)
+            .encode(
+                x=alt.X("group:N", title=None, axis=None),
+                y=alt.Y("value:Q", title=f"Macro {metric_label}", scale=alt.Scale(domain=[0, 1.02])),
+                color=alt.Color("group:N", title=None,
+                                 scale=alt.Scale(domain=["Positive (present)", "Negative (absent)"], range=[INK, NEGATIVE_RED])),
+                tooltip=[alt.Tooltip("model_label:N", title="Model"), alt.Tooltip("group:N", title="Class group"),
+                         alt.Tooltip("value:Q", title=f"Macro {metric_label}", format=".3f")],
+            )
         )
-    )
-    text = (
-        alt.Chart()
-        .mark_text(dy=-6, font=CHART_FONT, fontSize=10.5, color=INK)
-        .encode(x=alt.X("group:N", axis=None), y=alt.Y("f1:Q"), text=alt.Text("f1:Q", format=".2f"))
-    )
-    grouped_bar = (
-        alt.layer(bar, text, data=bar_df)
-        .properties(width=70, height=220)
-        .facet(column=alt.Column("model_label:N", title=None, sort=MODEL_LABEL_ORDER,
-                                  header=alt.Header(labelFont=CHART_FONT, labelFontSize=12.5, labelColor=INK, labelOrient="bottom")))
-    )
-    st.altair_chart(_base_config(grouped_bar), width="stretch")
+        text = (
+            alt.Chart()
+            .mark_text(dy=-6, font=CHART_FONT, fontSize=10.5, color=INK)
+            .encode(x=alt.X("group:N", axis=None), y=alt.Y("value:Q"), text=alt.Text("value:Q", format=".2f"))
+        )
+        return (
+            alt.layer(bar, text, data=df)
+            .properties(width=70, height=220)
+            .facet(column=alt.Column("model_label:N", title=None, sort=MODEL_LABEL_ORDER,
+                                      header=alt.Header(labelFont=CHART_FONT, labelFontSize=12.5, labelColor=INK, labelOrient="bottom")))
+        )
 
-    st.markdown('<div class="hv-h1" style="font-size:22px;margin:26px 0 2px">PER-CLASS F1 — EVERY MODEL, EVERY CLASS</div>',
+    st.markdown('<div class="hv-h1" style="font-size:22px;margin-bottom:2px">MACRO ACCURACY BY MODEL</div>', unsafe_allow_html=True)
+    st.caption("Negative classes (no-helmet, no-boots, …) are where every VLM falls apart — YOLO barely notices the difference.")
+    st.altair_chart(_base_config(macro_bar(macro, "accuracy")), width="stretch")
+
+    st.markdown('<div class="hv-h1" style="font-size:22px;margin:26px 0 2px">MACRO RECALL BY MODEL</div>', unsafe_allow_html=True)
+    st.caption("Recall = of the cases actually present, how many the model caught — the number that matters most for a safety product.")
+    st.altair_chart(_base_config(macro_bar(macro_recall, "recall")), width="stretch")
+
+    st.markdown('<div class="hv-h1" style="font-size:22px;margin:26px 0 2px">PER-CLASS ACCURACY — EVERY MODEL, EVERY CLASS</div>',
                 unsafe_allow_html=True)
-    st.caption("Darker = higher F1. Reads left→right as PPE-present classes, then the four absence classes.")
+    st.caption("Darker = higher accuracy. Reads left→right as PPE-present classes, then the four absence classes.")
 
     heat_df = metrics.copy()
-    heat_df["f1_display"] = heat_df["f1"].apply(lambda v: "—" if pd.isna(v) else f"{v:.2f}")
+    heat_df["accuracy_display"] = heat_df["accuracy"].apply(lambda v: "—" if pd.isna(v) else f"{v:.2f}")
 
     cells = (
         alt.Chart(heat_df)
@@ -414,11 +441,12 @@ else:
         .encode(
             x=alt.X("class_name:N", title=None, sort=CLASS_ORDER, axis=alt.Axis(labelAngle=-40, labelFontSize=11)),
             y=alt.Y("model_label:N", title=None, sort=MODEL_LABEL_ORDER),
-            color=alt.Color("f1:Q", title="F1", scale=alt.Scale(scheme="greys", domain=[0, 1]),
+            color=alt.Color("accuracy:Q", title="Accuracy", scale=alt.Scale(scheme="greys", domain=[0, 1]),
                              legend=alt.Legend(orient="right", gradientLength=140)),
             tooltip=[alt.Tooltip("model_label:N", title="Model"), alt.Tooltip("class_name:N", title="Class"),
-                     alt.Tooltip("f1:Q", title="F1", format=".3f"), alt.Tooltip("tp:Q", title="tp"),
-                     alt.Tooltip("fp:Q", title="fp"), alt.Tooltip("fn:Q", title="fn")],
+                     alt.Tooltip("accuracy:Q", title="Accuracy", format=".3f"), alt.Tooltip("recall:Q", title="Recall", format=".3f"),
+                     alt.Tooltip("tp:Q", title="tp"), alt.Tooltip("fp:Q", title="fp"),
+                     alt.Tooltip("fn:Q", title="fn"), alt.Tooltip("tn:Q", title="tn")],
         )
         .properties(height=max(120, 40 * len(MODEL_ORDER)))
     )
@@ -427,8 +455,8 @@ else:
         .mark_text(font=CHART_FONT, fontSize=11)
         .encode(
             x=alt.X("class_name:N", sort=CLASS_ORDER), y=alt.Y("model_label:N", sort=MODEL_LABEL_ORDER),
-            text="f1_display:N",
-            color=alt.condition(alt.datum.f1 > 0.55, alt.value("#FFFFFF"), alt.value(INK)),
+            text="accuracy_display:N",
+            color=alt.condition(alt.datum.accuracy > 0.55, alt.value("#FFFFFF"), alt.value(INK)),
         )
         .properties(height=max(120, 40 * len(MODEL_ORDER)))
     )
