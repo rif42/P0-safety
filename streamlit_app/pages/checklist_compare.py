@@ -272,14 +272,58 @@ def load_existing_checklist_rows(run_dir):
 # shared rendering
 # ---------------------------------------------------------------------------
 
-def _num_cell(value):
-    return f'<td style="padding:3px 8px;text-align:right;border-bottom:1px solid #E4E5E2">{value}</td>'
+# SERIES is [person, helmet, vest, gloves, boots, no-helmet, no-vest, no-gloves, no-boots] —
+# the first N_POSITIVE are "present" counts, the rest are "absent" counts. Used to chunk
+# the wide column list into two labeled groups (Gestalt grouping: related columns read as
+# one unit, not 9 flat items) rather than adding a 10th visual meaning on top of the
+# green/red accuracy color already carried by each cell.
+N_POSITIVE = 1 + len(CHECKLIST_ITEMS)
+_DIVIDER = "border-left:2px solid #9B9D97;"
 
 
-def _plain_cell(value):
+def _cell_style(base, series=None):
+    divider = _DIVIDER if series == SERIES[N_POSITIVE] else ""
+    return base.format(divider=divider)
+
+
+def _num_cell(value, series=None):
+    return _cell_style('<td style="padding:3px 8px;text-align:right;border-bottom:1px solid #E4E5E2;{divider}">'
+                        + f"{value}</td>", series)
+
+
+def _plain_cell(value, series=None):
     """Centered, uncolored — for the ground-truth row, which isn't being
     judged against anything so it never gets the green/red diff treatment."""
-    return f'<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2">{value}</td>'
+    return _cell_style('<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2;{divider}">'
+                        + f"{value}</td>", series)
+
+
+def _grouped_head(extra_cols=()):
+    """Two-row header: a top row labeling the PRESENT vs. ABSENT column
+    groups (so the 9 class columns read as two chunks, not nine unrelated
+    ones — the single biggest lever for scanning a wide table quickly),
+    then the actual column names. `extra_cols` (total, latency, ...) get a
+    blank top cell — they aren't part of either group."""
+    n_negative = len(SERIES) - N_POSITIVE
+    group_row = (
+        "<tr>"
+        '<th style="border:none"></th>'
+        f'<th colspan="{N_POSITIVE}" style="padding:1px 4px;text-align:center;font-size:9.5px;'
+        f'letter-spacing:.5px;color:{MUTED};font-weight:600">PRESENT</th>'
+        f'<th colspan="{n_negative}" style="padding:1px 4px;text-align:center;font-size:9.5px;'
+        f'letter-spacing:.5px;color:{MUTED};font-weight:600;{_DIVIDER}">ABSENT</th>'
+        + "".join('<th style="border:none"></th>' for _ in extra_cols)
+        + "</tr>"
+    )
+    name_row = (
+        '<tr style="border-bottom:1px solid #9B9D97">'
+        '<th style="padding:3px 8px;text-align:left">model</th>'
+        + "".join(f'<th style="padding:3px 6px;text-align:center;{_DIVIDER if s == SERIES[N_POSITIVE] else ""}">'
+                  f"{s}</th>" for s in SERIES)
+        + "".join(f'<th style="padding:3px 8px;text-align:center">{c}</th>' for c in extra_cols)
+        + "</tr>"
+    )
+    return group_row + name_row
 
 
 def _hex_to_rgb(hexstr):
@@ -311,18 +355,22 @@ def _diff_bg(count, reference):
     return f"rgb({r},{g},{b})"
 
 
-def _count_cell(count, reference):
+def _count_cell(count, reference, series=None):
     """The actual number, not dots — a cluster of 5+ dots reads as "a
     blob," a number reads instantly. Colored by how close it is to the
     ground truth (see _diff_bg()) so accuracy is visible without reading
     two cells and doing the subtraction yourself."""
     if count is None:
-        return f'<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2;color:{MUTED}">—</td>'
+        return _cell_style('<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2;'
+                            f'color:{MUTED};' + '{divider}">—</td>', series)
     bg = _diff_bg(count, reference)
     if bg is None:
-        return f'<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2">{count}</td>'
-    return (f'<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2;'
-            f'background:{bg};color:#FFFFFF;font-weight:600">{count}</td>')
+        return _cell_style('<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2;{divider}">'
+                            + f"{count}</td>", series)
+    return _cell_style(
+        '<td style="padding:3px 8px;text-align:center;border-bottom:1px solid #E4E5E2;{divider}'
+        f'background:{bg};color:#FFFFFF;font-weight:600">{count}</td>', series,
+    )
 
 
 def _fmt_latency(seconds):
@@ -331,40 +379,49 @@ def _fmt_latency(seconds):
     return f"{seconds:.1f}s" if seconds >= 1 else f"{seconds * 1000:.0f}ms"
 
 
-def _response_cell(raw_text, counts, descriptive_text):
-    """Up to two <details> blocks: the structured checklist call (collapsed
-    once it parsed into real counts — the table already says everything it
-    says; auto-expanded when it didn't, since a parse failure is usually
-    free text explaining why) and, if this model also answered the
-    free-text DESCRIPTIVE_PROMPT, that response — always expanded, since
-    it's prose meant to be read, not JSON to confirm parsed correctly."""
+def _latency_cell(seconds, max_seconds):
+    """A filled bar, not a bare number — latency reads as a length (a
+    pre-attentive visual cue) instead of requiring you to compare digits
+    across rows. Scaled to the slowest model in *this* card, so the bar is
+    meaningful relative to what's actually being compared right now."""
+    if seconds is None:
+        return '<td style="padding:3px 8px;border-bottom:1px solid #E4E5E2"><span style="color:' + MUTED + '">—</span></td>'
+    pct = min(seconds / max_seconds, 1.0) * 100 if max_seconds else 0
+    return (
+        '<td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">'
+        f'<div style="position:relative;background:#E4E5E2;height:14px;width:64px">'
+        f'<div style="position:absolute;inset:0;width:{pct:.0f}%;background:{INK}"></div>'
+        f'<span style="position:relative;font-size:9.5px;color:{"#FFFFFF" if pct > 45 else INK};'
+        f'padding-left:4px;line-height:14px;white-space:nowrap">{_fmt_latency(seconds)}</span>'
+        "</div></td>"
+    )
+
+
+def _response_html(raw_text, counts, descriptive_text, show_json, show_descriptive):
+    """Rendered OUTSIDE the table (see render_file_card) so toggling a
+    response on never reflows the counts table above it — a wide <pre>
+    block inside a <td> would otherwise force that whole column wider for
+    every row. Nothing renders at all unless its toggle is on."""
     parts = []
-    if raw_text:  # YOLO has none — it answers from boxes, not text
+    if show_json and raw_text:  # YOLO has none — it answers from boxes, not text
         parsed_ok = counts is not None
-        safe_text = html.escape(raw_text)
-        parts.append(
-            f'<details{"" if parsed_ok else " open"}>'
-            f'<summary style="cursor:pointer;color:{MUTED};font-size:10px">'
-            f'{"checklist json" if parsed_ok else "⚠ unparsed"}</summary>'
-            f'<pre style="white-space:pre-wrap;font-size:10px;max-width:380px;margin:4px 0 0">{safe_text}</pre>'
-            "</details>"
-        )
-    if descriptive_text:
-        safe_desc = html.escape(descriptive_text)
-        parts.append(
-            f'<details open><summary style="cursor:pointer;color:{MUTED};font-size:10px">description</summary>'
-            f'<div style="font-size:10.5px;max-width:380px;margin:4px 0 0">{safe_desc}</div></details>'
-        )
-    return "".join(parts) or "—"
+        label = "json" if parsed_ok else "⚠ unparsed"
+        parts.append(f'<div style="margin:2px 0"><span style="color:{MUTED};font-size:10px">{label}:</span> '
+                      f'<code style="font-size:10px">{html.escape(raw_text)}</code></div>')
+    if show_descriptive and descriptive_text:
+        parts.append(f'<div style="margin:2px 0;font-size:10.5px">{html.escape(descriptive_text)}</div>')
+    return "".join(parts)
 
 
-def render_file_card(feed, model_names, file_stem, buf, gt_counts):
+def render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive):
     """Real HTML <table>, one row per model plus a final "ground truth"
-    row — not a text caption under the thumbnail — columns = every series
-    (person + each item's present/absent count) as a number colored green
-    -> red by how far it is from ground truth (see _count_cell()), a total
-    (diffed the same way), latency, and a last "response" column (see
-    _response_cell())."""
+    row — not a text caption under the thumbnail — columns chunked into
+    PRESENT/ABSENT groups (see _grouped_head()), each a number colored
+    green -> red by how far it is from ground truth (_count_cell()), a
+    total (diffed the same way), and latency as a filled bar
+    (_latency_cell()). Text responses render below the table, not in a
+    cell (see _response_html()), so toggling them never reflows the
+    columns above."""
     with feed:
         cols = st.columns([1, 3])
         img_path = image_path_for(file_stem)
@@ -377,36 +434,33 @@ def render_file_card(feed, model_names, file_stem, buf, gt_counts):
 
             gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
             gt_total = sum(gt.values())
+            max_latency = max((buf[n]["latency"] for n in model_names if buf.get(n) and buf[n].get("latency")),
+                               default=None)
 
-            head = (
-                '<tr style="border-bottom:1px solid #9B9D97">'
-                '<th style="padding:3px 8px;text-align:left">model</th>'
-                + "".join(f'<th style="padding:3px 6px;text-align:center">{s}</th>' for s in SERIES)
-                + '<th style="padding:3px 8px;text-align:center">total</th>'
-                + '<th style="padding:3px 8px;text-align:right">latency</th>'
-                + '<th style="padding:3px 8px;text-align:left">response</th></tr>'
-            )
+            head = _grouped_head(["total", "latency"])
             body_rows = []
+            response_blocks = []
             for name in model_names:
                 entry = buf.get(name)
                 counts = entry["counts"] if entry else None
                 raw_text = entry.get("raw_text") if entry else None
                 descriptive_text = entry.get("descriptive_text") if entry else None
                 latency = entry.get("latency") if entry else None
-                cells = "".join(_count_cell(counts[s] if counts else None, gt[s]) for s in SERIES)
+                cells = "".join(_count_cell(counts[s] if counts else None, gt[s], series=s) for s in SERIES)
                 total = sum(counts.values()) if counts else None
                 body_rows.append(
                     f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
-                    f'{cells}{_count_cell(total, gt_total)}{_num_cell(_fmt_latency(latency))}'
-                    f'<td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">'
-                    f'{_response_cell(raw_text, counts, descriptive_text)}</td></tr>'
+                    f'{cells}{_count_cell(total, gt_total)}{_latency_cell(latency, max_latency)}</tr>'
                 )
+                resp = _response_html(raw_text, counts, descriptive_text, show_json, show_descriptive)
+                if resp:
+                    response_blocks.append(f'<div style="margin-top:2px"><b>{name}</b>{resp}</div>')
 
-            gt_cells = "".join(_plain_cell(gt[s]) for s in SERIES)
+            gt_cells = "".join(_plain_cell(gt[s], series=s) for s in SERIES)
             body_rows.append(
                 f'<tr style="background:#F0F1EC;font-weight:600">'
                 f'<td style="padding:3px 8px">ground truth</td>{gt_cells}'
-                f'{_plain_cell(gt_total)}{_num_cell("—")}<td style="padding:3px 8px">—</td></tr>'
+                f'{_plain_cell(gt_total)}{_plain_cell("—")}</tr>'
             )
 
             st.markdown(
@@ -414,6 +468,12 @@ def render_file_card(feed, model_names, file_stem, buf, gt_counts):
                 f'<thead>{head}</thead><tbody>{"".join(body_rows)}</tbody></table>',
                 unsafe_allow_html=True,
             )
+            if response_blocks:
+                st.markdown(
+                    f'<div style="margin-top:6px;padding:8px 10px;background:#FFFFFF;border:1px solid {FAINT};'
+                    f'font-size:11px;line-height:1.5">' + "".join(response_blocks) + "</div>",
+                    unsafe_allow_html=True,
+                )
         st.markdown("<hr style='margin:6px 0'>", unsafe_allow_html=True)
 
 
@@ -441,7 +501,8 @@ def load_adapters(model_names, args):
 
 def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
                         count_rows, item_rows, text_rows, descriptive_rows,
-                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs):
+                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs,
+                        show_json, show_descriptive):
     counts_path = run_dir / "person_counts.csv"
     items_path = run_dir / "person_items.csv"
     text_path = run_dir / "raw_responses.csv"
@@ -455,6 +516,10 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
     )
     st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 6px">RESULTS (live)</div>',
                 unsafe_allow_html=True)
+    # show_json/show_descriptive come in as params, not widgets declared here —
+    # the toggles live at module top-level (see the block above the run/resume
+    # branch below) since any widget click reruns the whole script and would
+    # otherwise wipe this function's output before it ever runs again.
     feed = st.container()
 
     # Replay whatever this run already has on disk (a resume) before the
@@ -476,7 +541,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                        "latency": latency_by_pair.get((file_stem, m))}
                    for m in covered[file_stem]}
             if covered[file_stem] == set(model_names):
-                render_file_card(feed, model_names, file_stem, buf, gt_counts)
+                render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive)
             else:
                 current_file, file_buf = file_stem, buf
 
@@ -491,7 +556,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
 
         if step["file"] != current_file:
             if current_file is not None:
-                render_file_card(feed, model_names, current_file, file_buf, gt_counts)
+                render_file_card(feed, model_names, current_file, file_buf, gt_counts, show_json, show_descriptive)
             current_file, file_buf = step["file"], {}
 
         people = step["people"]
@@ -530,7 +595,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                 pd.DataFrame(descriptive_rows).to_csv(descriptive_path, index=False)
 
     if current_file is not None:
-        render_file_card(feed, model_names, current_file, file_buf, gt_counts)
+        render_file_card(feed, model_names, current_file, file_buf, gt_counts, show_json, show_descriptive)
 
     manifest = {
         "run_name": f"{run_name}_COMPLETE",
@@ -596,8 +661,27 @@ if paused_runs:
     st.divider()
 
 # ---------------------------------------------------------------------------
-# resume path, or fresh-run config form
+# response toggles — top-level, not inside run_checklist_live(): ANY widget
+# click reruns this whole script from scratch, and if these lived inside
+# the live-run function they (and everything they control) would vanish
+# the instant you touched one, since neither "submitted" nor "resume"
+# would be true on that rerun. Living here instead means flipping a toggle
+# after a run finishes redraws the SAME completed run from session_state
+# (see the "redraw" branch below) instead of losing it.
 # ---------------------------------------------------------------------------
+
+st.markdown('<div class="hv-h1" style="font-size:15px;margin:14px 0 2px">RESPONSES</div>', unsafe_allow_html=True)
+st.caption("Hidden by default — flip either on to see it in every card below, no per-row clicking.")
+toggle_col1, toggle_col2 = st.columns(2)
+show_json = toggle_col1.toggle("Show JSON responses", value=False, key="checklist_show_json")
+show_descriptive = toggle_col2.toggle("Show descriptions", value=False, key="checklist_show_descriptive")
+
+# ---------------------------------------------------------------------------
+# resume path, fresh-run config form, or redraw the last completed run
+# (only reached when this rerun is neither of those — e.g. a toggle click)
+# ---------------------------------------------------------------------------
+
+ran_this_load = False
 
 if resume_clicked is not None:
     run_dir = resume_clicked["run_dir"]
@@ -616,7 +700,9 @@ if resume_clicked is not None:
     st.write(f"Resuming **{run_dir.name}** — {len(skip_pairs)}/{len(sampled_files) * len(model_names)} pairs already done.")
     run_checklist_live(run_dir, run_dir.name, model_names, sampled_files, adapters, seed, gt_counts,
                         count_rows, item_rows, text_rows, descriptive_rows,
-                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs)
+                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs,
+                        show_json, show_descriptive)
+    ran_this_load = True
 else:
     with st.form("checklist_run_config"):
         c1, c2 = st.columns(2)
@@ -644,36 +730,62 @@ else:
     if not submitted:
         st.info("Pick models above and hit **Run checklist comparison** — results stream in below, "
                 "then score themselves once the run finishes.")
-        st.stop()
-    if not model_names:
+    elif not model_names:
         st.error("Pick at least one model.")
-        st.stop()
-    if cloud_in_selection and not include_cloud:
+    elif cloud_in_selection and not include_cloud:
         st.error(f"{cloud_in_selection} need “Allow cloud models” checked — that's a deliberate cost guard.")
-        st.stop()
+    else:
+        sampled_files = sample_test_images(n_images, seed)
+        st.write(f"Sampled **{len(sampled_files)}** test images.")
+        gt_counts = load_gt_counts(tuple(sampled_files))
 
-    sampled_files = sample_test_images(n_images, seed)
-    st.write(f"Sampled **{len(sampled_files)}** test images.")
-    gt_counts = load_gt_counts(tuple(sampled_files))
+        args = build_args(model_names)
+        adapters = load_adapters(model_names, args)
 
-    args = build_args(model_names)
-    adapters = load_adapters(model_names, args)
+        run_name = build_run_name(n_images, seed, model_names)
+        run_dir = LLM_RUNS_ROOT / run_name
+        run_dir.mkdir(parents=True, exist_ok=True)
+        # Written before the loop starts, not after — this is what a paused
+        # run needs to be resumable at all (see list_paused_checklist_runs()).
+        (run_dir / "run_config.json").write_text(json.dumps(
+            {"kind": "checklist", "model_names": model_names, "sampled_files": sampled_files,
+             "seed": seed, "n_images": n_images},
+            indent=2,
+        ))
+        count_rows, item_rows, text_rows, descriptive_rows = [], [], [], []
+        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair = {}, {}, {}, {}
+        run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
+                            count_rows, item_rows, text_rows, descriptive_rows,
+                            people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, set(),
+                            show_json, show_descriptive)
+        ran_this_load = True
 
-    run_name = build_run_name(n_images, seed, model_names)
-    run_dir = LLM_RUNS_ROOT / run_name
-    run_dir.mkdir(parents=True, exist_ok=True)
-    # Written before the loop starts, not after — this is what a paused run
-    # needs to be resumable at all (see list_paused_checklist_runs() above).
-    (run_dir / "run_config.json").write_text(json.dumps(
-        {"kind": "checklist", "model_names": model_names, "sampled_files": sampled_files,
-         "seed": seed, "n_images": n_images},
-        indent=2,
-    ))
-    count_rows, item_rows, text_rows, descriptive_rows = [], [], [], []
-    people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair = {}, {}, {}, {}
-    run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
-                        count_rows, item_rows, text_rows, descriptive_rows,
-                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, set())
+if ran_this_load:
+    # Stashed so a later rerun that ISN'T a new submission/resume — a toggle
+    # flip above is the main case — can redraw this exact run instead of
+    # losing it (see the "redraw" branch below).
+    st.session_state["checklist_last_run"] = {
+        "model_names": model_names, "sampled_files": sampled_files, "gt_counts": gt_counts,
+        "people_by_pair": people_by_pair, "text_by_pair": text_by_pair,
+        "descriptive_by_pair": descriptive_by_pair, "latency_by_pair": latency_by_pair,
+    }
+elif "checklist_last_run" in st.session_state:
+    saved = st.session_state["checklist_last_run"]
+    model_names, sampled_files, gt_counts = saved["model_names"], saved["sampled_files"], saved["gt_counts"]
+    people_by_pair, text_by_pair = saved["people_by_pair"], saved["text_by_pair"]
+    descriptive_by_pair, latency_by_pair = saved["descriptive_by_pair"], saved["latency_by_pair"]
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 6px">RESULTS (last completed run)</div>',
+                unsafe_allow_html=True)
+    feed = st.container()
+    for f in sampled_files:
+        buf = {m: {"counts": model_counts_for_people(people_by_pair.get((f, m))),
+                   "raw_text": text_by_pair.get((f, m)),
+                   "descriptive_text": descriptive_by_pair.get((f, m)),
+                   "latency": latency_by_pair.get((f, m))}
+               for m in model_names}
+        render_file_card(feed, model_names, f, buf, gt_counts, show_json, show_descriptive)
+else:
+    st.stop()
 
 # ---------------------------------------------------------------------------
 # analysis — live, right below, common to both the resume and fresh paths
@@ -760,22 +872,18 @@ st.caption(
     "matches ground truth exactly, sliding to red the further off it is."
 )
 gt_totals = {series: int(per_image.loc[per_image["series"] == series, "effective_gt"].sum()) for series in SERIES}
-count_head = (
-    '<tr style="border-bottom:1px solid #9B9D97"><th style="padding:3px 8px;text-align:left">model</th>'
-    + "".join(f'<th style="padding:3px 6px;text-align:center">{s}</th>' for s in SERIES) + "</tr>"
-)
 count_body = []
 for m in model_order:
     row_totals = {s: int(per_image.loc[per_image["series"] == s, f"m_{m}"].dropna().sum()) for s in SERIES}
-    cells = "".join(_count_cell(row_totals[s], gt_totals[s]) for s in SERIES)
+    cells = "".join(_count_cell(row_totals[s], gt_totals[s], series=s) for s in SERIES)
     count_body.append(f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(m)}</td>{cells}</tr>')
 count_body.append(
     '<tr style="background:#F0F1EC;font-weight:600"><td style="padding:3px 8px">ground truth (effective)</td>'
-    + "".join(_plain_cell(gt_totals[s]) for s in SERIES) + "</tr>"
+    + "".join(_plain_cell(gt_totals[s], series=s) for s in SERIES) + "</tr>"
 )
 st.markdown(
     f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">'
-    f'<thead>{count_head}</thead><tbody>{"".join(count_body)}</tbody></table>',
+    f'<thead>{_grouped_head()}</thead><tbody>{"".join(count_body)}</tbody></table>',
     unsafe_allow_html=True,
 )
 
