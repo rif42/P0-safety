@@ -56,6 +56,46 @@ st.caption(
     "closing this tab, use the CLI instead."
 )
 
+
+def list_past_runs():
+    """Every run already on disk under runs/llm/ — newest first. Not
+    cached: it's a handful of small JSON reads, and this page itself adds a
+    new run every time it's used, so a stale cache would hide the run you
+    just made."""
+    rows = []
+    if not LLM_RUNS_ROOT.exists():
+        return rows
+    for d in sorted(LLM_RUNS_ROOT.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+        if not d.is_dir():
+            continue
+        manifest_path = d / "run_manifest.json"
+        if manifest_path.exists():
+            m = json.loads(manifest_path.read_text())
+            rows.append({
+                "run": d.name,
+                "created_at": m.get("created_at", "")[:19].replace("T", " "),
+                "status": m.get("status", "—"),
+                "images": m.get("n_images_sampled"),
+                "models": ", ".join(m.get("models", [])),
+                "parse failures": sum(m.get("parse_failures", {}).values()),
+            })
+        elif (d / "prompt_comparison.csv").exists():
+            df = pd.read_csv(d / "prompt_comparison.csv")
+            rows.append({
+                "run": d.name, "created_at": "", "status": "qualitative (unscored)",
+                "images": df["file"].nunique(), "models": "gemini/claude (descriptive)", "parse failures": 0,
+            })
+    return rows
+
+
+past_runs = list_past_runs()
+with st.expander(f"PREVIOUS RUNS ({len(past_runs)})", expanded=False):
+    if not past_runs:
+        st.caption("No runs yet — run one below.")
+    else:
+        st.dataframe(pd.DataFrame(past_runs), hide_index=True, width="stretch")
+        st.caption("Full scored breakdown of any of these: the **LLM vs YOLO** page.")
+
 with st.form("live_run_config"):
     c1, c2 = st.columns(2)
     n_images = c1.slider("Images to sample", 5, 100, 20)
