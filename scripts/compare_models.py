@@ -168,7 +168,7 @@ def image_path_for(file_stem):
     return None
 
 
-def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for, descriptive_prompt=None):
+def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for, descriptive_prompt=None, skip_pairs=None):
     """Drives every (file, model) prediction call one at a time, yielding a
     step dict after each — so a caller can checkpoint, render, or bail
     between calls instead of only seeing anything once the whole loop
@@ -179,7 +179,14 @@ def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for,
     `descriptive_prompt`, if given, also calls .describe() on any adapter
     that has one (claude, gemini) — same free-text/unscored capture
     ModelComparison.ipynb does; main() below doesn't pass one, so CLI runs
-    are unaffected."""
+    are unaffected.
+
+    `skip_pairs`, if given, is a set of (file, model) tuples to skip
+    outright — no predict()/describe() call, no rows, just a `resumed=True`
+    step carrying the counters forward. This is what makes resuming a
+    paused Live Comparison run actually save the API calls it's resuming
+    past, not just re-do them silently."""
+    skip_pairs = skip_pairs or set()
     total = len(sampled_files) * len(adapters)
     done = 0
     done_per_model = {name: 0 for name in adapters}
@@ -189,7 +196,7 @@ def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for,
         if image_path is None:
             yield {
                 "file": file_stem, "model": None, "done": done, "total": total,
-                "done_per_model": dict(done_per_model), "skipped": True, "parse_error": False,
+                "done_per_model": dict(done_per_model), "skipped": True, "resumed": False, "parse_error": False,
                 "presence_rows": [], "detection_rows": [], "descriptive_row": None,
             }
             continue
@@ -197,6 +204,15 @@ def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for,
         for name, adapter in adapters.items():
             done += 1
             done_per_model[name] += 1
+
+            if (file_stem, name) in skip_pairs:
+                yield {
+                    "file": file_stem, "model": name, "done": done, "total": total,
+                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": True, "parse_error": False,
+                    "presence_rows": [], "detection_rows": [], "descriptive_row": None,
+                }
+                continue
+
             detections = adapter.predict(image_path)
 
             presence_rows = []
@@ -242,7 +258,7 @@ def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for,
 
             yield {
                 "file": file_stem, "model": name, "done": done, "total": total,
-                "done_per_model": dict(done_per_model), "skipped": False, "parse_error": parse_error,
+                "done_per_model": dict(done_per_model), "skipped": False, "resumed": False, "parse_error": parse_error,
                 "presence_rows": presence_rows, "detection_rows": detection_rows, "descriptive_row": descriptive_row,
             }
 
