@@ -20,10 +20,23 @@ coordinate to a guess.
 import base64
 import json
 import mimetypes
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
+# Load repo-root .env (ANTHROPIC_API_KEY / GEMINI_API_KEY) if present — no
+# python-dotenv dependency for two lines. setdefault() so a real shell
+# export still wins. Done here, not in every script/notebook that imports
+# this module, since this is where those keys are actually read.
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+if _env_path.exists():
+    for _line in _env_path.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
 
 
 @dataclass
