@@ -274,7 +274,7 @@ class ClaudeAdapter:
         self.model = model
         self.prompt_template = prompt_template
 
-    def predict(self, image_path):
+    def _generate(self, image_path, text_prompt):
         media_type = mimetypes.guess_type(str(image_path))[0] or "image/jpeg"
         with open(image_path, "rb") as f:
             image_b64 = base64.standard_b64encode(f.read()).decode("utf-8")
@@ -287,16 +287,26 @@ class ClaudeAdapter:
                     "role": "user",
                     "content": [
                         {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_b64}},
-                        {"type": "text", "text": render_prompt(self.prompt_template, self.queryable_classes)},
+                        {"type": "text", "text": text_prompt},
                     ],
                 }
             ],
         )
-        text = next((b.text for b in response.content if b.type == "text"), "")
+        return next((b.text for b in response.content if b.type == "text"), "")
+
+    def predict(self, image_path):
+        text = self._generate(image_path, render_prompt(self.prompt_template, self.queryable_classes))
         presence = parse_presence_json(text, self.queryable_classes)
         if presence is None:
             return None
         return [Detection(class_name=c, present=present) for c, present in presence.items()]
+
+    def describe(self, image_path, prompt):
+        """Free-text mode, same rationale as GeminiAdapter.describe() — no
+        per-class boolean to score, so this is outside predict()'s scoring
+        pipeline. Used to collect Claude's plain-language response per image
+        alongside the structured call, for side-by-side viewing."""
+        return self._generate(image_path, prompt)
 
 
 # name -> {cls, is_cloud, default_model}. compare_models.py uses is_cloud to
