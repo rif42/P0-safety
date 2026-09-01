@@ -30,6 +30,7 @@ labeled).
 
 import glob
 import json
+import shutil
 import sys
 import time
 from datetime import datetime, timezone
@@ -165,7 +166,7 @@ if paused_runs:
     st.markdown(f'<div class="hv-h1" style="font-size:15px;margin:14px 0 6px">PAUSED RUNS ({len(paused_runs)})</div>',
                 unsafe_allow_html=True)
     for p in paused_runs:
-        rc1, rc2 = st.columns([4, 1])
+        rc1, rc2, rc3 = st.columns([4, 1, 1])
         rc1.markdown(
             f'<span class="hv-mono" style="font-size:12px">{p["run_name"]}</span> — '
             f'<b>{p["done_pairs"]}/{p["total_pairs"]}</b> pairs done ({", ".join(model_chip(m) for m in p["models"])})',
@@ -173,6 +174,9 @@ if paused_runs:
         )
         if rc2.button("▶ Resume", key=f"resume_{p['run_name']}"):
             resume_clicked = p
+        if rc3.button("🗑 Delete", key=f"delete_paused_{p['run_name']}"):
+            shutil.rmtree(p["run_dir"], ignore_errors=True)
+            st.rerun()
     st.divider()
 
 
