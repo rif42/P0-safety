@@ -168,6 +168,85 @@ def image_path_for(file_stem):
     return None
 
 
+def run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for, descriptive_prompt=None):
+    """Drives every (file, model) prediction call one at a time, yielding a
+    step dict after each — so a caller can checkpoint, render, or bail
+    between calls instead of only seeing anything once the whole loop
+    finishes. Shared by main() below and streamlit_app/pages/live_compare.py,
+    so the actual inference-and-row-building logic lives in exactly one
+    place.
+
+    `descriptive_prompt`, if given, also calls .describe() on any adapter
+    that has one (claude, gemini) — same free-text/unscored capture
+    ModelComparison.ipynb does; main() below doesn't pass one, so CLI runs
+    are unaffected."""
+    total = len(sampled_files) * len(adapters)
+    done = 0
+    done_per_model = {name: 0 for name in adapters}
+
+    for file_stem in sampled_files:
+        image_path = image_path_for(file_stem)
+        if image_path is None:
+            yield {
+                "file": file_stem, "model": None, "done": done, "total": total,
+                "done_per_model": dict(done_per_model), "skipped": True, "parse_error": False,
+                "presence_rows": [], "detection_rows": [], "descriptive_row": None,
+            }
+            continue
+
+        for name, adapter in adapters.items():
+            done += 1
+            done_per_model[name] += 1
+            detections = adapter.predict(image_path)
+
+            presence_rows = []
+            detection_rows = []
+            parse_error = detections is None
+            if parse_error:  # unparseable model output
+                for cls in adapter.queryable_classes:
+                    presence_rows.append(
+                        {"file": file_stem, "model": name, "class_name": cls, "present": None, "parse_error": True}
+                    )
+            else:
+                present_classes = {d.class_name for d in detections if d.present}
+                for cls in adapter.queryable_classes:
+                    presence_rows.append(
+                        {
+                            "file": file_stem,
+                            "model": name,
+                            "class_name": cls,
+                            "present": cls in present_classes,
+                            "parse_error": False,
+                        }
+                    )
+                for d in detections:
+                    if d.bbox is None and not d.present:
+                        continue  # a chat-model "false" isn't a detection row
+                    detection_rows.append(
+                        {
+                            "file": file_stem,
+                            "model": name,
+                            "class_name": d.class_name,
+                            "confidence": d.confidence,
+                            "x1": d.bbox[0] if d.bbox else None,
+                            "y1": d.bbox[1] if d.bbox else None,
+                            "x2": d.bbox[2] if d.bbox else None,
+                            "y2": d.bbox[3] if d.bbox else None,
+                        }
+                    )
+
+            descriptive_row = None
+            if descriptive_prompt and hasattr(adapter, "describe"):
+                text = adapter.describe(image_path, descriptive_prompt)
+                descriptive_row = {"file": file_stem, "model": name, "response_text": text.strip()}
+
+            yield {
+                "file": file_stem, "model": name, "done": done, "total": total,
+                "done_per_model": dict(done_per_model), "skipped": False, "parse_error": parse_error,
+                "presence_rows": presence_rows, "detection_rows": detection_rows, "descriptive_row": descriptive_row,
+            }
+
+
 def build_adapter(model_name, args):
     if model_name not in ADAPTERS:
         raise SystemExit(f"Unknown model '{model_name}'. Available: {', '.join(ADAPTERS)}")
@@ -225,66 +304,30 @@ def main():
 
     total = len(sampled_files) * len(model_names)
     done = 0
-    done_per_model = {name: 0 for name in model_names}
     t_start = time.perf_counter()
     detections_path = run_dir / "detections.csv"
     presence_path = run_dir / "presence.csv"
     interrupted = False
 
     try:
-        for file_stem in sampled_files:
-            image_path = image_path_for(file_stem)
-            if image_path is None:
-                print(f"warning: no image found for {file_stem}, skipping")
+        for step in run_comparison_steps(adapters, sampled_files, image_path_for=image_path_for):
+            if step["skipped"]:
+                print(f"warning: no image found for {step['file']}, skipping")
                 continue
 
-            for name, adapter in adapters.items():
-                done += 1
-                done_per_model[name] += 1
-                detections = adapter.predict(image_path)
+            done, total = step["done"], step["total"]
+            presence_rows.extend(step["presence_rows"])
+            detection_rows.extend(step["detection_rows"])
+            if step["parse_error"]:
+                parse_failures[step["model"]] += 1
 
-                if detections is None:  # unparseable model output
-                    parse_failures[name] += 1
-                    for cls in adapter.queryable_classes:
-                        presence_rows.append(
-                            {"file": file_stem, "model": name, "class_name": cls, "present": None, "parse_error": True}
-                        )
-                    continue
-
-                present_classes = {d.class_name for d in detections if d.present}
-                for cls in adapter.queryable_classes:
-                    presence_rows.append(
-                        {
-                            "file": file_stem,
-                            "model": name,
-                            "class_name": cls,
-                            "present": cls in present_classes,
-                            "parse_error": False,
-                        }
-                    )
-                for d in detections:
-                    if d.bbox is None and not d.present:
-                        continue  # a chat-model "false" isn't a detection row
-                    detection_rows.append(
-                        {
-                            "file": file_stem,
-                            "model": name,
-                            "class_name": d.class_name,
-                            "confidence": d.confidence,
-                            "x1": d.bbox[0] if d.bbox else None,
-                            "y1": d.bbox[1] if d.bbox else None,
-                            "x2": d.bbox[2] if d.bbox else None,
-                            "y2": d.bbox[3] if d.bbox else None,
-                        }
-                    )
-
-                if done % 20 == 0 or done == total:
-                    elapsed = time.perf_counter() - t_start
-                    per_model = " ".join(f"{n}:{c}/{len(sampled_files)}" for n, c in done_per_model.items())
-                    print(f"  {done}/{total} pairs, {elapsed:.0f}s elapsed — {per_model}")
-                    # checkpoint: survive a kill, not just a clean Ctrl+C
-                    pd.DataFrame(detection_rows).to_csv(detections_path, index=False)
-                    pd.DataFrame(presence_rows).to_csv(presence_path, index=False)
+            if done % 20 == 0 or done == total:
+                elapsed = time.perf_counter() - t_start
+                per_model = " ".join(f"{n}:{c}/{len(sampled_files)}" for n, c in step["done_per_model"].items())
+                print(f"  {done}/{total} pairs, {elapsed:.0f}s elapsed — {per_model}")
+                # checkpoint: survive a kill, not just a clean Ctrl+C
+                pd.DataFrame(detection_rows).to_csv(detections_path, index=False)
+                pd.DataFrame(presence_rows).to_csv(presence_path, index=False)
     except KeyboardInterrupt:
         interrupted = True
         print(f"\ninterrupted at {done}/{total} pairs — writing partial results and scoring what we have")
