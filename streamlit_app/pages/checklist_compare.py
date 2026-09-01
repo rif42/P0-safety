@@ -673,27 +673,12 @@ if paused_runs:
     st.divider()
 
 # ---------------------------------------------------------------------------
-# response toggles — top-level, not inside run_checklist_live(): ANY widget
-# click reruns this whole script from scratch, and if these lived inside
-# the live-run function they (and everything they control) would vanish
-# the instant you touched one, since neither "submitted" nor "resume"
-# would be true on that rerun. Living here instead means flipping a toggle
-# after a run finishes redraws the SAME completed run from session_state
-# (see the "redraw" branch below) instead of losing it.
+# resume path or fresh-run config form — decides WHAT to run but doesn't call
+# run_checklist_live() yet, so the response toggles below can render between
+# "configure the run" and "see the results" instead of above both.
 # ---------------------------------------------------------------------------
 
-st.markdown('<div class="hv-h1" style="font-size:15px;margin:14px 0 2px">RESPONSES</div>', unsafe_allow_html=True)
-st.caption("Hidden by default — flip either on to see it in every card below, no per-row clicking.")
-toggle_col1, toggle_col2 = st.columns(2)
-show_json = toggle_col1.toggle("Show JSON responses", value=False, key="checklist_show_json")
-show_descriptive = toggle_col2.toggle("Show descriptions", value=False, key="checklist_show_descriptive")
-
-# ---------------------------------------------------------------------------
-# resume path, fresh-run config form, or redraw the last completed run
-# (only reached when this rerun is neither of those — e.g. a toggle click)
-# ---------------------------------------------------------------------------
-
-ran_this_load = False
+should_run = False
 
 if resume_clicked is not None:
     run_dir = resume_clicked["run_dir"]
@@ -710,11 +695,7 @@ if resume_clicked is not None:
     skip_pairs = set(people_by_pair.keys())
 
     st.write(f"Resuming **{run_dir.name}** — {len(skip_pairs)}/{len(sampled_files) * len(model_names)} pairs already done.")
-    run_checklist_live(run_dir, run_dir.name, model_names, sampled_files, adapters, seed, gt_counts,
-                        count_rows, item_rows, text_rows, descriptive_rows,
-                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs,
-                        show_json, show_descriptive)
-    ran_this_load = True
+    should_run = True
 else:
     with st.form("checklist_run_config"):
         c1, c2 = st.columns(2)
@@ -766,11 +747,38 @@ else:
         ))
         count_rows, item_rows, text_rows, descriptive_rows = [], [], [], []
         people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair = {}, {}, {}, {}
+        should_run = True
+
+# ---------------------------------------------------------------------------
+# response toggles — placed here (after the config/resume controls above,
+# before any results below), not inside run_checklist_live(): ANY widget
+# click reruns this whole script from scratch, and if these lived inside
+# the live-run function they (and everything they control) would vanish
+# the instant you touched one, since neither "should_run" nor a resume
+# would be true on that rerun. Living here instead means flipping a toggle
+# after a run finishes redraws the SAME completed run from session_state
+# (see the "redraw" branch below) instead of losing it.
+# ---------------------------------------------------------------------------
+
+st.markdown('<div class="hv-h1" style="font-size:15px;margin:14px 0 2px">RESPONSES</div>', unsafe_allow_html=True)
+st.caption("Hidden by default — flip either on to see it in every card below, no per-row clicking.")
+toggle_col1, toggle_col2 = st.columns(2)
+show_json = toggle_col1.toggle("Show JSON responses", value=False, key="checklist_show_json")
+show_descriptive = toggle_col2.toggle("Show descriptions", value=False, key="checklist_show_descriptive")
+
+ran_this_load = False
+if should_run:
+    if resume_clicked is not None:
+        run_checklist_live(run_dir, run_dir.name, model_names, sampled_files, adapters, seed, gt_counts,
+                            count_rows, item_rows, text_rows, descriptive_rows,
+                            people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs,
+                            show_json, show_descriptive)
+    else:
         run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
                             count_rows, item_rows, text_rows, descriptive_rows,
                             people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, set(),
                             show_json, show_descriptive)
-        ran_this_load = True
+    ran_this_load = True
 
 if ran_this_load:
     # Stashed so a later rerun that ISN'T a new submission/resume — a toggle
