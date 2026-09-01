@@ -40,13 +40,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
-import altair as alt
 import pandas as pd
 import streamlit as st
 import yaml
 from PIL import Image, ImageDraw
-
-alt.themes.enable("none")
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_ROOT))
@@ -75,7 +72,6 @@ FAINT = "#C4C6C0"
 GT_BOX_COLOR = "#1B7A3D"
 POSITIVE_GREEN = "#1B7A3D"  # matches this app's existing compliant=green convention
 NEGATIVE_RED = "#B02A20"    # matches this app's existing non-compliant=red convention
-CHART_FONT = "IBM Plex Sans, sans-serif"
 SERIES = ["person"] + CHECKLIST_ITEMS + [f"no-{item}" for item in CHECKLIST_ITEMS]
 CLASS_NAMES = yaml.safe_load((MERGED_ROOT / "data.yaml").read_text())["names"]
 
@@ -227,16 +223,20 @@ def list_paused_checklist_runs():
 
 
 def load_existing_checklist_rows(run_dir):
-    """Reconstruct count_rows/item_rows/people_by_pair from a paused run's
-    checkpoint — people_by_pair also doubles as the resume's skip_pairs
-    (every (file, model) key in it was already asked, parse failure or not;
-    a failure isn't retried automatically here, same as everywhere else in
-    this codebase)."""
+    """Reconstruct count_rows/item_rows/text_rows/people_by_pair/text_by_pair
+    from a paused run's checkpoint — people_by_pair also doubles as the
+    resume's skip_pairs (every (file, model) key in it was already asked,
+    parse failure or not; a failure isn't retried automatically here, same
+    as everywhere else in this codebase)."""
     counts_path = run_dir / "person_counts.csv"
     items_path = run_dir / "person_items.csv"
+    text_path = run_dir / "raw_responses.csv"
     count_rows = pd.read_csv(counts_path).to_dict("records") if counts_path.exists() else []
     items_df = pd.read_csv(items_path) if items_path.exists() else pd.DataFrame()
     item_rows = items_df.to_dict("records")
+    text_df = pd.read_csv(text_path) if text_path.exists() else pd.DataFrame()
+    text_rows = text_df.to_dict("records")
+    text_by_pair = {(r["file"], r["model"]): r["response_text"] for r in text_rows}
 
     people_by_pair = {}
     for row in count_rows:
@@ -250,7 +250,7 @@ def load_existing_checklist_rows(run_dir):
             continue
         sub = items_df[(items_df["file"] == row["file"]) & (items_df["model"] == row["model"])].sort_values("person_idx")
         people_by_pair[key] = [{item: bool(r[item]) for item in CHECKLIST_ITEMS} for _, r in sub.iterrows()]
-    return count_rows, item_rows, people_by_pair
+    return count_rows, item_rows, text_rows, people_by_pair, text_by_pair
 
 
 # ---------------------------------------------------------------------------
@@ -285,22 +285,27 @@ def render_file_card(feed, model_names, file_stem, buf):
             st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin-bottom:4px">{file_stem}</div>',
                         unsafe_allow_html=True)
             for name in model_names:
-                counts = buf.get(name)
+                entry = buf.get(name)
+                counts = entry["counts"] if entry else None
+                raw_text = entry.get("raw_text") if entry else None
                 if counts is None:
                     st.markdown(
                         f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
                         f'{model_chip(name)}<span style="color:{MUTED};font-size:11px">parse error</span></div>',
                         unsafe_allow_html=True,
                     )
-                    continue
-                n = counts["person"]
-                items_chips = "".join(ratio_chip(item, counts[item], n) for item in CHECKLIST_ITEMS)
-                st.markdown(
-                    f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">'
-                    f'{model_chip(name)}<b class="hv-h1" style="font-size:16px">{n}</b>'
-                    f'<span style="font-size:11px;color:{MUTED}">people</span>{items_chips}</div>',
-                    unsafe_allow_html=True,
-                )
+                else:
+                    n = counts["person"]
+                    items_chips = "".join(ratio_chip(item, counts[item], n) for item in CHECKLIST_ITEMS)
+                    st.markdown(
+                        f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">'
+                        f'{model_chip(name)}<b class="hv-h1" style="font-size:16px">{n}</b>'
+                        f'<span style="font-size:11px;color:{MUTED}">people</span>{items_chips}</div>',
+                        unsafe_allow_html=True,
+                    )
+                if raw_text:  # YOLO has none — it answers from boxes, not text
+                    with st.expander(f"{name} — raw response", expanded=False):
+                        st.code(raw_text, language="json")
         st.markdown("<hr style='margin:6px 0'>", unsafe_allow_html=True)
 
 
@@ -327,9 +332,10 @@ def load_adapters(model_names, args):
 
 
 def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed,
-                        count_rows, item_rows, people_by_pair, skip_pairs):
+                        count_rows, item_rows, text_rows, people_by_pair, text_by_pair, skip_pairs):
     counts_path = run_dir / "person_counts.csv"
     items_path = run_dir / "person_items.csv"
+    text_path = run_dir / "raw_responses.csv"
 
     progress_bar = st.progress(0.0)
     status_line = st.empty()
@@ -354,7 +360,9 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
         for file_stem in sampled_files:
             if file_stem not in covered:
                 continue
-            buf = {m: model_counts_for_people(people_by_pair.get((file_stem, m))) for m in covered[file_stem]}
+            buf = {m: {"counts": model_counts_for_people(people_by_pair.get((file_stem, m))),
+                       "raw_text": text_by_pair.get((file_stem, m))}
+                   for m in covered[file_stem]}
             if covered[file_stem] == set(model_names):
                 render_file_card(feed, model_names, file_stem, buf)
             else:
@@ -380,8 +388,11 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
         if people:
             for idx, p in enumerate(people):
                 item_rows.append({"file": step["file"], "model": step["model"], "person_idx": idx, **p})
+        if step["raw_text"]:
+            text_by_pair[(step["file"], step["model"])] = step["raw_text"]
+            text_rows.append({"file": step["file"], "model": step["model"], "response_text": step["raw_text"]})
 
-        file_buf[step["model"]] = model_counts_for_people(people)
+        file_buf[step["model"]] = {"counts": model_counts_for_people(people), "raw_text": step["raw_text"]}
 
         done, total = step["done"], step["total"]
         progress_bar.progress(done / total)
@@ -391,6 +402,8 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
         if done % 10 == 0 or done == total:  # checkpoint: survive a paused/killed tab
             pd.DataFrame(count_rows).to_csv(counts_path, index=False)
             pd.DataFrame(item_rows).to_csv(items_path, index=False)
+            if text_rows:
+                pd.DataFrame(text_rows).to_csv(text_path, index=False)
 
     if current_file is not None:
         render_file_card(feed, model_names, current_file, file_buf)
@@ -411,6 +424,8 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
     run_dir.rename(final_dir)
     pd.DataFrame(count_rows).to_csv(final_dir / "person_counts.csv", index=False)
     pd.DataFrame(item_rows).to_csv(final_dir / "person_items.csv", index=False)
+    if text_rows:
+        pd.DataFrame(text_rows).to_csv(final_dir / "raw_responses.csv", index=False)
     (final_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2))
     st.success(f"Done in {time.perf_counter() - t_start:.0f}s — saved to `runs/llm/{final_dir.name}/`.")
 
@@ -455,17 +470,17 @@ if resume_clicked is not None:
 
     args = build_args(model_names)
     adapters = load_adapters(model_names, args)
-    count_rows, item_rows, people_by_pair = load_existing_checklist_rows(run_dir)
+    count_rows, item_rows, text_rows, people_by_pair, text_by_pair = load_existing_checklist_rows(run_dir)
     skip_pairs = set(people_by_pair.keys())
 
     st.write(f"Resuming **{run_dir.name}** — {len(skip_pairs)}/{len(sampled_files) * len(model_names)} pairs already done.")
     run_checklist_live(run_dir, run_dir.name, model_names, sampled_files, adapters, seed,
-                        count_rows, item_rows, people_by_pair, skip_pairs)
+                        count_rows, item_rows, text_rows, people_by_pair, text_by_pair, skip_pairs)
 else:
     with st.form("checklist_run_config"):
         c1, c2 = st.columns(2)
         n_images = c1.slider("Images to sample", 1, 100, 20)
-        seed = c2.number_input("Seed", value=42, step=1)
+        seed = c2.number_input("Seed", value=7, step=1)  # != 42, so a run here isn't just re-sampling the same images
         model_names = st.multiselect(
             "Models",
             list(ADAPTERS),
@@ -512,9 +527,9 @@ else:
          "seed": seed, "n_images": n_images},
         indent=2,
     ))
-    count_rows, item_rows, people_by_pair = [], [], {}
+    count_rows, item_rows, text_rows, people_by_pair, text_by_pair = [], [], [], {}, {}
     run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed,
-                        count_rows, item_rows, people_by_pair, set())
+                        count_rows, item_rows, text_rows, people_by_pair, text_by_pair, set())
 
 # ---------------------------------------------------------------------------
 # analysis — live, right below, common to both the resume and fresh paths
@@ -591,13 +606,34 @@ else:
 
 st.markdown("<hr style='margin:24px 0 18px'/>", unsafe_allow_html=True)
 
-# --- per-series accuracy against the ENHANCED ground truth ------------------
-st.markdown('<div class="hv-h1" style="font-size:20px;margin-bottom:2px">COUNT ACCURACY PER MODEL</div>', unsafe_allow_html=True)
+# --- results & ground truth, one table: rows = model (+ ground truth), columns = class --------
+model_order = sorted(model_names, key=lambda m: (m != "yolo", m))
+st.markdown('<div class="hv-h1" style="font-size:20px;margin-bottom:2px">RESULTS vs. GROUND TRUTH</div>', unsafe_allow_html=True)
 st.caption(
-    "Scored against the enhanced ground truth above. Exact-match rate: fraction of images where the "
-    "model's count equals it exactly — higher is better. Mean abs. error: average |model count − "
-    "effective ground truth| — lower is better. Only images the model actually answered (no parse "
-    "failure) count toward either."
+    "Total count per class, summed across every scored image — each model's own answer, plus the "
+    "\"ground truth (effective)\" row (max of the label and the model consensus — see above). Darker "
+    "= higher count within that column."
+)
+count_rows_table = []
+for m in model_order:
+    row = {"model": m}
+    for series in SERIES:
+        row[series] = int(per_image.loc[per_image["series"] == series, f"m_{m}"].dropna().sum())
+    count_rows_table.append(row)
+count_rows_table.append({
+    "model": "ground truth (effective)",
+    **{series: int(per_image.loc[per_image["series"] == series, "effective_gt"].sum()) for series in SERIES},
+})
+count_table = pd.DataFrame(count_rows_table).set_index("model")[SERIES]
+st.dataframe(count_table.style.background_gradient(cmap="Greys", axis=0), width="stretch")
+
+# --- per-model, per-class accuracy against the ENHANCED ground truth --------------------------
+st.markdown('<div class="hv-h1" style="font-size:20px;margin:22px 0 2px">COUNT ACCURACY PER MODEL</div>', unsafe_allow_html=True)
+st.caption(
+    "Scored per image against the enhanced ground truth above, then averaged. Exact-match rate: how "
+    "often the model's count is exactly right — higher (darker) is better. Mean abs. error: average "
+    "|model count − ground truth| — lower (darker, on the reversed scale below) is better. Only images "
+    "the model actually answered (no parse failure) count toward either."
 )
 macro_rows = []
 for series in SERIES:
@@ -617,48 +653,16 @@ macro = pd.DataFrame(macro_rows)
 if macro.empty:
     st.caption("No answered pairs to score yet.")
 else:
-    model_order = sorted(macro["model"].unique(), key=lambda m: (m != "yolo", m))
-    POSITIVE_SET = {"person", *CHECKLIST_ITEMS}
+    exact_table = macro.pivot(index="model", columns="series", values="exact_match_rate").reindex(index=model_order, columns=SERIES)
+    error_table = macro.pivot(index="model", columns="series", values="mean_abs_error").reindex(index=model_order, columns=SERIES)
 
-    def series_bar(df, value_col, value_label, y_domain):
-        df = df.rename(columns={value_col: "value"}).copy()
-        df["group"] = df["series"].apply(lambda s: "Positive (present)" if s in POSITIVE_SET else "Negative (absent)")
-        bar = (
-            alt.Chart()
-            .mark_bar(size=14, cornerRadiusTopLeft=2, cornerRadiusTopRight=2)
-            .encode(
-                x=alt.X("series:N", title=None, sort=SERIES, axis=alt.Axis(labelAngle=-40, labelFontSize=10)),
-                y=alt.Y("value:Q", title=value_label, scale=alt.Scale(domain=y_domain)),
-                color=alt.Color("group:N", title=None,
-                                 scale=alt.Scale(domain=["Positive (present)", "Negative (absent)"], range=[INK, NEGATIVE_RED])),
-                tooltip=[alt.Tooltip("model:N", title="Model"), alt.Tooltip("series:N", title="Class"),
-                         alt.Tooltip("value:Q", title=value_label, format=".2f"), alt.Tooltip("n:Q", title="images")],
-            )
-        )
-        text = (
-            alt.Chart().mark_text(dy=-5, font=CHART_FONT, fontSize=9, color=INK)
-            .encode(x=alt.X("series:N", sort=SERIES, axis=None), y="value:Q", text=alt.Text("value:Q", format=".2f"))
-        )
-        return (
-            alt.layer(bar, text, data=df)
-            .properties(width=26 * len(SERIES), height=210)
-            .facet(column=alt.Column("model:N", title=None, sort=model_order,
-                                      header=alt.Header(labelFont=CHART_FONT, labelFontSize=12.5, labelColor=INK, labelOrient="bottom")))
-            .configure_view(strokeWidth=0)
-            .configure_axis(labelFont=CHART_FONT, titleFont=CHART_FONT, labelColor=MUTED, titleColor=INK,
-                             grid=False, domainColor=FAINT, tickColor=FAINT, labelFontSize=10.5, titleFontSize=11.5)
-            .configure_legend(labelFont=CHART_FONT, titleFont=CHART_FONT, labelColor=INK, titleColor=INK,
-                               labelFontSize=11.5, titleFontSize=11.5, orient="top", symbolType="square")
-        )
-
-    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 2px">EXACT-MATCH RATE</div>', unsafe_allow_html=True)
-    st.altair_chart(series_bar(macro, "exact_match_rate", "Exact-match rate", [0, 1.05]), width="stretch")
-
-    st.markdown('<div class="hv-h1" style="font-size:15px;margin:20px 0 2px">MEAN ABSOLUTE COUNT ERROR (lower is better)</div>',
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 2px">EXACT-MATCH RATE (higher/darker is better)</div>',
                 unsafe_allow_html=True)
-    err_max = macro["mean_abs_error"].max()
-    st.altair_chart(series_bar(macro, "mean_abs_error", "Mean abs. error", [0, err_max * 1.15 if err_max else 1]),
-                     width="stretch")
+    st.dataframe(exact_table.style.background_gradient(cmap="Greys", vmin=0, vmax=1).format("{:.2f}"), width="stretch")
 
-    with st.expander("Full numbers"):
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:20px 0 2px">MEAN ABSOLUTE COUNT ERROR (lower/darker is better)</div>',
+                unsafe_allow_html=True)
+    st.dataframe(error_table.style.background_gradient(cmap="Greys_r", vmin=0).format("{:.2f}"), width="stretch")
+
+    with st.expander("Full numbers (long form, with sample sizes)"):
         st.dataframe(macro, hide_index=True, width="stretch")

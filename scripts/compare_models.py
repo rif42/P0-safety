@@ -297,7 +297,8 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
         if image_path is None:
             yield {
                 "file": file_stem, "model": None, "done": done, "total": total,
-                "done_per_model": dict(done_per_model), "skipped": True, "resumed": False, "people": None,
+                "done_per_model": dict(done_per_model), "skipped": True, "resumed": False,
+                "people": None, "raw_text": None,
             }
             continue
 
@@ -308,19 +309,22 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
             if (file_stem, name) in skip_pairs:
                 yield {
                     "file": file_stem, "model": name, "done": done, "total": total,
-                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": True, "people": None,
+                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": True,
+                    "people": None, "raw_text": None,
                 }
                 continue
 
+            raw_text = None
             if hasattr(adapter, "describe"):
-                text = adapter.describe(image_path, prompt)
-                people = parse_person_checklist_json(text, items)
+                raw_text = adapter.describe(image_path, prompt)
+                people = parse_person_checklist_json(raw_text, items)
             else:  # grounding model (YOLO) — no free-text interface, use its own boxes
                 detections = adapter.predict(image_path)
                 people = people_from_detections(detections, items) if detections is not None else None
             yield {
                 "file": file_stem, "model": name, "done": done, "total": total,
-                "done_per_model": dict(done_per_model), "skipped": False, "resumed": False, "people": people,
+                "done_per_model": dict(done_per_model), "skipped": False, "resumed": False,
+                "people": people, "raw_text": raw_text,
             }
 
 
