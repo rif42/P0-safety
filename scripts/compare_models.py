@@ -225,6 +225,7 @@ def main():
 
     total = len(sampled_files) * len(model_names)
     done = 0
+    done_per_model = {name: 0 for name in model_names}
     t_start = time.perf_counter()
     detections_path = run_dir / "detections.csv"
     presence_path = run_dir / "presence.csv"
@@ -239,6 +240,7 @@ def main():
 
             for name, adapter in adapters.items():
                 done += 1
+                done_per_model[name] += 1
                 detections = adapter.predict(image_path)
 
                 if detections is None:  # unparseable model output
@@ -278,7 +280,8 @@ def main():
 
                 if done % 20 == 0 or done == total:
                     elapsed = time.perf_counter() - t_start
-                    print(f"  {done}/{total} (image, model) pairs done, {elapsed:.0f}s elapsed")
+                    per_model = " ".join(f"{n}:{c}/{len(sampled_files)}" for n, c in done_per_model.items())
+                    print(f"  {done}/{total} pairs, {elapsed:.0f}s elapsed — {per_model}")
                     # checkpoint: survive a kill, not just a clean Ctrl+C
                     pd.DataFrame(detection_rows).to_csv(detections_path, index=False)
                     pd.DataFrame(presence_rows).to_csv(presence_path, index=False)
