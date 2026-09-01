@@ -23,7 +23,7 @@ import numpy as np
 from ultralytics import YOLO
 
 ROOT = Path(__file__).resolve().parents[2]  # E:/work/P0-safety
-SRC = ROOT / "demo-pics"
+SRC = ROOT / "demo-pics/challenging"
 OUT = Path(__file__).resolve().parent / "output"
 
 MODELS = {
