@@ -32,6 +32,7 @@ enough to rebuild sampling/models later. PAUSED RUNS below lists any run
 this page started that never got a run_manifest.json.
 """
 
+import html
 import json
 import statistics
 import sys
@@ -257,55 +258,75 @@ def load_existing_checklist_rows(run_dir):
 # shared rendering
 # ---------------------------------------------------------------------------
 
-def ratio_chip(item, count, total):
-    """Green = every detected person has this item, red = nobody does,
-    yellow (this app's existing attention/exception color) = some do —
-    quicker to scan than a bare "2/5" the way the old plain-text line was."""
-    if total == 0:
-        bg, fg = "#E4E5E2", MUTED
-    elif count == total:
-        bg, fg = POSITIVE_GREEN, "#FFFFFF"
-    elif count == 0:
-        bg, fg = NEGATIVE_RED, "#FFFFFF"
-    else:
-        bg, fg = "#EFE600", INK
-    return (f'<span class="hv-mono" style="display:inline-block;font-size:10px;padding:2px 7px;'
-            f'margin:2px 3px 2px 0;background:{bg};color:{fg};white-space:nowrap">{item} {count}/{total}</span>')
+def _table_cell(value):
+    return f'<td style="padding:3px 8px;text-align:right;border-bottom:1px solid #E4E5E2">{value}</td>'
 
 
-def render_file_card(feed, model_names, file_stem, buf):
+def render_file_card(feed, model_names, file_stem, buf, gt_counts):
+    """Real HTML <table>, one row per model plus a final "ground truth"
+    row — not a text caption under the thumbnail — columns = every series
+    (person + each item's present/absent count) + a total, and a last
+    "response" column. YOLO has no text response (it answers from boxes),
+    so that cell is "—". A chat model's response is wrapped in <details>:
+    collapsed when it parsed into real counts (the table already says
+    everything it says), auto-expanded when it didn't (a genuine parse
+    failure is usually free text explaining why, worth seeing immediately
+    instead of hiding it behind a click)."""
     with feed:
         cols = st.columns([1, 3])
         img_path = image_path_for(file_stem)
         if img_path:
             gt_boxes = load_gt_boxes(file_stem)
             cols[0].image(draw_gt_overlay(img_path, gt_boxes) if gt_boxes else str(img_path), width="stretch")
-            cols[0].caption(f"ground truth: {len(gt_boxes)} box(es)" if gt_boxes else "no ground-truth boxes for this image")
         with cols[1]:
             st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin-bottom:4px">{file_stem}</div>',
                         unsafe_allow_html=True)
+
+            head = (
+                '<tr style="border-bottom:1px solid #9B9D97">'
+                '<th style="padding:3px 8px;text-align:left">model</th>'
+                + "".join(f'<th style="padding:3px 8px;text-align:right">{s}</th>' for s in SERIES)
+                + '<th style="padding:3px 8px;text-align:right">total</th>'
+                + '<th style="padding:3px 8px;text-align:left">response</th></tr>'
+            )
+            body_rows = []
             for name in model_names:
                 entry = buf.get(name)
                 counts = entry["counts"] if entry else None
                 raw_text = entry.get("raw_text") if entry else None
-                if counts is None:
-                    st.markdown(
-                        f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
-                        f'{model_chip(name)}<span style="color:{MUTED};font-size:11px">parse error</span></div>',
-                        unsafe_allow_html=True,
+                cells = "".join(_table_cell(counts[s] if counts else "—") for s in SERIES)
+                total = sum(counts.values()) if counts else "—"
+                if raw_text:  # YOLO has none — it answers from boxes, not text
+                    parsed_ok = counts is not None
+                    safe_text = html.escape(raw_text)
+                    response = (
+                        f'<details{"" if parsed_ok else " open"}>'
+                        f'<summary style="cursor:pointer;color:{MUTED};font-size:10.5px">'
+                        f'{"json" if parsed_ok else "⚠ unparsed"}</summary>'
+                        f'<pre style="white-space:pre-wrap;font-size:10px;max-width:420px;margin:4px 0 0">{safe_text}</pre>'
+                        "</details>"
                     )
                 else:
-                    n = counts["person"]
-                    items_chips = "".join(ratio_chip(item, counts[item], n) for item in CHECKLIST_ITEMS)
-                    st.markdown(
-                        f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">'
-                        f'{model_chip(name)}<b class="hv-h1" style="font-size:16px">{n}</b>'
-                        f'<span style="font-size:11px;color:{MUTED}">people</span>{items_chips}</div>',
-                        unsafe_allow_html=True,
-                    )
-                if raw_text:  # YOLO has none — it answers from boxes, not text
-                    with st.expander(f"{name} — raw response", expanded=False):
-                        st.code(raw_text, language="json")
+                    response = "—"
+                body_rows.append(
+                    f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
+                    f'{cells}{_table_cell(f"<b>{total}</b>")}'
+                    f'<td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{response}</td></tr>'
+                )
+
+            gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
+            gt_cells = "".join(_table_cell(gt[s]) for s in SERIES)
+            body_rows.append(
+                f'<tr style="background:#F0F1EC;font-weight:600">'
+                f'<td style="padding:3px 8px">ground truth</td>{gt_cells}'
+                f'{_table_cell(sum(gt.values()))}<td style="padding:3px 8px">—</td></tr>'
+            )
+
+            st.markdown(
+                f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">'
+                f'<thead>{head}</thead><tbody>{"".join(body_rows)}</tbody></table>',
+                unsafe_allow_html=True,
+            )
         st.markdown("<hr style='margin:6px 0'>", unsafe_allow_html=True)
 
 
@@ -331,7 +352,7 @@ def load_adapters(model_names, args):
     return adapters
 
 
-def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed,
+def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
                         count_rows, item_rows, text_rows, people_by_pair, text_by_pair, skip_pairs):
     counts_path = run_dir / "person_counts.csv"
     items_path = run_dir / "person_items.csv"
@@ -364,7 +385,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                        "raw_text": text_by_pair.get((file_stem, m))}
                    for m in covered[file_stem]}
             if covered[file_stem] == set(model_names):
-                render_file_card(feed, model_names, file_stem, buf)
+                render_file_card(feed, model_names, file_stem, buf, gt_counts)
             else:
                 current_file, file_buf = file_stem, buf
 
@@ -378,7 +399,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
 
         if step["file"] != current_file:
             if current_file is not None:
-                render_file_card(feed, model_names, current_file, file_buf)
+                render_file_card(feed, model_names, current_file, file_buf, gt_counts)
             current_file, file_buf = step["file"], {}
 
         people = step["people"]
@@ -406,7 +427,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                 pd.DataFrame(text_rows).to_csv(text_path, index=False)
 
     if current_file is not None:
-        render_file_card(feed, model_names, current_file, file_buf)
+        render_file_card(feed, model_names, current_file, file_buf, gt_counts)
 
     manifest = {
         "run_name": f"{run_name}_COMPLETE",
@@ -467,6 +488,7 @@ if resume_clicked is not None:
     model_names = cfg["model_names"]
     sampled_files = cfg["sampled_files"]
     seed = cfg.get("seed")
+    gt_counts = load_gt_counts(tuple(sampled_files))
 
     args = build_args(model_names)
     adapters = load_adapters(model_names, args)
@@ -474,7 +496,7 @@ if resume_clicked is not None:
     skip_pairs = set(people_by_pair.keys())
 
     st.write(f"Resuming **{run_dir.name}** — {len(skip_pairs)}/{len(sampled_files) * len(model_names)} pairs already done.")
-    run_checklist_live(run_dir, run_dir.name, model_names, sampled_files, adapters, seed,
+    run_checklist_live(run_dir, run_dir.name, model_names, sampled_files, adapters, seed, gt_counts,
                         count_rows, item_rows, text_rows, people_by_pair, text_by_pair, skip_pairs)
 else:
     with st.form("checklist_run_config"):
@@ -513,6 +535,7 @@ else:
 
     sampled_files = sample_test_images(n_images, seed)
     st.write(f"Sampled **{len(sampled_files)}** test images.")
+    gt_counts = load_gt_counts(tuple(sampled_files))
 
     args = build_args(model_names)
     adapters = load_adapters(model_names, args)
@@ -528,7 +551,7 @@ else:
         indent=2,
     ))
     count_rows, item_rows, text_rows, people_by_pair, text_by_pair = [], [], [], {}, {}
-    run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed,
+    run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
                         count_rows, item_rows, text_rows, people_by_pair, text_by_pair, set())
 
 # ---------------------------------------------------------------------------
@@ -537,7 +560,8 @@ else:
 
 st.markdown('<div class="hv-h1" style="font-size:20px;margin:28px 0 6px">ANALYSIS</div>', unsafe_allow_html=True)
 
-gt_counts = load_gt_counts(tuple(sampled_files))
+# gt_counts was already computed above (before the live loop, so the per-image
+# tables could use it too) — reused here, not recomputed.
 if gt_counts is None:
     st.warning("data/merged/labels_long.csv not found on this checkout — can't score against ground truth "
                "(it's git-ignored). The run above is still saved.")
