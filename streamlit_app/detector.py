@@ -68,8 +68,8 @@ ALTEC_NO_PERSON_NOTE = (
 # yolo26m_merged_150e — same merged dataset/vocabulary as yolo26s_merged_100e above, but the
 # larger YOLO26m backbone trained for the full 150 epochs (patience=20, ran to completion
 # rather than early-stopping). Beats yolo26s_merged_100e on every aggregate metric and every
-# per-class confusion-matrix diagonal — this is now the app's default (see DEFAULT_WEIGHTS
-# below).
+# per-class confusion-matrix diagonal. Superseded as the app's default by
+# yolo26s_supervisorv1_fixed_nomosaic_300e below — kept here for Model Comparison.
 MERGED_M_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_merged_150e" / "weights" / "best.pt"
 MERGED_M_LABEL = "YOLO26m · yolo26m_merged_150e"
 
@@ -84,8 +84,21 @@ MERGED_M_LABEL = "YOLO26m · yolo26m_merged_150e"
 MERGEDPEOPLE_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_mergedpeople_150e" / "weights" / "best.pt"
 MERGEDPEOPLE_LABEL = "YOLO26m · yolo26m_mergedpeople_150e"
 
-DEFAULT_WEIGHTS = MERGED_M_WEIGHTS
-DEFAULT_LABEL = MERGED_M_LABEL
+# yolo26s_supervisorv1_fixed_nomosaic_300e — trained on the new SuperVisor.v1 dataset
+# (2026-09-02 export, mixed labels fixed and the previously-corrupted images recovered, so it
+# uses the full set), yolo26s backbone, epochs=300/patience=25 with close_mosaic=10;
+# early-stopped at 71/300, best epoch 46. First run here whose vocabulary covers ALL FIVE
+# tracked slots at once — Person plus hardhat/vest/mask/gloves/boots and every NO-* negative
+# (11 classes, all already in _RAW_TO_KEY) — so mask stops coming back "not visible" the way
+# it did under every merged run. Its aggregate numbers (precision 0.556, recall 0.531,
+# mAP50 0.490, mAP50-95 0.215 at the best epoch) are NOT comparable with the merged runs
+# above: different dataset, more classes, harder split. This is now the app's default.
+SUPERVISOR_V1_WEIGHTS = (REPO_ROOT / "runs" / "detect" /
+                         "yolo26s_supervisorv1_fixed_nomosaic_300e" / "weights" / "best.pt")
+SUPERVISOR_V1_LABEL = "YOLO26s · yolo26s_supervisorv1_fixed_nomosaic_300e"
+
+DEFAULT_WEIGHTS = SUPERVISOR_V1_WEIGHTS
+DEFAULT_LABEL = SUPERVISOR_V1_LABEL
 
 _weights_env = os.environ.get("HIVIS_MODEL_PATH")
 WEIGHTS_PATH = (REPO_ROOT / _weights_env) if _weights_env else DEFAULT_WEIGHTS
