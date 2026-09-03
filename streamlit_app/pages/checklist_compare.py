@@ -728,18 +728,29 @@ def render_full_table(container, model_names, file_stem, buf, gt_counts, show_js
             )
 
 
-def _browse_button(file_stem):
+@st.fragment
+def _browse_button(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
+                    descriptive_by_pair, latency_by_pair):
     """One discreet entry point per FILE, not one per row — a magnifier on
     every row wasted table space for what a single click + the gallery's
     own Prev/Next already covers (it walks every row of every file, see
     _gallery_sequence()). Opens at this file's ground-truth row; arrow to
-    any specific row/model from there."""
+    any specific row/model from there.
+
+    @st.fragment so opening/browsing the gallery only reruns this button
+    (and the dialog it opens), not the whole script — without it, every
+    click here is a full-app rerun, which cancels a still-running
+    run_checklist_live() loop the same way Streamlit's native Stop does."""
     st.caption("hover a thumbnail to enlarge")
     if st.button("🔍 Browse images", key=f"gallery_{file_stem}"):
         st.session_state["checklist_gallery_click"] = (file_stem, "__gt__")
+    if "checklist_gallery_click" in st.session_state:
+        _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
+                       descriptive_by_pair, latency_by_pair)
 
 
-def render_file_card(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive):
+def render_file_card(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive,
+                      sampled_files, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair):
     """One-shot full render — used wherever a file's data is already
     complete and only needs drawing once (resume replay of an
     already-covered file, redraw from session_state, an opened past run)
@@ -750,7 +761,8 @@ def render_file_card(container, model_names, file_stem, buf, gt_counts, show_jso
                      unsafe_allow_html=True)
     render_full_table(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive)
     with container:
-        _browse_button(file_stem)
+        _browse_button(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
+                        descriptive_by_pair, latency_by_pair)
         st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
 
 
@@ -776,24 +788,48 @@ def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by
     sequence, so browsing the whole run never needs closing and reopening
     this. The file's full result table is shown right below the image for
     context."""
+    if "checklist_gallery_click" not in st.session_state:
+        return
     seq = _gallery_sequence(sampled_files, model_names)
     current = tuple(st.session_state["checklist_gallery_click"])
     idx = seq.index(current) if current in seq else 0
 
+    # scope="fragment" (not the default "app"): this dialog only ever runs
+    # inside _browse_button's fragment, so a plain st.rerun() here would
+    # still escalate to a full-app rerun on every arrow click — same
+    # run-interrupting problem _browse_button's @st.fragment fixes, and it
+    # also left the OTHER arrow's `disabled` stuck one click stale (this
+    # render's nav_l.button() below was drawn using the pre-click idx,
+    # since Python evaluates it before the nav_r click below updates idx —
+    # rerunning immediately makes the next render start from the new idx
+    # instead of showing that stale disabled state).
     nav_l, nav_mid, nav_r, nav_close = st.columns([1, 5, 1, 1])
     if nav_l.button("←", key="gallery_prev", disabled=idx == 0):
-        idx -= 1
+        st.session_state["checklist_gallery_click"] = seq[idx - 1]
+        st.rerun(scope="fragment")
     if nav_r.button("→", key="gallery_next", disabled=idx >= len(seq) - 1):
-        idx += 1
+        st.session_state["checklist_gallery_click"] = seq[idx + 1]
+        st.rerun(scope="fragment")
     if nav_close.button("✕", key="gallery_close"):
         del st.session_state["checklist_gallery_click"]
+        # Full-app rerun (not scope="fragment"): a dialog is its own implicit
+        # rerun scope, so a fragment-scoped rerun from in here just re-invokes
+        # THIS function directly rather than unwinding back out to
+        # _browse_button's "is it open" check — leaves an empty dialog shell
+        # behind instead of actually closing it (the early-return guard above
+        # stops the KeyError, but Streamlit still shows the dialog chrome for
+        # a call that drew nothing). Closing is a deliberate, infrequent
+        # action, unlike opening/arrow-browsing — costing one full rerun here
+        # is an acceptable trade for actually closing the dialog.
         st.rerun()
     file_stem, model = seq[idx]
     st.session_state["checklist_gallery_click"] = (file_stem, model)
-    label = "ground truth" if model == "__gt__" else _display_name(model)
+    label = "Ground Truth" if model == "__gt__" else _display_name(model).replace("-", " ").replace("_", " ").title()
     nav_mid.markdown(
-        f'<div class="hv-mono" style="text-align:center;font-size:12px">{html.escape(file_stem)} — '
-        f'{html.escape(label)} ({idx + 1}/{len(seq)})</div>', unsafe_allow_html=True)
+        f'<div style="text-align:center">'
+        f'<div class="hv-h1" style="font-size:16px;line-height:1.2">{html.escape(label)}</div>'
+        f'<div class="hv-mono" style="font-size:11px;color:{MUTED}">{html.escape(file_stem)} ({idx + 1}/{len(seq)})</div>'
+        f'</div>', unsafe_allow_html=True)
 
     img_path = image_path_for(file_stem)
     if img_path:
@@ -840,7 +876,8 @@ def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by
     """, height=0)
 
 
-def init_live_card(feed, model_names, file_stem, gt_counts):
+def init_live_card(feed, model_names, file_stem, gt_counts, sampled_files, people_by_pair, text_by_pair,
+                    descriptive_by_pair, latency_by_pair):
     """First-touch setup for a file in the live loop: draws the title and
     one st.empty() for the whole table (ground truth plus a pending "—"
     row per model), then the browse button. Returns the state
@@ -850,7 +887,8 @@ def init_live_card(feed, model_names, file_stem, gt_counts):
         st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin:10px 0 2px">{file_stem}</div>',
                     unsafe_allow_html=True)
         table_ph = st.empty()
-        _browse_button(file_stem)
+        _browse_button(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
+                        descriptive_by_pair, latency_by_pair)
         st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
     buf = {}
     render_full_table(table_ph, model_names, file_stem, buf, gt_counts, False, False)
@@ -975,9 +1013,11 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                 continue
             buf = _buf_for_file(file_stem, model_names, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
             if covered[file_stem] == set(model_names):
-                render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive)
+                render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive,
+                                  sampled_files, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
             else:
-                scaffold = init_live_card(feed, model_names, file_stem, gt_counts)
+                scaffold = init_live_card(feed, model_names, file_stem, gt_counts, sampled_files, people_by_pair,
+                                           text_by_pair, descriptive_by_pair, latency_by_pair)
                 for name in covered[file_stem]:
                     update_live_row(scaffold, file_stem, name, buf[name], model_names, gt_counts,
                                      show_json, show_descriptive)
@@ -1007,7 +1047,9 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
 
         file_stem = step["file"]
         if file_stem not in file_scaffolds:
-            file_scaffolds[file_stem] = init_live_card(feed, model_names, file_stem, gt_counts)
+            file_scaffolds[file_stem] = init_live_card(feed, model_names, file_stem, gt_counts, sampled_files,
+                                                        people_by_pair, text_by_pair, descriptive_by_pair,
+                                                        latency_by_pair)
 
         people = step["people"]
         key = (step["file"], step["model"])
@@ -1266,12 +1308,15 @@ elif "checklist_last_run" in st.session_state:
     feed = st.container()
     for f in sampled_files:
         buf = _buf_for_file(f, model_names, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
-        render_file_card(feed, model_names, f, buf, gt_counts, show_json, show_descriptive)
+        render_file_card(feed, model_names, f, buf, gt_counts, show_json, show_descriptive,
+                          sampled_files, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
 else:
     st.stop()
 
-if "checklist_gallery_click" in st.session_state:
-    _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
+# NOTE: the gallery no longer opens from a top-level check here — it opens
+# from inside _browse_button's own @st.fragment (see there), so browsing
+# never triggers the full-script rerun that used to cancel an in-progress
+# run_checklist_live() loop.
 
 # ---------------------------------------------------------------------------
 # analysis — live, right below, common to both the resume and fresh paths
