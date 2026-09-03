@@ -39,6 +39,7 @@ import json
 import shutil
 import statistics
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -728,19 +729,15 @@ def render_full_table(container, model_names, file_stem, buf, gt_counts, show_js
             )
 
 
-@st.fragment
-def _browse_button(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
-                    descriptive_by_pair, latency_by_pair):
+def _browse_button_body(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
+                         descriptive_by_pair, latency_by_pair):
     """One discreet entry point per FILE, not one per row — a magnifier on
     every row wasted table space for what a single click + the gallery's
     own Prev/Next already covers (it walks every row of every file, see
     _gallery_sequence()). Opens at this file's ground-truth row; arrow to
-    any specific row/model from there.
-
-    @st.fragment so opening/browsing the gallery only reruns this button
-    (and the dialog it opens), not the whole script — without it, every
-    click here is a full-app rerun, which cancels a still-running
-    run_checklist_live() loop the same way Streamlit's native Stop does."""
+    any specific row/model from there. Shared by _browse_button (static
+    cards) and _browse_button_live (still-running cards) below — same
+    body, only the ticking behavior differs."""
     st.caption("hover a thumbnail to enlarge")
     if st.button("🔍 Browse images", key=f"gallery_{file_stem}"):
         st.session_state["checklist_gallery_click"] = (file_stem, "__gt__")
@@ -749,20 +746,40 @@ def _browse_button(file_stem, model_names, sampled_files, gt_counts, people_by_p
                        descriptive_by_pair, latency_by_pair)
 
 
+@st.fragment
+def _browse_button(*args):
+    """@st.fragment so opening/browsing the gallery only reruns this button
+    (and the dialog it opens), not the whole script — without it, every
+    click here is a full-app rerun, which would cancel a still-running
+    background run the same way Streamlit's native Stop does."""
+    _browse_button_body(*args)
+
+
+@st.fragment(run_every="1s")
+def _browse_button_live(*args):
+    """Same as _browse_button, plus a 1s tick — for a file whose run is
+    still going: if its gallery is open, this keeps it refreshed as more
+    of that file's models finish, instead of only updating on the next
+    manual Prev/Next click."""
+    _browse_button_body(*args)
+
+
 def render_file_card(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive,
-                      sampled_files, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair):
-    """One-shot full render — used wherever a file's data is already
-    complete and only needs drawing once (resume replay of an
-    already-covered file, redraw from session_state, an opened past run)
-    — for the LIVE, still-in-progress case see init_live_card()/
-    update_live_row() instead."""
+                      sampled_files, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair,
+                      live=False):
+    """Full render of one file's card. `live=True` (still-running file,
+    called every tick from _render_live_run) uses the self-refreshing
+    browse button so an open gallery updates as more answers land;
+    `live=False` (a finished file — redraw from session_state, an opened
+    past run) uses the plain one-shot version."""
     with container:
         st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin:10px 0 2px">{file_stem}</div>',
                      unsafe_allow_html=True)
     render_full_table(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive)
     with container:
-        _browse_button(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
-                        descriptive_by_pair, latency_by_pair)
+        browse = _browse_button_live if live else _browse_button
+        browse(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
+               descriptive_by_pair, latency_by_pair)
         st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
 
 
@@ -794,33 +811,27 @@ def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by
     current = tuple(st.session_state["checklist_gallery_click"])
     idx = seq.index(current) if current in seq else 0
 
-    # scope="fragment" (not the default "app"): this dialog only ever runs
-    # inside _browse_button's fragment, so a plain st.rerun() here would
-    # still escalate to a full-app rerun on every arrow click — same
-    # run-interrupting problem _browse_button's @st.fragment fixes, and it
-    # also left the OTHER arrow's `disabled` stuck one click stale (this
-    # render's nav_l.button() below was drawn using the pre-click idx,
-    # since Python evaluates it before the nav_r click below updates idx —
-    # rerunning immediately makes the next render start from the new idx
-    # instead of showing that stale disabled state).
+    # Plain st.rerun() (full app, not scope="fragment"): the run itself now
+    # lives on a background thread (see _run_checklist_worker), so a full
+    # rerun here no longer cancels anything — it's just Streamlit
+    # redrawing. scope="fragment" looked right (this dialog only ever
+    # opens from inside _browse_button's/_browse_button_live's fragment)
+    # but a dialog is its own implicit rerun scope: it made nav_close
+    # re-invoke THIS function directly instead of unwinding out to
+    # _browse_button's "is it open" check (leaving an empty dialog shell
+    # instead of closing), and on _browse_button_live (run_every="1s")
+    # it raced with the fragment's own timer tick, sometimes eating a
+    # click's idx update entirely (arrows looked stuck again). Plain
+    # st.rerun() sidesteps both.
     nav_l, nav_mid, nav_r, nav_close = st.columns([1, 5, 1, 1])
     if nav_l.button("←", key="gallery_prev", disabled=idx == 0):
         st.session_state["checklist_gallery_click"] = seq[idx - 1]
-        st.rerun(scope="fragment")
+        st.rerun()
     if nav_r.button("→", key="gallery_next", disabled=idx >= len(seq) - 1):
         st.session_state["checklist_gallery_click"] = seq[idx + 1]
-        st.rerun(scope="fragment")
+        st.rerun()
     if nav_close.button("✕", key="gallery_close"):
         del st.session_state["checklist_gallery_click"]
-        # Full-app rerun (not scope="fragment"): a dialog is its own implicit
-        # rerun scope, so a fragment-scoped rerun from in here just re-invokes
-        # THIS function directly rather than unwinding back out to
-        # _browse_button's "is it open" check — leaves an empty dialog shell
-        # behind instead of actually closing it (the early-return guard above
-        # stops the KeyError, but Streamlit still shows the dialog chrome for
-        # a call that drew nothing). Closing is a deliberate, infrequent
-        # action, unlike opening/arrow-browsing — costing one full rerun here
-        # is an acceptable trade for actually closing the dialog.
         st.rerun()
     file_stem, model = seq[idx]
     st.session_state["checklist_gallery_click"] = (file_stem, model)
@@ -874,31 +885,6 @@ def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by
     })();
     </script>
     """, height=0)
-
-
-def init_live_card(feed, model_names, file_stem, gt_counts, sampled_files, people_by_pair, text_by_pair,
-                    descriptive_by_pair, latency_by_pair):
-    """First-touch setup for a file in the live loop: draws the title and
-    one st.empty() for the whole table (ground truth plus a pending "—"
-    row per model), then the browse button. Returns the state
-    update_live_row() needs to redraw that one placeholder as each
-    model's result arrives."""
-    with feed:
-        st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin:10px 0 2px">{file_stem}</div>',
-                    unsafe_allow_html=True)
-        table_ph = st.empty()
-        _browse_button(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
-                        descriptive_by_pair, latency_by_pair)
-        st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
-    buf = {}
-    render_full_table(table_ph, model_names, file_stem, buf, gt_counts, False, False)
-    return {"table_ph": table_ph, "buf": buf}
-
-
-def update_live_row(scaffold, file_stem, name, entry, model_names, gt_counts, show_json, show_descriptive):
-    scaffold["buf"][name] = entry
-    render_full_table(scaffold["table_ph"], model_names, file_stem, scaffold["buf"], gt_counts,
-                       show_json, show_descriptive)
 
 
 def _progress_html(model_names, done_per_model, total_per_model, in_flight_by_model):
@@ -971,160 +957,204 @@ def load_adapters(model_names, args):
     return adapters
 
 
-def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
-                        count_rows, item_rows, text_rows, descriptive_rows,
-                        people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs,
-                        show_json, show_descriptive):
-    counts_path = run_dir / "person_counts.csv"
-    items_path = run_dir / "person_items.csv"
-    text_path = run_dir / "raw_responses.csv"
-    descriptive_path = run_dir / "descriptive_responses.csv"
+def _checkpoint(bg):
+    """Write whatever's accumulated so far to run_dir's CSVs — the same
+    checkpoint the old synchronous loop wrote every 10 pairs, still safe to
+    resume from (list_paused_checklist_runs() just reads these back)."""
+    run_dir = bg["run_dir"]
+    pd.DataFrame(bg["count_rows"]).to_csv(run_dir / "person_counts.csv", index=False)
+    pd.DataFrame(bg["item_rows"]).to_csv(run_dir / "person_items.csv", index=False)
+    if bg["text_rows"]:
+        pd.DataFrame(bg["text_rows"]).to_csv(run_dir / "raw_responses.csv", index=False)
+    if bg["descriptive_rows"]:
+        pd.DataFrame(bg["descriptive_rows"]).to_csv(run_dir / "descriptive_responses.csv", index=False)
 
-    progress_bar = st.progress(0.0)
-    status_line = st.empty()
-    st.button(
-        "⏸ Pause run", key="checklist_pause_btn",
-        help="Stops now — the checkpoint already on disk is safe. Pick it back up from PAUSED RUNS above.",
-    )
-    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 6px">RESULTS (live)</div>',
-                unsafe_allow_html=True)
-    # show_json/show_descriptive come in as params, not widgets declared here —
-    # the toggles live at module top-level (see the block above the run/resume
-    # branch below) since any widget click reruns the whole script and would
-    # otherwise wipe this function's output before it ever runs again.
-    feed = st.container()
 
-    # Replay whatever this run already has on disk (a resume) before the
-    # live loop continues — a fully-covered file gets its final card now
-    # (render_file_card — done, never changes again), a file caught
-    # mid-way gets a live scaffold (init_live_card/update_live_row) so the
-    # loop below merges into it. Keyed by file (not one "current file"
-    # slot): run_checklist_steps() now fires every (file, model) pair at
-    # once, so several files can be genuinely in progress at the same
-    # time — each gets its own scaffold, updated independently as its
-    # models finish, in whatever order they actually complete.
-    file_scaffolds = {}
-    if skip_pairs:
-        covered = {}
-        for f, m in skip_pairs:
-            covered.setdefault(f, set()).add(m)
-        for file_stem in sampled_files:
-            if file_stem not in covered:
+def _run_checklist_worker(bg):
+    """The actual model-calling loop, on its own thread — completely
+    decoupled from Streamlit's script execution, which is what makes
+    Browse Images (and Pause) responsive during a run: Streamlit can only
+    react to a click once the main script returns control to it, and this
+    loop used to BE the main script's body for however long the whole run
+    took. Touches only `bg` (a plain dict `_render_live_run` polls) and
+    the disk — never st.* directly, since Streamlit's APIs aren't safe to
+    call off the main script thread.
+
+    bg["lock"] guards the small scalar progress fields both this thread
+    and the polling fragment read/write (done/total/done_per_model/
+    in_flight/finished/stopped/error/final_dir) — a torn read there would
+    just show one stale-looking tick, not corrupt anything, but the ask
+    was "proper... error handling", so it's a real lock, not a shrug.
+    The *_by_pair dicts and *_rows lists are this thread's alone to
+    mutate; the fragment only ever reads them, and dict/list mutation is
+    atomic enough under the GIL that a concurrent read sees either the
+    old or new state, never a half-written one.
+
+    ponytail: skip_pairs/adapters/model_names are read once from `bg` and
+    never change after _start_background_run() sets them — no lock needed
+    for those, only the fields this function keeps updating."""
+    run_dir, sampled_files = bg["run_dir"], bg["sampled_files"]
+    people_by_pair, text_by_pair = bg["people_by_pair"], bg["text_by_pair"]
+    descriptive_by_pair, latency_by_pair = bg["descriptive_by_pair"], bg["latency_by_pair"]
+    count_rows, item_rows = bg["count_rows"], bg["item_rows"]
+    text_rows, descriptive_rows = bg["text_rows"], bg["descriptive_rows"]
+
+    try:
+        for step in run_checklist_steps(bg["adapters"], sampled_files, image_path_for=image_path_for,
+                                         skip_pairs=bg["skip_pairs"], descriptive_prompt=DESCRIPTIVE_PROMPT):
+            if bg["stop_event"].is_set():
+                break
+            if step.get("tick"):
+                with bg["lock"]:
+                    bg["done"], bg["total"] = step["done"], step["total"]
+                    bg["done_per_model"] = dict(step["done_per_model"])
+                    bg["in_flight"] = step["in_flight"]
                 continue
-            buf = _buf_for_file(file_stem, model_names, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
-            if covered[file_stem] == set(model_names):
-                render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive,
-                                  sampled_files, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
-            else:
-                scaffold = init_live_card(feed, model_names, file_stem, gt_counts, sampled_files, people_by_pair,
-                                           text_by_pair, descriptive_by_pair, latency_by_pair)
-                for name in covered[file_stem]:
-                    update_live_row(scaffold, file_stem, name, buf[name], model_names, gt_counts,
-                                     show_json, show_descriptive)
-                file_scaffolds[file_stem] = scaffold
+            if step["skipped"]:
+                continue
+            if step["resumed"]:
+                with bg["lock"]:
+                    bg["done"], bg["total"] = step["done"], step["total"]
+                continue
 
-    t_start = time.perf_counter()
-    for step in run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for,
-                                     skip_pairs=skip_pairs, descriptive_prompt=DESCRIPTIVE_PROMPT):
-        if step.get("tick"):
-            # Nothing finished in the last ~1s — still tell the user what's
-            # actually in flight and for how long, instead of going quiet
-            # (several Ollama-backed models share one lock and run one at a
-            # time — see model_adapters.OllamaAdapter — so a multi-minute
-            # gap between completions is normal, not a hang).
-            status_line.markdown(
-                f"**{step['done']}/{step['total']}** pairs · {time.perf_counter() - t_start:.0f}s elapsed<br>"
-                + _progress_html(model_names, step["done_per_model"], len(sampled_files),
-                                  _in_flight_by_model(step["in_flight"])),
-                unsafe_allow_html=True,
-            )
-            continue
-        if step["skipped"]:
-            continue
-        if step["resumed"]:
-            progress_bar.progress(step["done"] / step["total"])
-            continue
+            people = step["people"]
+            key = (step["file"], step["model"])
+            people_by_pair[key] = people
+            latency_by_pair[key] = step["latency"]
+            count_rows.append({"file": step["file"], "model": step["model"],
+                                "person_count": len(people) if people is not None else None,
+                                "latency": step["latency"]})
+            if people:
+                for idx, p in enumerate(people):
+                    pbbox = p["bbox"]
+                    for d in p["items"]:
+                        item_rows.append({
+                            "file": step["file"], "model": step["model"], "person_idx": idx,
+                            "person_bbox": json.dumps(list(pbbox)) if pbbox else "",
+                            "slot": d.class_name[3:] if d.class_name.startswith("no-") else d.class_name,
+                            "class": d.class_name,
+                            "confidence": d.confidence if d.confidence is not None else "",
+                            "bbox": json.dumps(list(d.bbox)) if d.bbox else "",
+                        })
+            if step["raw_text"]:
+                text_by_pair[key] = step["raw_text"]
+                text_rows.append({"file": step["file"], "model": step["model"], "response_text": step["raw_text"]})
+            if step["descriptive_text"]:
+                descriptive_by_pair[key] = step["descriptive_text"]
+                descriptive_rows.append({"file": step["file"], "model": step["model"],
+                                          "response_text": step["descriptive_text"]})
 
-        file_stem = step["file"]
-        if file_stem not in file_scaffolds:
-            file_scaffolds[file_stem] = init_live_card(feed, model_names, file_stem, gt_counts, sampled_files,
-                                                        people_by_pair, text_by_pair, descriptive_by_pair,
-                                                        latency_by_pair)
+            with bg["lock"]:
+                bg["done"], bg["total"] = step["done"], step["total"]
+                bg["done_per_model"] = dict(step["done_per_model"])
+                bg["in_flight"] = []
 
-        people = step["people"]
-        key = (step["file"], step["model"])
-        people_by_pair[key] = people
-        latency_by_pair[key] = step["latency"]
-        count_rows.append({"file": step["file"], "model": step["model"],
-                            "person_count": len(people) if people is not None else None,
-                            "latency": step["latency"]})
-        if people:
-            for idx, p in enumerate(people):
-                pbbox = p["bbox"]
-                for d in p["items"]:
-                    item_rows.append({
-                        "file": step["file"], "model": step["model"], "person_idx": idx,
-                        "person_bbox": json.dumps(list(pbbox)) if pbbox else "",
-                        "slot": d.class_name[3:] if d.class_name.startswith("no-") else d.class_name,
-                        "class": d.class_name,
-                        "confidence": d.confidence if d.confidence is not None else "",
-                        "bbox": json.dumps(list(d.bbox)) if d.bbox else "",
-                    })
-        if step["raw_text"]:
-            text_by_pair[key] = step["raw_text"]
-            text_rows.append({"file": step["file"], "model": step["model"], "response_text": step["raw_text"]})
-        if step["descriptive_text"]:
-            descriptive_by_pair[key] = step["descriptive_text"]
-            descriptive_rows.append({"file": step["file"], "model": step["model"], "response_text": step["descriptive_text"]})
+            if step["done"] % 10 == 0 or step["done"] == step["total"]:  # survive a killed tab
+                _checkpoint(bg)
 
-        entry = {
-            "counts": model_counts_for_people(people), "people": people, "raw_text": step["raw_text"],
-            "descriptive_text": step["descriptive_text"], "latency": step["latency"],
+        if bg["stop_event"].is_set():
+            _checkpoint(bg)  # one last checkpoint so a mid-batch Pause isn't lost up to the next multiple of 10
+            with bg["lock"]:
+                bg["stopped"], bg["needs_full_rerun"] = True, True
+            return
+
+        manifest = {
+            "run_name": f"{bg['run_name']}_COMPLETE", "status": "COMPLETE", "kind": "checklist",
+            "created_at": datetime.now(timezone.utc).isoformat(), "dataset_name": DATASET_NAME,
+            "n_images_sampled": len(sampled_files), "seed": bg["seed"], "models": bg["model_names"],
+            "checklist_items": CHECKLIST_ITEMS, "sampled_files": sampled_files,
         }
-        # Redraw this file's WHOLE table with the one new result folded in —
-        # cheap now that thumbnails are small inline images, not the old
-        # big zoomable ones (see render_full_table()'s docstring).
-        update_live_row(file_scaffolds[file_stem], file_stem, step["model"], entry, model_names, gt_counts,
-                         show_json, show_descriptive)
+        final_dir = LLM_RUNS_ROOT / f"{bg['run_name']}_COMPLETE"
+        run_dir.rename(final_dir)
+        bg["run_dir"] = final_dir  # _checkpoint() below must now write to the renamed dir
+        _checkpoint(bg)
+        (final_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2))
+        with bg["lock"]:
+            bg["final_dir"], bg["finished"], bg["needs_full_rerun"] = final_dir, True, True
+    except Exception as exc:
+        # Keep whatever's already on disk resumable, same as a Pause —
+        # an API error partway through shouldn't cost the pairs already
+        # answered.
+        _checkpoint(bg)
+        with bg["lock"]:
+            bg["error"], bg["needs_full_rerun"] = str(exc), True
 
-        done, total = step["done"], step["total"]
-        progress_bar.progress(done / total)
-        status_line.markdown(
-            f"**{done}/{total}** pairs · {time.perf_counter() - t_start:.0f}s elapsed<br>"
-            + _progress_html(model_names, step["done_per_model"], len(sampled_files), {}),
+
+def _start_background_run(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
+                           count_rows, item_rows, text_rows, descriptive_rows,
+                           people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs):
+    bg = {
+        "lock": threading.Lock(), "stop_event": threading.Event(),
+        "run_dir": run_dir, "run_name": run_name, "model_names": model_names, "sampled_files": sampled_files,
+        "adapters": adapters, "seed": seed, "gt_counts": gt_counts, "skip_pairs": skip_pairs,
+        "count_rows": count_rows, "item_rows": item_rows, "text_rows": text_rows, "descriptive_rows": descriptive_rows,
+        "people_by_pair": people_by_pair, "text_by_pair": text_by_pair,
+        "descriptive_by_pair": descriptive_by_pair, "latency_by_pair": latency_by_pair,
+        "done": len(skip_pairs), "total": len(sampled_files) * len(model_names),
+        "done_per_model": {}, "in_flight": [], "t_start": time.perf_counter(),
+        "finished": False, "stopped": False, "error": None, "final_dir": None, "needs_full_rerun": False,
+    }
+    st.session_state["checklist_bg"] = bg
+    threading.Thread(target=_run_checklist_worker, args=(bg,), daemon=True).start()
+
+
+@st.fragment(run_every="1s")
+def _render_live_run(show_json, show_descriptive):
+    """Polls st.session_state["checklist_bg"] every second and redraws —
+    the background thread updates that dict, this just reflects it, so a
+    click on Browse Images/Pause elsewhere is a normal, fast, non-blocking
+    rerun the whole time (nothing here ever blocks on model calls)."""
+    bg = st.session_state.get("checklist_bg")
+    if bg is None:  # already wrapped up and cleared by the outer script — nothing to draw
+        return
+    with bg["lock"]:
+        done, total = bg["done"], bg["total"]
+        done_per_model, in_flight = dict(bg["done_per_model"]), list(bg["in_flight"])
+        finished, stopped, error, final_dir = bg["finished"], bg["stopped"], bg["error"], bg["final_dir"]
+        needs_full_rerun = bg["needs_full_rerun"]
+        if needs_full_rerun:
+            bg["needs_full_rerun"] = False
+    model_names, sampled_files, gt_counts = bg["model_names"], bg["sampled_files"], bg["gt_counts"]
+    people_by_pair, text_by_pair = bg["people_by_pair"], bg["text_by_pair"]
+    descriptive_by_pair, latency_by_pair = bg["descriptive_by_pair"], bg["latency_by_pair"]
+    live = not (finished or stopped or error)
+
+    if live:
+        if st.button("⏸ Pause run", key="checklist_pause_btn",
+                     help="Stops now — the checkpoint already on disk is safe. Pick it back up from PAUSED RUNS above."):
+            bg["stop_event"].set()
+        st.progress(done / total if total else 0.0)
+        st.markdown(
+            f"**{done}/{total}** pairs · {time.perf_counter() - bg['t_start']:.0f}s elapsed<br>"
+            + _progress_html(model_names, done_per_model, len(sampled_files), _in_flight_by_model(in_flight)),
             unsafe_allow_html=True,
         )
+    elif error:
+        st.error(f"Run failed: {error} — partial results saved, resumable from PAUSED RUNS above.")
+    elif stopped:
+        st.info("Paused — resumable from PAUSED RUNS above.")
+    else:
+        st.success(f"Done in {time.perf_counter() - bg['t_start']:.0f}s — saved to `runs/llm/{final_dir.name}/`.")
 
-        if done % 10 == 0 or done == total:  # checkpoint: survive a paused/killed tab
-            pd.DataFrame(count_rows).to_csv(counts_path, index=False)
-            pd.DataFrame(item_rows).to_csv(items_path, index=False)
-            if text_rows:
-                pd.DataFrame(text_rows).to_csv(text_path, index=False)
-            if descriptive_rows:
-                pd.DataFrame(descriptive_rows).to_csv(descriptive_path, index=False)
+    st.markdown('<div class="hv-h1" style="font-size:15px;margin:16px 0 6px">RESULTS (live)</div>',
+                unsafe_allow_html=True)
+    feed = st.container()
+    touched = {f for (f, _m) in people_by_pair.keys()}
+    for f in sampled_files:  # sampled_files order, not arrival order — stable across ticks
+        if f not in touched:
+            continue
+        buf = _buf_for_file(f, model_names, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
+        render_file_card(feed, model_names, f, buf, gt_counts, show_json, show_descriptive,
+                          sampled_files, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair,
+                          live=live)
 
-    manifest = {
-        "run_name": f"{run_name}_COMPLETE",
-        "status": "COMPLETE",
-        "kind": "checklist",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "dataset_name": DATASET_NAME,
-        "n_images_sampled": len(sampled_files),
-        "seed": seed,
-        "models": model_names,
-        "checklist_items": CHECKLIST_ITEMS,
-        "sampled_files": sampled_files,
-    }
-    final_dir = LLM_RUNS_ROOT / f"{run_name}_COMPLETE"
-    run_dir.rename(final_dir)
-    pd.DataFrame(count_rows).to_csv(final_dir / "person_counts.csv", index=False)
-    pd.DataFrame(item_rows).to_csv(final_dir / "person_items.csv", index=False)
-    if text_rows:
-        pd.DataFrame(text_rows).to_csv(final_dir / "raw_responses.csv", index=False)
-    if descriptive_rows:
-        pd.DataFrame(descriptive_rows).to_csv(final_dir / "descriptive_responses.csv", index=False)
-    (final_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2))
-    st.success(f"Done in {time.perf_counter() - t_start:.0f}s — saved to `runs/llm/{final_dir.name}/`.")
+    if needs_full_rerun:
+        # The run just finished/paused/failed on this tick — force one real
+        # app rerun now instead of waiting for the user to click something:
+        # the outer script (not this fragment) is what folds this into
+        # checklist_last_run and reveals ANALYSIS below (see the run/resume
+        # branch at module bottom) — that only happens on a full rerun.
+        st.rerun()
 
 
 # ---------------------------------------------------------------------------
@@ -1179,9 +1209,9 @@ if paused_runs:
     st.divider()
 
 # ---------------------------------------------------------------------------
-# resume path or fresh-run config form — decides WHAT to run but doesn't call
-# run_checklist_live() yet, so the response toggles below can render between
-# "configure the run" and "see the results" instead of above both.
+# resume path or fresh-run config form — decides WHAT to run but doesn't
+# start the background run yet, so the response toggles below can render
+# between "configure the run" and "see the results" instead of above both.
 # ---------------------------------------------------------------------------
 
 should_run = False
@@ -1260,13 +1290,10 @@ else:
 
 # ---------------------------------------------------------------------------
 # response toggles — placed here (after the config/resume controls above,
-# before any results below), not inside run_checklist_live(): ANY widget
-# click reruns this whole script from scratch, and if these lived inside
-# the live-run function they (and everything they control) would vanish
-# the instant you touched one, since neither "should_run" nor a resume
-# would be true on that rerun. Living here instead means flipping a toggle
-# after a run finishes redraws the SAME completed run from session_state
-# (see the "redraw" branch below) instead of losing it.
+# before any results below), not inside _render_live_run(): they're plain
+# module-level widgets so a toggle flip is a normal full rerun that reads
+# whatever's in checklist_bg/checklist_last_run right now, rather than
+# needing to be threaded into the background run itself.
 # ---------------------------------------------------------------------------
 
 st.markdown('<div class="hv-h1" style="font-size:15px;margin:14px 0 2px">RESPONSES</div>', unsafe_allow_html=True)
@@ -1275,29 +1302,46 @@ toggle_col1, toggle_col2 = st.columns(2)
 show_json = toggle_col1.toggle("Show JSON responses", value=False, key="checklist_show_json")
 show_descriptive = toggle_col2.toggle("Show descriptions", value=False, key="checklist_show_descriptive")
 
-ran_this_load = False
-if should_run:
+# A run/resume click kicks off a background thread and stores its shared
+# progress dict in st.session_state["checklist_bg"] — NOT called every time
+# should_run happens to be true again, only the render where the button
+# itself actually fired (the same one-shot behavior st.button/
+# st.form_submit_button already have).
+if should_run and "checklist_bg" not in st.session_state:
     if resume_clicked is not None:
-        run_checklist_live(run_dir, run_dir.name, model_names, sampled_files, adapters, seed, gt_counts,
-                            count_rows, item_rows, text_rows, descriptive_rows,
-                            people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs,
-                            show_json, show_descriptive)
+        _start_background_run(run_dir, run_dir.name, model_names, sampled_files, adapters, seed, gt_counts,
+                               count_rows, item_rows, text_rows, descriptive_rows,
+                               people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, skip_pairs)
     else:
-        run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
-                            count_rows, item_rows, text_rows, descriptive_rows,
-                            people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, set(),
-                            show_json, show_descriptive)
-    ran_this_load = True
+        _start_background_run(run_dir, run_name, model_names, sampled_files, adapters, seed, gt_counts,
+                               count_rows, item_rows, text_rows, descriptive_rows,
+                               people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair, set())
 
-if ran_this_load:
-    # Stashed so a later rerun that ISN'T a new submission/resume — a toggle
-    # flip above is the main case — can redraw this exact run instead of
-    # losing it (see the "redraw" branch below).
-    st.session_state["checklist_last_run"] = {
-        "model_names": model_names, "sampled_files": sampled_files, "gt_counts": gt_counts,
-        "people_by_pair": people_by_pair, "text_by_pair": text_by_pair,
-        "descriptive_by_pair": descriptive_by_pair, "latency_by_pair": latency_by_pair,
-    }
+if "checklist_bg" in st.session_state:
+    bg = st.session_state["checklist_bg"]
+    _render_live_run(show_json, show_descriptive)  # self-ticking fragment — see its own docstring
+    with bg["lock"]:
+        wrapped_up, succeeded = (bg["finished"] or bg["stopped"] or bg["error"]), bg["finished"]
+    # Only the OUTER script (a full rerun, never a fragment tick) folds a
+    # finished run into checklist_last_run and clears checklist_bg — doing
+    # either from inside the ticking fragment would make the results
+    # flicker away the moment it next ticks and sees nothing to draw. The
+    # fragment's own final tick forces exactly one such full rerun (see
+    # its "needs_full_rerun" handling) so this isn't left waiting on the
+    # user to click something.
+    if succeeded:
+        st.session_state["checklist_last_run"] = {
+            "model_names": bg["model_names"], "sampled_files": bg["sampled_files"], "gt_counts": bg["gt_counts"],
+            "people_by_pair": bg["people_by_pair"], "text_by_pair": bg["text_by_pair"],
+            "descriptive_by_pair": bg["descriptive_by_pair"], "latency_by_pair": bg["latency_by_pair"],
+        }
+    if wrapped_up:
+        del st.session_state["checklist_bg"]
+    model_names, sampled_files, gt_counts = bg["model_names"], bg["sampled_files"], bg["gt_counts"]
+    people_by_pair, text_by_pair = bg["people_by_pair"], bg["text_by_pair"]
+    descriptive_by_pair, latency_by_pair = bg["descriptive_by_pair"], bg["latency_by_pair"]
+    if not wrapped_up:
+        st.stop()  # ANALYSIS below needs the run actually finished, same as before this ran in the background
 elif "checklist_last_run" in st.session_state:
     saved = st.session_state["checklist_last_run"]
     model_names, sampled_files, gt_counts = saved["model_names"], saved["sampled_files"], saved["gt_counts"]
@@ -1316,7 +1360,7 @@ else:
 # NOTE: the gallery no longer opens from a top-level check here — it opens
 # from inside _browse_button's own @st.fragment (see there), so browsing
 # never triggers the full-script rerun that used to cancel an in-progress
-# run_checklist_live() loop.
+# background run.
 
 # ---------------------------------------------------------------------------
 # analysis — live, right below, common to both the resume and fresh paths
