@@ -349,9 +349,20 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     the descriptive-prompt side chat models can answer too; None (the
     default) skips it entirely, so existing callers are unaffected.
 
-    Every model for a given image runs concurrently (a thread per model),
-    same reasoning as run_comparison_steps() — independent I/O-bound calls,
-    a real wall-clock win.
+    Every (file, model) pair is submitted at once — not a per-image barrier
+    (fire N models, wait for all N, only then move to the next image). A
+    slow model on image 1 no longer holds up image 2 from even starting;
+    results for later images can and do arrive before earlier ones finish.
+    OllamaAdapter's own class-level lock (model_adapters.py) still
+    serializes calls that share one local Ollama server, so this doesn't
+    reintroduce the VRAM-thrashing hang that fixed — it just lets YOLO and
+    the cloud adapters race ahead of it across every image instead of only
+    within one. Consumers can no longer assume steps arrive grouped by
+    file (see streamlit_app/pages/checklist_compare.py's per-file
+    placeholders, keyed by file rather than tracking one "current file").
+    ponytail: pool sized to every pair at once, capped at 32 — plenty for
+    today's run sizes; the real throughput ceiling is OllamaAdapter's lock
+    and each cloud API's own rate limit, not thread count.
 
     Each step's `people` is the list scripts/model_adapters.py's
     parse_person_checklist_json() (or people_from_detections()) returns, or
@@ -370,7 +381,8 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     done = 0
     done_per_model = {name: 0 for name in adapters}
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(adapters))) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(32, max(1, total))) as pool:
+        futures = {}
         for file_stem in sampled_files:
             image_path = image_path_for(file_stem)
             if image_path is None:
@@ -381,7 +393,6 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
                 }
                 continue
 
-            futures = {}
             for name, adapter in adapters.items():
                 if (file_stem, name) in skip_pairs:
                     done += 1
@@ -393,16 +404,33 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
                     }
                     continue
                 future = pool.submit(_checklist_predict_one, name, adapter, image_path, prompt, items, descriptive_prompt)
-                futures[future] = name
+                futures[future] = (file_stem, name, time.perf_counter())
 
-            for future in concurrent.futures.as_completed(futures):
-                name = futures[future]
+        # concurrent.futures.wait(..., timeout=1) instead of as_completed():
+        # as_completed() blocks silently until the NEXT completion, which for
+        # several Ollama-backed models sharing one lock (model_adapters.py)
+        # can be a minute+ with zero visible progress — easy to mistake for a
+        # hang. Ticking every ~1s instead, with the elapsed time of whatever
+        # is still in flight, is what actually answers "is this stuck?".
+        pending = set(futures)
+        while pending:
+            finished, pending = concurrent.futures.wait(pending, timeout=1.0,
+                                                          return_when=concurrent.futures.FIRST_COMPLETED)
+            if not finished:
+                yield {
+                    "tick": True, "done": done, "total": total, "done_per_model": dict(done_per_model),
+                    "in_flight": [(f, n, time.perf_counter() - t0) for f, n, t0 in
+                                  (futures[fut] for fut in pending)],
+                }
+                continue
+            for future in finished:
+                file_stem, name, _t0 = futures[future]
                 done += 1
                 done_per_model[name] += 1
                 people, raw_text, latency, descriptive_text = future.result()
                 yield {
                     "file": file_stem, "model": name, "done": done, "total": total,
-                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": False,
+                    "done_per_model": dict(done_per_model), "skipped": False, "resumed": False, "tick": False,
                     "people": people, "raw_text": raw_text, "latency": latency, "descriptive_text": descriptive_text,
                 }
 

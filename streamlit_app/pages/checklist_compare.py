@@ -64,9 +64,55 @@ from compare_models import (  # noqa: E402
     sample_test_images,
 )
 from gemini_prompt_comparison import DESCRIPTIVE_PROMPT  # noqa: E402
-from model_adapters import ADAPTERS, CHECKLIST_ITEMS, DEFAULT_PROMPT_TEMPLATE, Detection, _norm_class_name  # noqa: E402
+from model_adapters import ADAPTERS, CHECKLIST_ITEMS, DEFAULT_PROMPT_TEMPLATE, Detection, YOLOAdapter, _norm_class_name  # noqa: E402
 
+import detector as det  # noqa: E402 — streamlit_app/ is already on sys.path (this page lives in pages/)
 import view_helpers as vh
+
+# "Our previous model weights" — every trained run detector.py already curates
+# as comparable (a working Person class + at least one PPE slot, real
+# vocabulary, not a throwaway smoke test). ALTEC_WEIGHTS is deliberately
+# excluded: no Person class at all, so it can't drive this page's per-person
+# pipeline (see detector.ALTEC_NO_PERSON_NOTE). Reused rather than re-scanning
+# runs/detect/ ourselves — detector.py is already the one place that decides
+# which runs are worth showing vs. experimental noise.
+YOLO_WEIGHT_CHOICES = [
+    ("yolo-v8-pretrained-100e", det.V8_LABEL, det.V8_WEIGHTS),
+    ("yolo-css-100e", det.V26_LABEL, det.V26_WEIGHTS),
+    ("yolo-merged-100e", det.MERGED_LABEL, det.MERGED_WEIGHTS),
+    ("yolo-merged-m-150e", det.MERGED_M_LABEL, det.MERGED_M_WEIGHTS),
+    ("yolo-mergedpeople-150e", det.MERGEDPEOPLE_LABEL, det.MERGEDPEOPLE_WEIGHTS),
+    ("yolo-supervisorv1-300e", det.SUPERVISOR_V1_LABEL, det.SUPERVISOR_V1_WEIGHTS),
+    ("yolo-supervisorv4-300e", det.SUPERVISOR_V4_LABEL, det.SUPERVISOR_V4_WEIGHTS),
+]
+YOLO_WEIGHTS_BY_KEY = {key: path for key, _label, path in YOLO_WEIGHT_CHOICES}
+YOLO_LABEL_BY_KEY = {key: label for key, label, _path in YOLO_WEIGHT_CHOICES}
+# Short display name for table chips — the run's own folder name (e.g.
+# "yolo26s_supervisorv4_300e"), already familiar from run history elsewhere
+# in this app, rather than the full detector.py label or the raw multiselect key.
+YOLO_SHORT_BY_KEY = {key: path.parent.parent.name for key, _label, path in YOLO_WEIGHT_CHOICES}
+
+# Grouped, in the requested order, for the Models multiselect below: our
+# previous YOLO weight runs, then locally-hosted LLMs, then API-based ones.
+LOCAL_LLM_NAMES = [n for n, spec in ADAPTERS.items() if n != "yolo" and not spec["is_cloud"]]
+CLOUD_LLM_NAMES = [n for n, spec in ADAPTERS.items() if spec["is_cloud"]]
+MODEL_OPTIONS = [key for key, _label, _path in YOLO_WEIGHT_CHOICES] + LOCAL_LLM_NAMES + CLOUD_LLM_NAMES
+
+
+def _is_yolo_name(name):
+    """True for any YOLO weight choice — the new per-run keys, or the bare
+    "yolo" a run started before this feature existed still has recorded in
+    its run_config.json/manifest (kept resumable/reopenable, just not
+    offered as a fresh choice — see MODEL_OPTIONS above)."""
+    return name == "yolo" or name in YOLO_WEIGHTS_BY_KEY
+
+
+def _yolo_weights_for(name):
+    return DEFAULT_YOLO_WEIGHTS if name == "yolo" else YOLO_WEIGHTS_BY_KEY[name]
+
+
+def _display_name(name):
+    return "yolo" if name == "yolo" else YOLO_SHORT_BY_KEY.get(name, name)
 
 st.markdown(vh.HV_STYLE_CSS, unsafe_allow_html=True)
 st.markdown(vh.header_html("LLM vs YOLO (PERSON DETECTION)", "how many people, and what are they wearing?"),
@@ -96,11 +142,13 @@ def stat_tile(label, value, note, bg=INK, fg="#FFFFFF", border=None):
 
 
 def model_chip(name):
-    bg = INK if name == "yolo" else "#FFFFFF"
-    fg = "#FFFFFF" if name == "yolo" else INK
-    border = INK if name == "yolo" else FAINT
+    is_yolo = _is_yolo_name(name)
+    bg = INK if is_yolo else "#FFFFFF"
+    fg = "#FFFFFF" if is_yolo else INK
+    border = INK if is_yolo else FAINT
     return (f'<span class="hv-mono" style="display:inline-block;font-size:10.5px;padding:3px 8px;'
-            f'background:{bg};color:{fg};border:1px solid {border};margin:2px 4px 2px 0;white-space:nowrap">{name}</span>')
+            f'background:{bg};color:{fg};border:1px solid {border};margin:2px 4px 2px 0;'
+            f'white-space:nowrap">{_display_name(name)}</span>')
 
 st.caption(
     "Every model gets one prompt: count the people, then check helmet/vest/gloves/boots for "
@@ -659,10 +707,9 @@ def build_args(model_names):
     args = SimpleNamespace(
         ollama_url="http://localhost:11434",
         prompt_template=DEFAULT_PROMPT_TEMPLATE,  # unused by describe()/predict()-via-boxes, adapters still want it
-        yolo_weights=str(DEFAULT_YOLO_WEIGHTS),
     )
     for name in model_names:
-        if name != "yolo":
+        if not _is_yolo_name(name):
             setattr(args, f"{name.replace('-', '_')}_model", ADAPTERS[name]["default_model"])
     return args
 
@@ -672,7 +719,10 @@ def load_adapters(model_names, args):
     load_status = st.empty()
     for name in model_names:
         load_status.markdown(f"Loading `{name}`...")
-        adapters[name] = build_adapter(name, args)
+        # Multiple YOLO weight choices can be selected at once, each its own
+        # YOLOAdapter — bypasses compare_models.build_adapter()'s single
+        # shared args.yolo_weights, which only ever points at one run.
+        adapters[name] = YOLOAdapter(_yolo_weights_for(name)) if _is_yolo_name(name) else build_adapter(name, args)
     load_status.markdown("Loaded: " + ", ".join(f"`{n}`" for n in adapters))
     return adapters
 
@@ -701,11 +751,15 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
     feed = st.container()
 
     # Replay whatever this run already has on disk (a resume) before the
-    # live loop continues — same file-boundary logic as llm_comparison.py: a
-    # fully-covered file gets its final card now, a file caught mid-way
-    # seeds file_buf/current_file so the loop below merges into it.
-    file_buf = {}
-    current_file = None
+    # live loop continues — a fully-covered file gets its final card now, a
+    # file caught mid-way seeds file_bufs/file_placeholders so the loop
+    # below merges into it. Keyed by file (not one "current file" slot):
+    # run_checklist_steps() now fires every (file, model) pair at once, so
+    # several files can be genuinely in progress at the same time — each
+    # gets its own placeholder, filled in independently as its models
+    # finish, in whatever order they actually complete.
+    file_bufs = {}
+    file_placeholders = {}
     if skip_pairs:
         covered = {}
         for f, m in skip_pairs:
@@ -722,22 +776,37 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             if covered[file_stem] == set(model_names):
                 render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive)
             else:
-                current_file, file_buf = file_stem, buf
+                file_bufs[file_stem] = buf
+                with feed:
+                    file_placeholders[file_stem] = st.empty()
+                render_file_card(file_placeholders[file_stem], model_names, file_stem, buf, gt_counts,
+                                  show_json, show_descriptive)
 
-    file_placeholder = None
     t_start = time.perf_counter()
     for step in run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for,
                                      skip_pairs=skip_pairs, descriptive_prompt=DESCRIPTIVE_PROMPT):
+        if step.get("tick"):
+            # Nothing finished in the last ~1s — still tell the user what's
+            # actually in flight and for how long, instead of going quiet
+            # (several Ollama-backed models share one lock and run one at a
+            # time — see model_adapters.OllamaAdapter — so a multi-minute
+            # gap between completions is normal, not a hang).
+            per_model = " · ".join(f"{n}:{c}/{len(sampled_files)}" for n, c in step["done_per_model"].items())
+            in_flight = " · ".join(f"{n} on {f} ({secs:.0f}s)" for f, n, secs in sorted(step["in_flight"]))
+            status_line.markdown(f"**{step['done']}/{step['total']}** pairs · {time.perf_counter() - t_start:.0f}s "
+                                  f"elapsed — {per_model}  \n⏳ running now: {in_flight or '—'}")
+            continue
         if step["skipped"]:
             continue
         if step["resumed"]:
             progress_bar.progress(step["done"] / step["total"])
             continue
 
-        if step["file"] != current_file:
-            current_file, file_buf = step["file"], {}
+        file_stem = step["file"]
+        if file_stem not in file_bufs:
+            file_bufs[file_stem] = {}
             with feed:
-                file_placeholder = st.empty()  # redrawn below on every model's result — see render_file_card()
+                file_placeholders[file_stem] = st.empty()  # redrawn below on every model's result
 
         people = step["people"]
         key = (step["file"], step["model"])
@@ -765,17 +834,19 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             descriptive_by_pair[key] = step["descriptive_text"]
             descriptive_rows.append({"file": step["file"], "model": step["model"], "response_text": step["descriptive_text"]})
 
-        file_buf[step["model"]] = {
+        file_bufs[file_stem][step["model"]] = {
             "counts": model_counts_for_people(people), "people": people, "raw_text": step["raw_text"],
             "descriptive_text": step["descriptive_text"], "latency": step["latency"],
         }
-        # Redraw the current file's card right now, with whatever models have
-        # answered so far — a model not in file_buf yet just shows "—" cells
-        # (render_file_card already handles a missing buf entry). Every model
-        # runs in its own thread and yields the instant it finishes (see
-        # run_checklist_steps()), so this is the point where that actually
-        # reaches the screen instead of waiting for the whole image.
-        render_file_card(file_placeholder, model_names, current_file, file_buf, gt_counts, show_json, show_descriptive)
+        # Redraw this file's card right now, with whatever models have
+        # answered so far for it — a model not in its buf yet just shows
+        # "—" cells (render_file_card already handles a missing buf entry).
+        # Every model runs in its own thread and yields the instant it
+        # finishes (see run_checklist_steps()), so this is the point where
+        # that actually reaches the screen instead of waiting for the whole
+        # image — or, now, for every OTHER image in the run — to finish.
+        render_file_card(file_placeholders[file_stem], model_names, file_stem, file_bufs[file_stem], gt_counts,
+                          show_json, show_descriptive)
 
         done, total = step["done"], step["total"]
         progress_bar.progress(done / total)
@@ -896,12 +967,15 @@ else:
         seed = c2.number_input("Seed", value=7, step=1)  # != 42, so a run here isn't just re-sampling the same images
         model_names = st.multiselect(
             "Models",
-            list(ADAPTERS),
-            default=["yolo", "ollama"],
-            help="YOLO answers from its own boxes, no prompt. ollama/qwen3-vl/gemma4/minicpm-v need Ollama "
-                 "running locally; claude/gemini call a paid API.",
+            MODEL_OPTIONS,
+            default=["yolo-supervisorv4-300e", "ollama"],
+            format_func=lambda k: YOLO_LABEL_BY_KEY.get(k, k),
+            help="Grouped in order: our previous YOLO training runs (own boxes, no prompt — pick several "
+                 "to compare weight versions directly), then locally-hosted LLMs (need Ollama running), "
+                 "then API-based LLMs (calls a paid API). Local LLMs share one Ollama server and run one "
+                 "at a time, not in parallel — picking several roughly sums their individual times.",
         )
-        cloud_in_selection = [m for m in model_names if ADAPTERS[m]["is_cloud"]]
+        cloud_in_selection = [m for m in model_names if ADAPTERS.get(m, {}).get("is_cloud")]
         # key= pins this checkbox's identity — without it the auto-derived
         # key includes the label text below, which embeds cloud_in_selection.
         # Changing which models are selected then changes the label (hence
@@ -1078,7 +1152,7 @@ else:
 st.markdown("<hr style='margin:24px 0 18px'/>", unsafe_allow_html=True)
 
 # --- results & ground truth, one table: rows = model (+ ground truth), columns = class --------
-model_order = sorted(model_names, key=lambda m: (m != "yolo", m))
+model_order = sorted(model_names, key=lambda m: (not _is_yolo_name(m), m))
 st.markdown('<div class="hv-h1" style="font-size:20px;margin-bottom:2px">RESULTS vs. GROUND TRUTH</div>', unsafe_allow_html=True)
 st.caption(
     "Total count per class, summed across every scored image — each model's own answer, plus the "
