@@ -22,6 +22,7 @@ import json
 import mimetypes
 import os
 import re
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -287,10 +288,23 @@ class OllamaAdapter:
     registry entries (ollama/qwen3-vl/gemma4/minicpm-v below) that
     differ only in which model tag they pull — four different model
     families (LLaVA, Qwen, Gemma, MiniCPM) compared under identical
-    prompting and scoring."""
+    prompting and scoring.
+
+    _SERVER_LOCK is class-level, shared by every instance/model tag: the
+    comparison runs every adapter concurrently (one thread per model per
+    image), but they're four DIFFERENT model tags on the SAME local Ollama
+    server. Fired at once, Ollama has to keep swapping which model is
+    resident in VRAM between requests — confirmed directly (each model
+    alone: ~30-45s; concurrent, "hangs" for minutes) — so this serializes
+    every Ollama call to one at a time. YOLO and the cloud adapters aren't
+    touched by this lock and keep running fully in parallel.
+    ponytail: one global lock for every tag, not per-tag — simplest fix for
+    "don't thrash one shared server," revisit if profiling ever shows two
+    tags genuinely coexist in VRAM without evicting each other."""
 
     supports_grounding = False
     queryable_classes = ALL_CLASSES
+    _SERVER_LOCK = threading.Lock()
 
     def __init__(self, model="llava", base_url="http://localhost:11434", prompt_template=DEFAULT_PROMPT_TEMPLATE):
         self.model = model
@@ -303,24 +317,28 @@ class OllamaAdapter:
         with open(image_path, "rb") as f:
             image_b64 = base64.b64encode(f.read()).decode()
 
-        response = requests.post(
-            f"{self.base_url}/api/generate",
-            json={
-                "model": self.model,
-                "prompt": text_prompt,
-                "images": [image_b64],
-                "stream": False,
-                "format": "json",
-                # The per-person checklist prompt (bbox+confidence per item per
-                # person) asks for far more output than the old boolean-per-class
-                # one — uncapped, a small local model can fall into a slow/looping
-                # generation that eats the whole 300s timeout instead of failing
-                # fast. Capped, not tuned per-model: raise if legitimate multi-
-                # person answers start getting truncated.
-                "options": {"num_predict": 800},
-            },
-            timeout=300,  # cold model loads observed up to ~140s under load; leave headroom
-        )
+        with self._SERVER_LOCK:  # one Ollama call at a time across every model tag — see class docstring
+            response = requests.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": text_prompt,
+                    "images": [image_b64],
+                    "stream": False,
+                    "format": "json",
+                    # Backstop against a genuine runaway/looping generation eating
+                    # the whole 300s timeout — NOT the fix for the "ollama/gemma4
+                    # hang" bug (that was VRAM-thrashing from concurrent requests
+                    # to different model tags on one server, fixed by _SERVER_LOCK
+                    # above). 800 was too tight and silently cut off legitimate
+                    # multi-person answers (observed: a real 95s gemma4 response
+                    # came back empty) — 3000 gives headroom for a busy image
+                    # (~6-8 people, each with 4 items x confidence+bbox) while
+                    # still bounding a true loop.
+                    "options": {"num_predict": 3000},
+                },
+                timeout=300,  # cold model loads observed up to ~140s under load; leave headroom
+            )
         response.raise_for_status()
         data = response.json()
         # Reasoning models (e.g. qwen3-vl) can emit their entire answer inside

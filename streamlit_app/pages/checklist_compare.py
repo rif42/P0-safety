@@ -574,7 +574,7 @@ def _row_table(row_tr):
             f'<tbody>{row_tr}</tbody></table>')
 
 
-def render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive):
+def render_file_card(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive):
     """One row per entity — ground truth FIRST, then each model — each row a
     columns([1, 3]) pair: its own annotated, zoomable/pannable image on the
     left (see _zoom_image_html()) and its counts (colored green -> red by
@@ -585,6 +585,13 @@ def render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, sh
     the ONLY place the source image appears on the page — comparing every
     model's boxes against ground truth is a matter of scanning straight
     down this one column, not hunting for a thumbnail elsewhere.
+
+    `container` is whatever the caller wants this drawn into — the shared
+    history feed for a one-shot render (resume replay, redraw from
+    session_state), or a per-file st.empty() that gets redrawn every time a
+    new model's result comes in, so a card shows partial results (some
+    rows filled, others still "—") the moment they exist instead of
+    waiting for the whole image to finish (see run_checklist_live()).
     ponytail: one iframe per row per image — fine at today's run sizes
     (tens of images), revisit with on-demand rendering if a 100-image run
     makes the page heavy."""
@@ -594,7 +601,7 @@ def render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, sh
     max_latency = max((buf[n]["latency"] for n in model_names if buf.get(n) and buf[n].get("latency")),
                        default=None)
 
-    with feed:
+    with container:
         st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin:10px 0 2px">{file_stem}</div>',
                     unsafe_allow_html=True)
 
@@ -717,6 +724,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             else:
                 current_file, file_buf = file_stem, buf
 
+    file_placeholder = None
     t_start = time.perf_counter()
     for step in run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for,
                                      skip_pairs=skip_pairs, descriptive_prompt=DESCRIPTIVE_PROMPT):
@@ -727,9 +735,9 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             continue
 
         if step["file"] != current_file:
-            if current_file is not None:
-                render_file_card(feed, model_names, current_file, file_buf, gt_counts, show_json, show_descriptive)
             current_file, file_buf = step["file"], {}
+            with feed:
+                file_placeholder = st.empty()  # redrawn below on every model's result — see render_file_card()
 
         people = step["people"]
         key = (step["file"], step["model"])
@@ -761,6 +769,13 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             "counts": model_counts_for_people(people), "people": people, "raw_text": step["raw_text"],
             "descriptive_text": step["descriptive_text"], "latency": step["latency"],
         }
+        # Redraw the current file's card right now, with whatever models have
+        # answered so far — a model not in file_buf yet just shows "—" cells
+        # (render_file_card already handles a missing buf entry). Every model
+        # runs in its own thread and yields the instant it finishes (see
+        # run_checklist_steps()), so this is the point where that actually
+        # reaches the screen instead of waiting for the whole image.
+        render_file_card(file_placeholder, model_names, current_file, file_buf, gt_counts, show_json, show_descriptive)
 
         done, total = step["done"], step["total"]
         progress_bar.progress(done / total)
@@ -774,9 +789,6 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                 pd.DataFrame(text_rows).to_csv(text_path, index=False)
             if descriptive_rows:
                 pd.DataFrame(descriptive_rows).to_csv(descriptive_path, index=False)
-
-    if current_file is not None:
-        render_file_card(feed, model_names, current_file, file_buf, gt_counts, show_json, show_descriptive)
 
     manifest = {
         "run_name": f"{run_name}_COMPLETE",
