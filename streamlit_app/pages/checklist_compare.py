@@ -704,7 +704,7 @@ def render_full_table(container, model_names, file_stem, buf, gt_counts, show_js
 
     body_rows = [_gt_row_tr(file_stem, gt, gt_total)]
     response_blocks = []
-    for name in model_names:
+    for name in sorted(model_names, key=lambda n: (_group_rank(n), n)):
         entry = buf.get(name)
         body_rows.append(_model_row_tr(file_stem, name, entry, gt, gt_total, max_latency))
         if entry:
