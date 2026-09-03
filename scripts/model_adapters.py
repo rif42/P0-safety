@@ -51,6 +51,25 @@ POSITIVE_CLASSES = ["person", "helmet", "gloves", "boots", "vest"]
 NEGATIVE_CLASSES = ["no-helmet", "no-gloves", "no-boots", "no-vest"]
 ALL_CLASSES = POSITIVE_CLASSES + NEGATIVE_CLASSES
 
+# YOLOAdapter reads its raw class names straight off whatever checkpoint
+# DEFAULT_YOLO_WEIGHTS points at — different training runs have used
+# different words for the same slot (helmet vs hardhat, vest vs "safety
+# vest"). This is the one place that needs to know about it; add a run's
+# raw names here rather than retraining to match. (streamlit_app/detector.py
+# has its own equivalent map — separate module, separate vocabulary, not
+# reused here on purpose.) Unmapped raw names (e.g. mask/no-mask, not
+# tracked by this comparison) pass through lowercased and are simply
+# ignored by every consumer that only looks at ALL_CLASSES/CHECKLIST_ITEMS.
+_RAW_CLASS_MAP = {
+    "hardhat": "helmet", "no-hardhat": "no-helmet",
+    "safety vest": "vest", "no-safety vest": "no-vest",
+}
+
+
+def _norm_class_name(raw):
+    raw = raw.strip().lower()
+    return _RAW_CLASS_MAP.get(raw, raw)
+
 # Editable, visible prompt template for every chat-style (non-grounding)
 # model. {class_list} and {json_shape} are filled in per-model from its own
 # queryable_classes via render_prompt() — e.g. a notebook can print/edit
@@ -98,48 +117,92 @@ def parse_presence_json(text, classes):
     return {c: bool(data.get(c, False)) for c in classes}
 
 
-# Per-person checklist prompt: "how many people, and for each, which items?"
-# — a second query shape alongside the flat per-image presence one above.
-# Deliberately only the 4 positive items (no "no-X" fields): a person not
-# wearing an item already encodes its absence, so there's no separate
-# boolean to ask for. Used by streamlit_app/pages/checklist_compare.py via
-# each adapter's describe() for chat-style models, or people_from_detections()
-# below for a grounding model (YOLO) — both produce the same list-of-people
-# shape, so the rest of that page's scoring never needs to know which one
-# produced it.
+# Per-person checklist prompt: "how many people, and for each, which items —
+# present or absent, how sure, and where?" — a second query shape alongside
+# the flat per-image presence one above. Used by
+# streamlit_app/pages/checklist_compare.py via each adapter's describe() for
+# chat-style models, or people_from_detections() below for a grounding model
+# (YOLO) — both produce the same list-of-people shape (see
+# parse_person_checklist_json()'s docstring), so the rest of that page's
+# scoring/visualization never needs to know which one produced it.
 CHECKLIST_ITEMS = ["helmet", "vest", "gloves", "boots"]
 
 PERSON_CHECKLIST_PROMPT_TEMPLATE = (
     "You are reviewing a construction-site photo for PPE compliance. "
     "Count every distinct person visible in the image — even partially "
-    "visible ones. For EACH person, report whether they are wearing/using "
-    "each of: {class_list}.\n"
+    "visible ones. For EACH person: give their bounding box, then for each "
+    "of {class_list}, report whether they have it (class \"X\") or not "
+    "(class \"no-X\"), your confidence in that call from 0 to 1, and a "
+    "bounding box — the item itself if present, or the region where it "
+    "would be (e.g. the head, for a missing helmet) if absent. All boxes "
+    "are [x1, y1, x2, y2], normalized 0-1 (top-left / bottom-right).\n"
     "Respond with ONLY a JSON object, no markdown fences, no other text, "
     "in exactly this shape — one entry per person, an empty list if you "
     "see nobody:\n"
-    '{{"people": [{json_shape}, ...]}}'
+    '{{"people": [{{"bbox": [x1,y1,x2,y2], "items": [{json_shape}]}}, ...]}}'
 )
 
 
 def render_checklist_prompt(items=CHECKLIST_ITEMS):
-    return PERSON_CHECKLIST_PROMPT_TEMPLATE.format(
-        class_list=", ".join(items),
-        json_shape="{" + ", ".join(f'"{c}": true/false' for c in items) + "}",
+    item_shape = ", ".join(
+        f'{{"class": "{item}"|"no-{item}", "confidence": 0.0-1.0, "bbox": [x1,y1,x2,y2]}}'
+        for item in items
     )
+    return PERSON_CHECKLIST_PROMPT_TEMPLATE.format(class_list=", ".join(items), json_shape=item_shape)
+
+
+def _as_bbox(v):
+    if isinstance(v, (list, tuple)) and len(v) == 4:
+        try:
+            return tuple(float(x) for x in v)
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _as_confidence(v):
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return None
+    return max(0.0, min(1.0, v))
 
 
 def parse_person_checklist_json(text, items=CHECKLIST_ITEMS):
-    """Returns a list of dict[item -> bool], one per person the model claims
-    to see (an empty list is a real, meaningful "saw nobody" answer) — or
-    None if the response couldn't be read as {"people": [...]} at all
-    (a parse failure, kept distinct from "0 people")."""
+    """Returns a list of {"bbox": (x1,y1,x2,y2)|None, "items": [Detection, ...]},
+    one per person the model claims to see (an empty list is a real,
+    meaningful "saw nobody" answer) — or None if the response couldn't be
+    read as {"people": [...]} at all (a parse failure, kept distinct from
+    "0 people"). Each person carries exactly one Detection per slot in
+    `items` — its class_name is either the slot ("helmet") or its negative
+    ("no-helmet"), so the same class can repeat once per person without
+    colliding across people. A slot the model never mentioned (or a
+    malformed entry) defaults to an unstated negative (confidence/bbox
+    None) rather than dropping the slot, so every person has the same
+    item count downstream."""
     data = _extract_json(text)
     if not isinstance(data, dict):
         return None
-    people = data.get("people")
-    if not isinstance(people, list):
+    raw_people = data.get("people")
+    if not isinstance(raw_people, list):
         return None
-    return [{item: bool(p.get(item, False)) if isinstance(p, dict) else False for item in items} for p in people]
+    valid_names = {name for item in items for name in (item, f"no-{item}")}
+    people = []
+    for p in raw_people:
+        p = p if isinstance(p, dict) else {}
+        by_slot = {}
+        for it in p.get("items", []) if isinstance(p.get("items"), list) else []:
+            if not isinstance(it, dict) or it.get("class") not in valid_names:
+                continue
+            cls = it["class"]
+            slot = cls[3:] if cls.startswith("no-") else cls
+            by_slot[slot] = Detection(cls, not cls.startswith("no-"),
+                                       _as_confidence(it.get("confidence")), _as_bbox(it.get("bbox")))
+        people.append({
+            "bbox": _as_bbox(p.get("bbox")),
+            "items": [by_slot.get(item, Detection(f"no-{item}", False, None, None)) for item in items],
+        })
+    return people
 
 
 def _containment(item_box, container_box):
@@ -158,20 +221,27 @@ def _containment(item_box, container_box):
 
 
 def people_from_detections(detections, items=CHECKLIST_ITEMS, containment_thresh=0.5):
-    """The same per-person checklist shape parse_person_checklist_json()
-    returns, built from a grounding model's own real boxes instead of a
-    prompted answer: each detected person, plus any item box mostly
-    contained in it, counts as present. Lets YOLO run through the exact
-    same checklist scoring pipeline as every chat model, instead of being
+    """The same per-person shape parse_person_checklist_json() returns,
+    built from a grounding model's own real boxes instead of a prompted
+    answer: each detected person, plus whichever item/no-item box (our
+    trained YOLO detects both as real classes, each with its own confidence
+    and box) is mostly contained in it, becomes that slot's Detection —
+    highest-confidence one wins if both showed up. No matching box at all
+    means an unstated negative, same convention as a chat model's
+    unmentioned slot. Lets YOLO run through the exact same checklist
+    scoring/visualization pipeline as every chat model, instead of being
     left out because it has no describe()."""
     persons = [d for d in detections if d.class_name == "person" and d.bbox is not None]
     other = [d for d in detections if d.class_name != "person" and d.bbox is not None]
     people = []
     for p in persons:
-        people.append({
-            item: any(d.class_name == item and _containment(d.bbox, p.bbox) > containment_thresh for d in other)
-            for item in items
-        })
+        entry_items = []
+        for item in items:
+            candidates = [d for d in other if d.class_name in (item, f"no-{item}")
+                          and _containment(d.bbox, p.bbox) > containment_thresh]
+            best = max(candidates, key=lambda d: d.confidence or 0.0) if candidates else None
+            entry_items.append(best or Detection(f"no-{item}", False, None, None))
+        people.append({"bbox": p.bbox, "items": entry_items})
     return people
 
 
@@ -200,7 +270,7 @@ class YOLOAdapter:
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             detections.append(
                 Detection(
-                    class_name=self.class_names[cls_id],
+                    class_name=_norm_class_name(self.class_names[cls_id]),
                     present=True,
                     confidence=float(box.conf[0]),
                     bbox=(x1 / img_w, y1 / img_h, x2 / img_w, y2 / img_h),

@@ -97,8 +97,15 @@ SUPERVISOR_V1_WEIGHTS = (REPO_ROOT / "runs" / "detect" /
                          "yolo26s_supervisorv1_fixed_nomosaic_300e" / "weights" / "best.pt")
 SUPERVISOR_V1_LABEL = "YOLO26s · yolo26s_supervisorv1_fixed_nomosaic_300e"
 
-DEFAULT_WEIGHTS = SUPERVISOR_V1_WEIGHTS
-DEFAULT_LABEL = SUPERVISOR_V1_LABEL
+# yolo26s_supervisorv4_300e — same yolo26s backbone/vocabulary (11 classes, all five slots)
+# on the newer SuperVisor.v4 dataset export; early-stopped at 46/300, best epoch 21
+# (precision 0.551, recall 0.516, mAP50 0.477, mAP50-95 0.220 — a touch ahead of v1's
+# 0.215 mAP50-95). Superseded SUPERVISOR_V1_WEIGHTS as the app's default.
+SUPERVISOR_V4_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26s_supervisorv4_300e" / "weights" / "best.pt"
+SUPERVISOR_V4_LABEL = "YOLO26s · yolo26s_supervisorv4_300e"
+
+DEFAULT_WEIGHTS = SUPERVISOR_V4_WEIGHTS
+DEFAULT_LABEL = SUPERVISOR_V4_LABEL
 
 _weights_env = os.environ.get("HIVIS_MODEL_PATH")
 WEIGHTS_PATH = (REPO_ROOT / _weights_env) if _weights_env else DEFAULT_WEIGHTS

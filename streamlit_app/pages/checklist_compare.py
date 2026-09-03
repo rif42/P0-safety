@@ -32,7 +32,9 @@ enough to rebuild sampling/models later. PAUSED RUNS below lists any run
 this page started that never got a run_manifest.json.
 """
 
+import base64
 import html
+import io
 import json
 import shutil
 import statistics
@@ -44,8 +46,9 @@ from types import SimpleNamespace
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 import yaml
-from PIL import Image, ImageDraw
+from PIL import Image
 
 SCRIPTS_ROOT = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_ROOT))
@@ -61,7 +64,7 @@ from compare_models import (  # noqa: E402
     sample_test_images,
 )
 from gemini_prompt_comparison import DESCRIPTIVE_PROMPT  # noqa: E402
-from model_adapters import ADAPTERS, CHECKLIST_ITEMS, DEFAULT_PROMPT_TEMPLATE  # noqa: E402
+from model_adapters import ADAPTERS, CHECKLIST_ITEMS, DEFAULT_PROMPT_TEMPLATE, Detection, _norm_class_name  # noqa: E402
 
 import view_helpers as vh
 
@@ -72,7 +75,6 @@ st.markdown(vh.header_html("LLM vs YOLO (PERSON DETECTION)", "how many people, a
 INK = "#141414"
 MUTED = "#71736D"
 FAINT = "#C4C6C0"
-GT_BOX_COLOR = "#1B7A3D"
 POSITIVE_GREEN = "#1B7A3D"  # matches this app's existing compliant=green convention
 NEGATIVE_RED = "#B02A20"    # matches this app's existing non-compliant=red convention
 SERIES = ["person"] + CHECKLIST_ITEMS + [f"no-{item}" for item in CHECKLIST_ITEMS]
@@ -114,23 +116,34 @@ st.caption(
 
 @st.cache_data
 def load_gt_counts(sampled_files):
-    """dict[file][series] -> ground-truth box count, straight from labels —
-    no enhancement here, that happens per-image against the live model
-    counts below."""
-    labels_path = MERGED_ROOT / "labels_long.csv"
-    if not labels_path.exists():
+    """dict[file][series] -> ground-truth box count, straight from each
+    image's own label .txt (via load_gt_boxes(), which also normalizes raw
+    class names) — no enhancement here, that happens per-image against the
+    live model counts below. Deliberately not read from a separately-built
+    labels_long.csv: that's a derived, gitignored artifact that can (and
+    did) drift out of sync with the raw dataset after a re-export swapped
+    in a different class vocabulary — reading the labels directly means
+    there's nothing to regenerate or go stale."""
+    if not (MERGED_ROOT / "test" / "labels").exists():
         return None
-    labels_long = pd.read_csv(labels_path)
-    id_to_name = {i: n for i, n in enumerate(CLASS_NAMES)}
-    sub = labels_long[labels_long["file"].isin(sampled_files)].copy()
-    sub["class_name"] = sub["class_id"].map(id_to_name)
-    counts = sub.groupby(["file", "class_name"]).size()
-    return {f: {s: int(counts.get((f, s), 0)) for s in SERIES} for f in sampled_files}
+    counts_by_file = {}
+    for f in sampled_files:
+        counts = {s: 0 for s in SERIES}
+        for class_name, _bbox in load_gt_boxes(f):
+            if class_name in counts:
+                counts[class_name] += 1
+        counts_by_file[f] = counts
+    return counts_by_file
 
 
 def load_gt_boxes(file_stem):
-    """[(class_name, (x1,y1,x2,y2) normalized)] straight from the
-    YOLO-format label .txt for this test image."""
+    """[(class_name, (x1,y1,x2,y2) normalized)] straight from the label .txt
+    for this test image — a mix of plain YOLO bbox and YOLO segmentation
+    (variable-length polygon) lines in this dataset, the latter bounded to
+    its own axis-aligned box. class_name normalized via
+    model_adapters._norm_class_name() (hardhat -> helmet, "safety vest" ->
+    vest, ...) so it lines up with SERIES regardless of which raw dataset
+    export data/merged/data.yaml currently points at."""
     label_path = MERGED_ROOT / "test" / "labels" / f"{file_stem}.txt"
     if not label_path.exists():
         return []
@@ -138,34 +151,29 @@ def load_gt_boxes(file_stem):
     for line in label_path.read_text().splitlines():
         if not line.strip():
             continue
-        cid, cx, cy, bw, bh = line.split()
-        cid, cx, cy, bw, bh = int(cid), float(cx), float(cy), float(bw), float(bh)
-        boxes.append((CLASS_NAMES[cid], (cx - bw / 2, cy - bh / 2, cx + bw / 2, cy + bh / 2)))
+        parts = line.split()
+        cid, coords = int(parts[0]), [float(v) for v in parts[1:]]
+        if len(coords) == 4:  # plain YOLO bbox: cx, cy, w, h
+            cx, cy, bw, bh = coords
+            bbox = (cx - bw / 2, cy - bh / 2, cx + bw / 2, cy + bh / 2)
+        else:  # YOLO segmentation polygon (variable-length x,y pairs) — bound it
+            xs, ys = coords[0::2], coords[1::2]
+            bbox = (min(xs), min(ys), max(xs), max(ys))
+        boxes.append((_norm_class_name(CLASS_NAMES[cid]), bbox))
     return boxes
 
 
-def draw_gt_overlay(image_path, boxes):
-    img = Image.open(image_path).convert("RGB")
-    iw, ih = img.size
-    draw = ImageDraw.Draw(img)
-    line_w = max(2, min(iw, ih) // 250)
-    for class_name, (x1, y1, x2, y2) in boxes:
-        px = (x1 * iw, y1 * ih, x2 * iw, y2 * ih)
-        draw.rectangle(px, outline=GT_BOX_COLOR, width=line_w)
-        draw.text((px[0] + 2, px[1] + 2), class_name, fill=GT_BOX_COLOR)
-    return img
-
-
 def model_counts_for_people(people):
-    """people: list[{item: bool}] or None (parse failure) -> dict[series]->
-    int, or None if the model's answer couldn't be read at all — kept
-    distinct from a genuine "0 people" answer, which scores normally."""
+    """people: list[{"bbox":..., "items": [Detection, ...]}] or None (parse
+    failure) -> dict[series] -> int, or None if the model's answer couldn't
+    be read at all — kept distinct from a genuine "0 people" answer, which
+    scores normally."""
     if people is None:
         return None
     n = len(people)
     counts = {"person": n}
     for item in CHECKLIST_ITEMS:
-        present = sum(1 for p in people if p.get(item))
+        present = sum(1 for p in people if any(d.class_name == item for d in p["items"]))
         counts[item] = present
         counts[f"no-{item}"] = n - present
     return counts
@@ -250,6 +258,40 @@ def load_existing_checklist_rows(run_dir):
     descriptive_rows = descriptive_df.to_dict("records")
     descriptive_by_pair = {(r["file"], r["model"]): r["response_text"] for r in descriptive_rows}
 
+    # person_items.csv is one row per (file, model, person_idx, slot) — new
+    # schema, carrying class/confidence/bbox per slot instead of one boolean
+    # column per item. A run checkpointed under the OLD schema (no "slot"
+    # column) still opens: reconstructed with bare presence, no
+    # confidence/bbox, same as a chat model that never mentioned that slot.
+    old_schema = not items_df.empty and "slot" not in items_df.columns
+
+    def _people_for(file_stem, model, n):
+        if old_schema:
+            sub = items_df[(items_df["file"] == file_stem) & (items_df["model"] == model)].sort_values("person_idx")
+            return [{"bbox": None, "items": [Detection(item if r[item] else f"no-{item}", bool(r[item]), None, None)
+                                              for item in CHECKLIST_ITEMS]}
+                    for _, r in sub.iterrows()]
+        sub = items_df[(items_df["file"] == file_stem) & (items_df["model"] == model)]
+        people = []
+        for idx in range(n):
+            grp = sub[sub["person_idx"] == idx]
+            pbbox = grp.iloc[0]["person_bbox"] if not grp.empty else None
+            pbbox = json.loads(pbbox) if isinstance(pbbox, str) and pbbox else None
+            items = []
+            for item in CHECKLIST_ITEMS:
+                row = grp[grp["slot"] == item]
+                if row.empty:
+                    items.append(Detection(f"no-{item}", False, None, None))
+                    continue
+                r = row.iloc[0]
+                bbox = json.loads(r["bbox"]) if isinstance(r["bbox"], str) and r["bbox"] else None
+                conf = r["confidence"]
+                conf = float(conf) if conf not in ("", None) and not pd.isna(conf) else None
+                items.append(Detection(r["class"], not str(r["class"]).startswith("no-"), conf,
+                                        tuple(bbox) if bbox else None))
+            people.append({"bbox": tuple(pbbox) if pbbox else None, "items": items})
+        return people
+
     people_by_pair = {}
     latency_by_pair = {}
     for row in count_rows:
@@ -262,8 +304,7 @@ def load_existing_checklist_rows(run_dir):
         if int(pc) == 0 or items_df.empty:
             people_by_pair[key] = []
             continue
-        sub = items_df[(items_df["file"] == row["file"]) & (items_df["model"] == row["model"])].sort_values("person_idx")
-        people_by_pair[key] = [{item: bool(r[item]) for item in CHECKLIST_ITEMS} for _, r in sub.iterrows()]
+        people_by_pair[key] = _people_for(row["file"], row["model"], int(pc))
     return (count_rows, item_rows, text_rows, descriptive_rows,
             people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
 
@@ -413,68 +454,198 @@ def _response_html(raw_text, counts, descriptive_text, show_json, show_descripti
     return "".join(parts)
 
 
+def _zoom_image_html(img_path, boxes, height=210, max_side=900):
+    """The source image with `boxes` (a flat list of {"bbox","color","label",
+    "dashed"?}) drawn as an SVG overlay, inside a plain wheel-to-zoom/
+    drag-to-pan viewport — no chart/zoom library, just a CSS transform
+    driven by a few event listeners (components.v1.html runs this in a
+    real iframe, so the <script> actually executes, unlike a plain
+    st.markdown). Starts fit-to-width so the un-zoomed state is already
+    legible; scroll to go further, drag to pan once zoomed.
+    ponytail: rebuilds + re-embeds the JPEG on every render (no cache) — a
+    tab isn't hammering this in a loop, so it's not worth memoizing yet."""
+    img = Image.open(img_path).convert("RGB")
+    if max(img.size) > max_side:
+        img.thumbnail((max_side, max_side))
+    w, h = img.size
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=82)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+
+    font_size = max(w, h) * 0.024
+    shapes = []
+    for b in boxes:
+        x1, y1, x2, y2 = b["bbox"]
+        bx, by, bw, bh = x1 * w, y1 * h, (x2 - x1) * w, (y2 - y1) * h
+        dash = ' stroke-dasharray="5 4"' if b.get("dashed") else ""
+        shapes.append(f'<rect x="{bx:.1f}" y="{by:.1f}" width="{bw:.1f}" height="{bh:.1f}" '
+                      f'fill="none" stroke="{b["color"]}" stroke-width="2"{dash}/>')
+        if b.get("label"):
+            shapes.append(f'<text x="{bx:.1f}" y="{max(by - 4, font_size):.1f}" fill="{b["color"]}" '
+                          f'font-size="{font_size:.0f}" font-family="monospace">{html.escape(b["label"])}</text>')
+
+    return f"""
+    <div id="zbox" style="border:1px solid {FAINT};overflow:hidden;position:relative;
+                height:{height}px;background:#111;cursor:grab">
+      <div id="zwrap" style="transform-origin:0 0;position:absolute;top:0;left:0">
+        <svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" style="display:block">
+          <image href="data:image/jpeg;base64,{b64}" width="{w}" height="{h}"/>
+          {"".join(shapes)}
+        </svg>
+      </div>
+    </div>
+    <script>
+    (function() {{
+      const box = document.currentScript.previousElementSibling;
+      const wrap = box.querySelector('#zwrap');
+      let scale, tx = 0, ty = 0, dragging = false, lastX = 0, lastY = 0;
+      const fit = box.clientWidth / {w};
+      scale = fit;
+      function apply() {{ wrap.style.transform = `translate(${{tx}}px,${{ty}}px) scale(${{scale}})`; }}
+      apply();
+      box.addEventListener('wheel', (e) => {{
+        e.preventDefault();
+        const rect = box.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const next = Math.min(Math.max(scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15), fit * 0.5), fit * 15);
+        tx = mx - (mx - tx) * (next / scale);
+        ty = my - (my - ty) * (next / scale);
+        scale = next;
+        apply();
+      }}, {{passive: false}});
+      box.addEventListener('mousedown', (e) => {{ dragging = true; lastX = e.clientX; lastY = e.clientY; box.style.cursor = 'grabbing'; }});
+      window.addEventListener('mouseup', () => {{ dragging = false; box.style.cursor = 'grab'; }});
+      window.addEventListener('mousemove', (e) => {{
+        if (!dragging) return;
+        tx += e.clientX - lastX; ty += e.clientY - lastY;
+        lastX = e.clientX; lastY = e.clientY;
+        apply();
+      }});
+    }})();
+    </script>
+    """
+
+
+def _gt_boxes_for_zoom(gt_boxes):
+    """load_gt_boxes()'s [(class_name, bbox)] -> _zoom_image_html()'s box
+    shape: green for a present slot, red for its "no-X" negative, neutral
+    for "person" (not a compliance call). Anything outside SERIES (e.g.
+    mask/no-mask on an 11-class export — not a tracked slot here) is
+    dropped rather than mis-colored."""
+    boxes = []
+    for class_name, bbox in gt_boxes:
+        if class_name not in SERIES:
+            continue
+        color = MUTED if class_name == "person" else (NEGATIVE_RED if class_name.startswith("no-") else POSITIVE_GREEN)
+        boxes.append({"bbox": bbox, "color": color, "label": class_name})
+    return boxes
+
+
+def _person_boxes_for_zoom(people):
+    """A model's people (see model_adapters.parse_person_checklist_json())
+    -> _zoom_image_html()'s box shape: each person's own box dashed/neutral,
+    each item green (present) or red (absent), labeled "class conf%"."""
+    boxes = []
+    for p in people or []:
+        if p["bbox"]:
+            boxes.append({"bbox": p["bbox"], "color": MUTED, "label": None, "dashed": True})
+        for d in p["items"]:
+            if d.bbox:
+                label = f"{d.class_name} {d.confidence:.0%}" if d.confidence is not None else d.class_name
+                boxes.append({"bbox": d.bbox, "color": POSITIVE_GREEN if d.present else NEGATIVE_RED, "label": label})
+    return boxes
+
+
+# Shared between the header-only table and every single-row table below —
+# each row is its own <table> (an interactive per-row image can't live
+# inside one <td> of a single shared <table>), so this is what keeps their
+# columns lined up despite that.
+_TABLE_COLGROUP = (
+    "<colgroup>"
+    '<col style="width:15%">'
+    + "".join(f'<col style="width:{60 / len(SERIES):.2f}%">' for _ in SERIES)
+    + '<col style="width:10%"><col style="width:15%">'
+    + "</colgroup>"
+)
+
+
+def _row_table(row_tr):
+    return (f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">{_TABLE_COLGROUP}'
+            f'<tbody>{row_tr}</tbody></table>')
+
+
 def render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive):
-    """Real HTML <table>, one row per model plus a final "ground truth"
-    row — not a text caption under the thumbnail — columns chunked into
-    PRESENT/ABSENT groups (see _grouped_head()), each a number colored
-    green -> red by how far it is from ground truth (_count_cell()), a
-    total (diffed the same way), and latency as a filled bar
-    (_latency_cell()). Text responses render below the table, not in a
-    cell (see _response_html()), so toggling them never reflows the
-    columns above."""
+    """One row per entity — ground truth FIRST, then each model — each row a
+    columns([1, 3]) pair: its own annotated, zoomable/pannable image on the
+    left (see _zoom_image_html()) and its counts (colored green -> red by
+    distance from ground truth, see _count_cell()) plus latency (filled
+    bar, see _latency_cell()) on the right. Every row is its own single-row
+    <table> sharing _TABLE_COLGROUP with the header, since a live per-row
+    iframe can't sit inside one <td> of a single shared <table>. This is
+    the ONLY place the source image appears on the page — comparing every
+    model's boxes against ground truth is a matter of scanning straight
+    down this one column, not hunting for a thumbnail elsewhere.
+    ponytail: one iframe per row per image — fine at today's run sizes
+    (tens of images), revisit with on-demand rendering if a 100-image run
+    makes the page heavy."""
+    img_path = image_path_for(file_stem)
+    gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
+    gt_total = sum(gt.values())
+    max_latency = max((buf[n]["latency"] for n in model_names if buf.get(n) and buf[n].get("latency")),
+                       default=None)
+
     with feed:
-        cols = st.columns([1, 3])
-        img_path = image_path_for(file_stem)
+        st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin:10px 0 2px">{file_stem}</div>',
+                    unsafe_allow_html=True)
+
+        img_col, tbl_col = st.columns([1, 3])
+        with img_col:
+            st.caption("scroll to zoom · drag to pan")
+        with tbl_col:
+            st.markdown(f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">{_TABLE_COLGROUP}'
+                        f'<thead>{_grouped_head(["total", "latency"])}</thead></table>', unsafe_allow_html=True)
+
         if img_path:
-            gt_boxes = load_gt_boxes(file_stem)
-            cols[0].image(draw_gt_overlay(img_path, gt_boxes) if gt_boxes else str(img_path), width="stretch")
-        with cols[1]:
-            st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin-bottom:4px">{file_stem}</div>',
-                        unsafe_allow_html=True)
+            gt_row = (f'<tr style="background:#F0F1EC;font-weight:600"><td style="padding:3px 8px">ground truth</td>'
+                      f'{"".join(_plain_cell(gt[s], series=s) for s in SERIES)}'
+                      f'{_plain_cell(gt_total)}{_plain_cell("—")}</tr>')
+            img_col, tbl_col = st.columns([1, 3])
+            with img_col:
+                components.html(_zoom_image_html(img_path, _gt_boxes_for_zoom(load_gt_boxes(file_stem))), height=225)
+            with tbl_col:
+                st.markdown(_row_table(gt_row), unsafe_allow_html=True)
 
-            gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
-            gt_total = sum(gt.values())
-            max_latency = max((buf[n]["latency"] for n in model_names if buf.get(n) and buf[n].get("latency")),
-                               default=None)
+        response_blocks = []
+        for name in model_names:
+            entry = buf.get(name)
+            counts = entry["counts"] if entry else None
+            people = entry.get("people") if entry else None
+            raw_text = entry.get("raw_text") if entry else None
+            descriptive_text = entry.get("descriptive_text") if entry else None
+            latency = entry.get("latency") if entry else None
+            cells = "".join(_count_cell(counts[s] if counts else None, gt[s], series=s) for s in SERIES)
+            total = sum(counts.values()) if counts else None
+            row_tr = (f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
+                      f'{cells}{_count_cell(total, gt_total)}{_latency_cell(latency, max_latency)}</tr>')
 
-            head = _grouped_head(["total", "latency"])
-            body_rows = []
-            response_blocks = []
-            for name in model_names:
-                entry = buf.get(name)
-                counts = entry["counts"] if entry else None
-                raw_text = entry.get("raw_text") if entry else None
-                descriptive_text = entry.get("descriptive_text") if entry else None
-                latency = entry.get("latency") if entry else None
-                cells = "".join(_count_cell(counts[s] if counts else None, gt[s], series=s) for s in SERIES)
-                total = sum(counts.values()) if counts else None
-                body_rows.append(
-                    f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
-                    f'{cells}{_count_cell(total, gt_total)}{_latency_cell(latency, max_latency)}</tr>'
-                )
-                resp = _response_html(raw_text, counts, descriptive_text, show_json, show_descriptive)
-                if resp:
-                    response_blocks.append(f'<div style="margin-top:2px"><b>{name}</b>{resp}</div>')
+            img_col, tbl_col = st.columns([1, 3])
+            with img_col:
+                if img_path:
+                    components.html(_zoom_image_html(img_path, _person_boxes_for_zoom(people)), height=225)
+            with tbl_col:
+                st.markdown(_row_table(row_tr), unsafe_allow_html=True)
 
-            gt_cells = "".join(_plain_cell(gt[s], series=s) for s in SERIES)
-            body_rows.append(
-                f'<tr style="background:#F0F1EC;font-weight:600">'
-                f'<td style="padding:3px 8px">ground truth</td>{gt_cells}'
-                f'{_plain_cell(gt_total)}{_plain_cell("—")}</tr>'
-            )
+            resp = _response_html(raw_text, counts, descriptive_text, show_json, show_descriptive)
+            if resp:
+                response_blocks.append(f'<div style="margin-top:2px"><b>{name}</b>{resp}</div>')
 
+        if response_blocks:
             st.markdown(
-                f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">'
-                f'<thead>{head}</thead><tbody>{"".join(body_rows)}</tbody></table>',
+                f'<div style="margin-top:6px;padding:8px 10px;background:#FFFFFF;border:1px solid {FAINT};'
+                f'font-size:11px;line-height:1.5">' + "".join(response_blocks) + "</div>",
                 unsafe_allow_html=True,
             )
-            if response_blocks:
-                st.markdown(
-                    f'<div style="margin-top:6px;padding:8px 10px;background:#FFFFFF;border:1px solid {FAINT};'
-                    f'font-size:11px;line-height:1.5">' + "".join(response_blocks) + "</div>",
-                    unsafe_allow_html=True,
-                )
-        st.markdown("<hr style='margin:6px 0'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
 
 
 def build_args(model_names):
@@ -536,6 +707,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             if file_stem not in covered:
                 continue
             buf = {m: {"counts": model_counts_for_people(people_by_pair.get((file_stem, m))),
+                       "people": people_by_pair.get((file_stem, m)),
                        "raw_text": text_by_pair.get((file_stem, m)),
                        "descriptive_text": descriptive_by_pair.get((file_stem, m)),
                        "latency": latency_by_pair.get((file_stem, m))}
@@ -568,7 +740,16 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                             "latency": step["latency"]})
         if people:
             for idx, p in enumerate(people):
-                item_rows.append({"file": step["file"], "model": step["model"], "person_idx": idx, **p})
+                pbbox = p["bbox"]
+                for d in p["items"]:
+                    item_rows.append({
+                        "file": step["file"], "model": step["model"], "person_idx": idx,
+                        "person_bbox": json.dumps(list(pbbox)) if pbbox else "",
+                        "slot": d.class_name[3:] if d.class_name.startswith("no-") else d.class_name,
+                        "class": d.class_name,
+                        "confidence": d.confidence if d.confidence is not None else "",
+                        "bbox": json.dumps(list(d.bbox)) if d.bbox else "",
+                    })
         if step["raw_text"]:
             text_by_pair[key] = step["raw_text"]
             text_rows.append({"file": step["file"], "model": step["model"], "response_text": step["raw_text"]})
@@ -577,7 +758,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             descriptive_rows.append({"file": step["file"], "model": step["model"], "response_text": step["descriptive_text"]})
 
         file_buf[step["model"]] = {
-            "counts": model_counts_for_people(people), "raw_text": step["raw_text"],
+            "counts": model_counts_for_people(people), "people": people, "raw_text": step["raw_text"],
             "descriptive_text": step["descriptive_text"], "latency": step["latency"],
         }
 
@@ -799,6 +980,7 @@ elif "checklist_last_run" in st.session_state:
     feed = st.container()
     for f in sampled_files:
         buf = {m: {"counts": model_counts_for_people(people_by_pair.get((f, m))),
+                   "people": people_by_pair.get((f, m)),
                    "raw_text": text_by_pair.get((f, m)),
                    "descriptive_text": descriptive_by_pair.get((f, m)),
                    "latency": latency_by_pair.get((f, m))}
@@ -816,8 +998,8 @@ st.markdown('<div class="hv-h1" style="font-size:20px;margin:28px 0 6px">ANALYSI
 # gt_counts was already computed above (before the live loop, so the per-image
 # tables could use it too) — reused here, not recomputed.
 if gt_counts is None:
-    st.warning("data/merged/labels_long.csv not found on this checkout — can't score against ground truth "
-               "(it's git-ignored). The run above is still saved.")
+    st.warning("data/merged/test/labels/ not found on this checkout — can't score against ground truth "
+               "(the dataset is git-ignored). The run above is still saved.")
     st.stop()
 
 per_image_rows = []       # file, series, gt, effective_gt, consensus, flagged, {model: count}

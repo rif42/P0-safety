@@ -49,6 +49,7 @@ import json
 import random
 import sys
 import time
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -62,7 +63,7 @@ MERGED_ROOT = REPO_ROOT / "data" / "merged"
 DATASET_NAME = MERGED_ROOT.name  # "merged" — folds into the run name/manifest
 LLM_RUNS_ROOT = REPO_ROOT / "runs" / "llm"
 
-DEFAULT_YOLO_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26s_merged_100e" / "weights" / "best.pt"
+DEFAULT_YOLO_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26s_supervisorv4_300e" / "weights" / "best.pt"
 DEFAULT_N_IMAGES = 20
 DEFAULT_MODELS = "yolo,ollama,qwen3-vl,gemma4,minicpm-v"
 
@@ -120,25 +121,38 @@ def sample_test_images(n_images, seed):
     which silently starved any class confined to a different raw source
     (e.g. gloves/boots, which only anuragraj03 labels, never got sampled
     because a same-image-count-or-larger class from snehilsanyal-main
-    always sorted rarer and ate the whole quota first)."""
-    labels_long = pd.read_csv(MERGED_ROOT / "labels_long.csv")
-    test_labels = labels_long[labels_long["split"] == "test"]
-    all_test_files = sorted(test_labels["file"].unique())
+    always sorted rarer and ate the whole quota first).
+
+    Reads class membership straight from each test image's own label .txt
+    rather than a separately-built labels_long.csv — that's a derived,
+    gitignored artifact that can (and did) drift out of sync with the raw
+    dataset after a re-export swapped in a different class vocabulary/split;
+    reading the labels directly means there's nothing to regenerate or go
+    stale."""
+    test_dir = MERGED_ROOT / "test"
+    all_test_files = sorted(p.stem for p in (test_dir / "images").iterdir() if p.is_file())
 
     if n_images == -1 or n_images >= len(all_test_files):
         return all_test_files
 
+    file_classes = {}
+    for f in all_test_files:
+        label_path = test_dir / "labels" / f"{f}.txt"
+        if not label_path.exists():
+            continue
+        file_classes[f] = {int(line.split()[0]) for line in label_path.read_text().splitlines() if line.strip()}
+
+    class_counts = Counter(cid for ids in file_classes.values() for cid in ids)
+    class_ids_rarest_first = [cid for cid, _ in sorted(class_counts.items(), key=lambda kv: kv[1])]
+    per_class_quota = max(1, n_images // max(1, len(class_ids_rarest_first)))
+
     rng = random.Random(seed)
     selected = []
     seen = set()
-    class_counts = test_labels["class_id"].value_counts()
-    class_ids_rarest_first = class_counts.sort_values().index.tolist()
-    per_class_quota = max(1, n_images // len(class_ids_rarest_first))
-
     for class_id in class_ids_rarest_first:
         if len(selected) >= n_images:
             break
-        candidates = test_labels[test_labels["class_id"] == class_id]["file"].unique().tolist()
+        candidates = [f for f, ids in file_classes.items() if class_id in ids]
         rng.shuffle(candidates)
         taken = 0
         for f in candidates:

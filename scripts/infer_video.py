@@ -1,11 +1,11 @@
-"""Video inference for YOLO26m merged PPE model.
+"""Video inference for the HI-VIS PPE detector.
 
 Usage:
     python scripts/infer_video.py --source path/to/video.mp4
     python scripts/infer_video.py --source 0                      # webcam
     python scripts/infer_video.py --source video.mp4 --output out.mp4 --conf 0.25 --show
 
-Defaults to runs/detect/yolo26m_merged_150e/weights/best.pt — override with
+Defaults to runs/detect/yolo26s_supervisorv4_300e/weights/best.pt — override with
 --weights or HIVIS_MODEL_PATH env var.
 """
 import argparse
@@ -18,7 +18,7 @@ import cv2
 
 # Allow importing detector for colors when run from repo root or scripts/
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_merged_150e" / "weights" / "best.pt"
+DEFAULT_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26s_supervisorv4_300e" / "weights" / "best.pt"
 
 # Fallback palette if detector not importable
 FALLBACK_COLORS = {
@@ -92,9 +92,9 @@ def _color_for(class_name: str):
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="YOLO26m video inference")
+    p = argparse.ArgumentParser(description="HI-VIS PPE video inference")
     p.add_argument("--source", required=True, help="Video path, image path, or 0 for webcam (also supports RTSP/YouTube via opencv)")
-    p.add_argument("--weights", default=None, help="Path to best.pt (default: runs/detect/yolo26m_merged_150e/weights/best.pt or $HIVIS_MODEL_PATH)")
+    p.add_argument("--weights", default=None, help="Path to best.pt (default: runs/detect/yolo26s_supervisorv4_300e/weights/best.pt or $HIVIS_MODEL_PATH)")
     p.add_argument("--conf", type=float, default=0.25, help="Confidence threshold (default 0.25)")
     p.add_argument("--iou", type=float, default=0.5, help="NMS IoU threshold (default 0.5)")
     p.add_argument("--output", default=None, help="Output video path (e.g. runs/predict/out.mp4). If omitted and --save given, auto-named.")
