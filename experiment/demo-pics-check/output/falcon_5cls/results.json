@@ -1,0 +1,9317 @@
+[
+  {
+    "image": "challenging/-3766-_png_jpg.rf.81ead992d4b8047ec7beb28b7532cf0a.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          502.0,
+          68.0,
+          586.0,
+          144.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          273.0,
+          0.0,
+          401.0,
+          218.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          451.0,
+          75.0,
+          548.0,
+          213.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          579.0,
+          64.0,
+          639.0,
+          226.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          483.0,
+          135.0,
+          586.0,
+          283.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          368.0,
+          160.0,
+          476.0,
+          330.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          544.0,
+          213.0,
+          639.0,
+          362.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          416.0,
+          228.0,
+          557.0,
+          431.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          108.0,
+          248.0,
+          222.0,
+          421.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          192.0,
+          273.0,
+          375.0,
+          456.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          565.0,
+          360.0,
+          638.0,
+          508.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          443.0,
+          377.0,
+          566.0,
+          627.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          309.0,
+          408.0,
+          460.0,
+          620.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          137.0,
+          540.0,
+          310.0,
+          638.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          565.0,
+          584.0,
+          638.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          502.0,
+          135.0,
+          586.0,
+          195.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          393.0,
+          160.0,
+          476.0,
+          255.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          578.0,
+          214.0,
+          639.0,
+          281.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          416.0,
+          229.0,
+          518.0,
+          303.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          108.0,
+          249.0,
+          202.0,
+          328.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          360.0,
+          323.0,
+          449.0,
+          415.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          140.0,
+          357.0,
+          232.0,
+          426.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          584.0,
+          363.0,
+          639.0,
+          461.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          140.0,
+          407.0,
+          235.0,
+          502.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          343.0,
+          419.0,
+          436.0,
+          529.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          343.0,
+          535.0,
+          436.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          138.0,
+          565.0,
+          237.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          554.0,
+          344.0,
+          599.0,
+          404.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          78.0,
+          383.0,
+          105.0,
+          420.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          275.0,
+          0.0,
+          389.0,
+          96.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          273.0,
+          103.0,
+          391.0,
+          222.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/-4405-_png_jpg.rf.82b5c10b2acd1cfaa24259ada8e599fe.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          318.0,
+          369.0,
+          396.0,
+          449.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          325.0,
+          368.0,
+          348.0,
+          391.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          321.0,
+          400.0,
+          352.0,
+          418.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          325.0,
+          368.0,
+          348.0,
+          391.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          318.0,
+          369.0,
+          396.0,
+          449.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/anuragraj03__005331_jpg.rf.6f33b1de6a36491745450d22f355c32a.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          366.0,
+          77.0,
+          395.0,
+          120.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          110.0,
+          81.0,
+          137.0,
+          124.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          332.0,
+          87.0,
+          351.0,
+          119.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          172.0,
+          84.0,
+          196.0,
+          124.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          267.0,
+          94.0,
+          283.0,
+          123.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          203.0,
+          100.0,
+          217.0,
+          119.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          283.0,
+          88.0,
+          310.0,
+          131.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          76.0,
+          95.0,
+          96.0,
+          130.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          22.0,
+          92.0,
+          53.0,
+          136.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          215.0,
+          106.0,
+          233.0,
+          142.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          257.0,
+          95.0,
+          282.0,
+          205.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          321.0,
+          87.0,
+          366.0,
+          243.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          214.0,
+          106.0,
+          243.0,
+          240.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          69.0,
+          94.0,
+          105.0,
+          264.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          158.0,
+          84.0,
+          225.0,
+          277.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          360.0,
+          68.0,
+          464.0,
+          304.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          96.0,
+          81.0,
+          151.0,
+          291.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          263.0,
+          88.0,
+          330.0,
+          297.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          4.0,
+          92.0,
+          78.0,
+          313.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          367.0,
+          76.0,
+          397.0,
+          99.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          109.0,
+          80.0,
+          138.0,
+          100.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          331.0,
+          87.0,
+          351.0,
+          101.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          171.0,
+          84.0,
+          196.0,
+          104.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          282.0,
+          88.0,
+          310.0,
+          107.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          267.0,
+          94.0,
+          282.0,
+          108.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          22.0,
+          92.0,
+          53.0,
+          114.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          76.0,
+          95.0,
+          96.0,
+          113.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          215.0,
+          107.0,
+          233.0,
+          121.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          442.0,
+          153.0,
+          468.0,
+          185.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          362.0,
+          255.0,
+          376.0,
+          275.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          412.0,
+          285.0,
+          427.0,
+          304.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          364.0,
+          104.0,
+          420.0,
+          170.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          321.0,
+          113.0,
+          366.0,
+          165.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          158.0,
+          115.0,
+          223.0,
+          164.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          69.0,
+          121.0,
+          97.0,
+          170.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          95.0,
+          113.0,
+          148.0,
+          178.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          264.0,
+          121.0,
+          332.0,
+          180.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          4.0,
+          127.0,
+          76.0,
+          187.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/anuragraj03__005354_jpg.rf.c1eefbf6cdbee9f086071435974241d0.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          209.0,
+          47.0,
+          251.0,
+          156.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          217.0,
+          47.0,
+          236.0,
+          65.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          188.0,
+          69.0,
+          202.0,
+          81.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      }
+    ]
+  },
+  {
+    "image": "challenging/anuragraj03__005360_jpg.rf.76cd4a716fa59edf807052ccfe690801.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          0.0,
+          127.0,
+          14.0,
+          199.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          66.0,
+          131.0,
+          81.0,
+          216.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          146.0,
+          132.0,
+          173.0,
+          215.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          278.0,
+          138.0,
+          297.0,
+          211.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          105.0,
+          132.0,
+          124.0,
+          226.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          324.0,
+          133.0,
+          353.0,
+          228.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          298.0,
+          133.0,
+          335.0,
+          231.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          253.0,
+          138.0,
+          283.0,
+          230.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          67.0,
+          122.0,
+          106.0,
+          259.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          109.0,
+          128.0,
+          148.0,
+          252.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          207.0,
+          118.0,
+          248.0,
+          267.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          172.0,
+          129.0,
+          219.0,
+          260.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          125.0,
+          129.0,
+          139.0,
+          139.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          73.0,
+          131.0,
+          81.0,
+          139.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          307.0,
+          133.0,
+          320.0,
+          143.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          335.0,
+          134.0,
+          348.0,
+          144.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          281.0,
+          139.0,
+          291.0,
+          146.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          213.0,
+          139.0,
+          248.0,
+          189.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/anuragraj03__frame00001_png.rf.8a0f5fb1d652ceb2340042962c04011a.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          189.0,
+          146.0,
+          233.0,
+          259.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          186.0,
+          236.0,
+          229.0,
+          463.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          129.0,
+          201.0,
+          188.0,
+          498.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          216.0,
+          205.0,
+          271.0,
+          524.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          447.0,
+          258.0,
+          511.0,
+          496.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          6.0,
+          362.0,
+          85.0,
+          577.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          197.0,
+          146.0,
+          220.0,
+          169.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          236.0,
+          206.0,
+          264.0,
+          239.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          135.0,
+          200.0,
+          163.0,
+          250.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          186.0,
+          237.0,
+          212.0,
+          273.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          474.0,
+          275.0,
+          505.0,
+          315.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          27.0,
+          363.0,
+          59.0,
+          406.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          175.0,
+          340.0,
+          190.0,
+          379.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          417.0,
+          415.0,
+          441.0,
+          439.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          194.0,
+          258.0,
+          228.0,
+          332.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          132.0,
+          255.0,
+          181.0,
+          375.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          226.0,
+          255.0,
+          271.0,
+          375.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          482.0,
+          315.0,
+          511.0,
+          419.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          8.0,
+          411.0,
+          68.0,
+          523.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/anuragraj03__frame00121_png.rf.2c0882ee84e8074a67c70ca9e61d9ba2.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          515.0,
+          73.0,
+          579.0,
+          477.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          345.0,
+          124.0,
+          394.0,
+          520.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          407.0,
+          116.0,
+          467.0,
+          528.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          173.0,
+          159.0,
+          227.0,
+          509.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          250.0,
+          150.0,
+          300.0,
+          519.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          210.0,
+          184.0,
+          285.0,
+          534.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          283.0,
+          193.0,
+          365.0,
+          546.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          515.0,
+          72.0,
+          544.0,
+          108.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          411.0,
+          115.0,
+          442.0,
+          154.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          179.0,
+          118.0,
+          211.0,
+          160.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          386.0,
+          122.0,
+          412.0,
+          155.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          342.0,
+          124.0,
+          371.0,
+          163.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          316.0,
+          127.0,
+          343.0,
+          161.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          255.0,
+          141.0,
+          290.0,
+          171.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          250.0,
+          153.0,
+          280.0,
+          197.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          193.0,
+          164.0,
+          227.0,
+          203.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          226.0,
+          184.0,
+          256.0,
+          231.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          309.0,
+          192.0,
+          340.0,
+          233.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          560.0,
+          269.0,
+          589.0,
+          336.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          542.0,
+          445.0,
+          581.0,
+          479.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          520.0,
+          125.0,
+          569.0,
+          295.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/anuragraj03__frame00271_png.rf.99575ef03b3806302ef8b71e87513080.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          299.0,
+          165.0,
+          326.0,
+          240.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          251.0,
+          236.0,
+          284.0,
+          319.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          285.0,
+          230.0,
+          310.0,
+          463.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          312.0,
+          239.0,
+          352.0,
+          499.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          220.0,
+          269.0,
+          255.0,
+          520.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          252.0,
+          266.0,
+          311.0,
+          533.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          287.0,
+          230.0,
+          306.0,
+          255.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          319.0,
+          240.0,
+          340.0,
+          265.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          302.0,
+          239.0,
+          318.0,
+          271.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          300.0,
+          435.0,
+          315.0,
+          463.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          312.0,
+          279.0,
+          351.0,
+          370.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/f643eec0-dc10-11f0-bd2b-d531d865f86a.jpg.webp",
+    "detections": [
+      {
+        "xyxy": [
+          119.0,
+          192.0,
+          301.0,
+          575.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          510.0,
+          199.0,
+          624.0,
+          574.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          456.0,
+          245.0,
+          516.0,
+          537.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          287.0,
+          212.0,
+          369.0,
+          575.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          830.0,
+          221.0,
+          1000.0,
+          575.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          7.0,
+          224.0,
+          139.0,
+          575.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          313.0,
+          235.0,
+          479.0,
+          574.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          771.0,
+          246.0,
+          883.0,
+          575.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          629.0,
+          247.0,
+          785.0,
+          575.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          181.0,
+          192.0,
+          247.0,
+          229.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          544.0,
+          199.0,
+          598.0,
+          233.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          313.0,
+          211.0,
+          359.0,
+          246.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          743.0,
+          214.0,
+          791.0,
+          245.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          621.0,
+          224.0,
+          649.0,
+          242.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          836.0,
+          228.0,
+          866.0,
+          249.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          101.0,
+          224.0,
+          147.0,
+          255.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          855.0,
+          224.0,
+          887.0,
+          258.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          445.0,
+          234.0,
+          475.0,
+          252.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          859.0,
+          222.0,
+          947.0,
+          268.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          367.0,
+          234.0,
+          425.0,
+          274.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          455.0,
+          248.0,
+          493.0,
+          277.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          788.0,
+          246.0,
+          858.0,
+          285.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          470.0,
+          415.0,
+          482.0,
+          430.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          512.0,
+          443.0,
+          534.0,
+          461.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          460.0,
+          500.0,
+          484.0,
+          521.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          466.0,
+          519.0,
+          510.0,
+          538.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          286.0,
+          544.0,
+          306.0,
+          566.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          121.0,
+          552.0,
+          161.0,
+          575.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          616.0,
+          263.0,
+          662.0,
+          321.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          756.0,
+          265.0,
+          794.0,
+          323.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          535.0,
+          269.0,
+          623.0,
+          400.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          292.0,
+          273.0,
+          368.0,
+          428.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          460.0,
+          295.0,
+          516.0,
+          423.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          20.0,
+          287.0,
+          136.0,
+          436.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          136.0,
+          269.0,
+          272.0,
+          455.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          776.0,
+          316.0,
+          870.0,
+          466.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          320.0,
+          316.0,
+          472.0,
+          506.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          837.0,
+          297.0,
+          1001.0,
+          548.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          629.0,
+          326.0,
+          785.0,
+          555.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/Incorrect-camera-lighting-for-PPE-detection-1024x576.webp",
+    "detections": [
+      {
+        "xyxy": [
+          487.0,
+          17.0,
+          497.0,
+          47.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          517.0,
+          49.0,
+          529.0,
+          86.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          772.0,
+          51.0,
+          786.0,
+          85.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          543.0,
+          50.0,
+          559.0,
+          88.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          722.0,
+          63.0,
+          740.0,
+          106.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          724.0,
+          72.0,
+          746.0,
+          134.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          744.0,
+          83.0,
+          766.0,
+          143.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          490.0,
+          270.0,
+          548.0,
+          417.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          361.0,
+          287.0,
+          423.0,
+          436.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          729.0,
+          277.0,
+          741.0,
+          288.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          512.0,
+          270.0,
+          534.0,
+          294.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          377.0,
+          288.0,
+          399.0,
+          309.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          538.0,
+          358.0,
+          548.0,
+          370.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          721.0,
+          403.0,
+          733.0,
+          423.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          753.0,
+          410.0,
+          765.0,
+          430.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          737.0,
+          412.0,
+          749.0,
+          432.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          753.0,
+          419.0,
+          765.0,
+          439.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          741.0,
+          421.0,
+          753.0,
+          441.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          737.0,
+          428.0,
+          749.0,
+          448.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          749.0,
+          435.0,
+          761.0,
+          455.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          737.0,
+          442.0,
+          749.0,
+          462.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          749.0,
+          448.0,
+          761.0,
+          468.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          737.0,
+          455.0,
+          749.0,
+          475.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          749.0,
+          460.0,
+          761.0,
+          479.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          736.0,
+          466.0,
+          750.0,
+          486.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          748.0,
+          473.0,
+          762.0,
+          493.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          736.0,
+          480.0,
+          750.0,
+          500.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          748.0,
+          484.0,
+          762.0,
+          504.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          736.0,
+          491.0,
+          750.0,
+          511.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          747.0,
+          495.0,
+          763.0,
+          516.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          751.0,
+          502.0,
+          767.0,
+          523.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          740.0,
+          506.0,
+          754.0,
+          527.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          736.0,
+          513.0,
+          750.0,
+          534.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          741.0,
+          521.0,
+          753.0,
+          540.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          736.0,
+          527.0,
+          750.0,
+          547.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          732.0,
+          533.0,
+          746.0,
+          555.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          728.0,
+          540.0,
+          742.0,
+          561.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          740.0,
+          546.0,
+          754.0,
+          569.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          727.0,
+          553.0,
+          743.0,
+          575.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          488.0,
+          82.0,
+          500.0,
+          102.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          726.0,
+          81.0,
+          744.0,
+          104.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          746.0,
+          95.0,
+          764.0,
+          122.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          495.0,
+          297.0,
+          543.0,
+          364.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/ketakichalke-boots__image632.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          77.0,
+          218.0,
+          105.0,
+          262.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          351.0,
+          165.0,
+          518.0,
+          385.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          15.0,
+          202.0,
+          121.0,
+          400.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          90.0,
+          212.0,
+          168.0,
+          400.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          148.0,
+          239.0,
+          177.0,
+          388.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          403.0,
+          333.0,
+          600.0,
+          425.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          135.0,
+          364.0,
+          509.0,
+          419.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          82.0,
+          220.0,
+          106.0,
+          245.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          155.0,
+          238.0,
+          175.0,
+          257.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          499.0,
+          333.0,
+          600.0,
+          425.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          411.0,
+          327.0,
+          468.0,
+          357.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          347.0,
+          331.0,
+          372.0,
+          362.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          98.0,
+          256.0,
+          160.0,
+          369.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          15.0,
+          264.0,
+          121.0,
+          400.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/ketakichalke-boots__image645.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          0.0,
+          25.0,
+          86.0,
+          188.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          493.0,
+          24.0,
+          560.0,
+          214.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          572.0,
+          79.0,
+          636.0,
+          261.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          359.0,
+          123.0,
+          404.0,
+          227.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          222.0,
+          108.0,
+          283.0,
+          257.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          408.0,
+          28.0,
+          501.0,
+          347.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          145.0,
+          55.0,
+          215.0,
+          325.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          475.0,
+          206.0,
+          634.0,
+          389.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          186.0,
+          271.0,
+          252.0,
+          538.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          187.0,
+          275.0,
+          323.0,
+          533.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          309.0,
+          342.0,
+          580.0,
+          592.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          577.0,
+          358.0,
+          636.0,
+          591.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          520.0,
+          21.0,
+          564.0,
+          45.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          587.0,
+          22.0,
+          621.0,
+          49.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          433.0,
+          22.0,
+          466.0,
+          60.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          169.0,
+          22.0,
+          204.0,
+          61.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          105.0,
+          38.0,
+          143.0,
+          82.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          475.0,
+          36.0,
+          519.0,
+          86.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          418.0,
+          36.0,
+          460.0,
+          88.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          167.0,
+          55.0,
+          213.0,
+          123.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          589.0,
+          80.0,
+          635.0,
+          137.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          475.0,
+          206.0,
+          559.0,
+          329.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          200.0,
+          244.0,
+          250.0,
+          291.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          242.0,
+          277.0,
+          290.0,
+          338.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          594.0,
+          360.0,
+          635.0,
+          509.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          509.0,
+          370.0,
+          579.0,
+          499.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          263.0,
+          156.0,
+          287.0,
+          184.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          274.0,
+          341.0,
+          311.0,
+          377.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          220.0,
+          502.0,
+          280.0,
+          537.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          233.0,
+          24.0,
+          297.0,
+          105.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          8.0,
+          25.0,
+          72.0,
+          175.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          494.0,
+          83.0,
+          560.0,
+          225.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          108.0,
+          91.0,
+          169.0,
+          249.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          411.0,
+          91.0,
+          503.0,
+          294.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          146.0,
+          132.0,
+          212.0,
+          318.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          533.0,
+          242.0,
+          635.0,
+          388.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          187.0,
+          328.0,
+          258.0,
+          511.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          310.0,
+          342.0,
+          509.0,
+          592.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/ppe_0355_jpg.rf.508753d5b708536eca53de192b927c61.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          276.0,
+          262.0,
+          339.0,
+          607.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          49.0,
+          275.0,
+          134.0,
+          604.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          381.0,
+          257.0,
+          477.0,
+          637.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          0.0,
+          270.0,
+          81.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          409.0,
+          257.0,
+          450.0,
+          290.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          300.0,
+          261.0,
+          330.0,
+          292.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          0.0,
+          269.0,
+          56.0,
+          323.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          49.0,
+          276.0,
+          88.0,
+          316.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          461.0,
+          394.0,
+          478.0,
+          420.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          382.0,
+          424.0,
+          396.0,
+          475.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          279.0,
+          435.0,
+          291.0,
+          464.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          77.0,
+          440.0,
+          94.0,
+          464.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          387.0,
+          538.0,
+          416.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          289.0,
+          578.0,
+          316.0,
+          600.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          316.0,
+          578.0,
+          337.0,
+          606.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          426.0,
+          610.0,
+          452.0,
+          638.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          286.0,
+          315.0,
+          339.0,
+          439.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          395.0,
+          323.0,
+          463.0,
+          456.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          0.0,
+          346.0,
+          81.0,
+          547.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/youtube-198_jpg.rf.e89faeb9765c6bd6cece5434d140f4af.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          459.0,
+          182.0,
+          479.0,
+          228.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          425.0,
+          198.0,
+          453.0,
+          222.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          250.0,
+          38.0,
+          483.0,
+          597.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "challenging/youtube-342_jpg.rf.d7e55a17800f8d87313d7b6f33256ea9.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          411.0,
+          239.0,
+          422.0,
+          286.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          21.0,
+          279.0,
+          42.0,
+          365.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          28.0,
+          279.0,
+          37.0,
+          291.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          415.0,
+          271.0,
+          424.0,
+          289.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          25.0,
+          294.0,
+          41.0,
+          326.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/000005_jpg.rf.96e9379ccae638140c4a90fc4b700a2b.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          294.0,
+          122.0,
+          639.0,
+          508.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          0.0,
+          145.0,
+          159.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          51.0,
+          143.0,
+          159.0,
+          267.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          409.0,
+          211.0,
+          485.0,
+          364.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          292.0,
+          238.0,
+          320.0,
+          322.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          429.0,
+          409.0,
+          639.0,
+          459.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          358.0,
+          125.0,
+          639.0,
+          505.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          0.0,
+          305.0,
+          151.0,
+          524.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/002551_jpg.rf.ce4b9f934161faa72c80dc6898d37b2d.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          0.0,
+          61.0,
+          56.0,
+          299.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          189.0,
+          29.0,
+          386.0,
+          331.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          332.0,
+          27.0,
+          386.0,
+          134.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          33.0,
+          75.0,
+          58.0,
+          118.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          110.0,
+          113.0,
+          127.0,
+          130.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          329.0,
+          297.0,
+          355.0,
+          346.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          194.0,
+          390.0,
+          249.0,
+          539.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          246.0,
+          411.0,
+          311.0,
+          568.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          188.0,
+          61.0,
+          337.0,
+          269.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/004063_jpg.rf.1b7cdc4035bcb24ef69b8798b444053e.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          6.0,
+          219.0,
+          189.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          187.0,
+          279.0,
+          263.0,
+          634.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          450.0,
+          400.0,
+          489.0,
+          609.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          285.0,
+          433.0,
+          318.0,
+          596.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          502.0,
+          435.0,
+          541.0,
+          599.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          79.0,
+          219.0,
+          133.0,
+          299.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          211.0,
+          278.0,
+          242.0,
+          334.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          459.0,
+          400.0,
+          480.0,
+          434.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          287.0,
+          433.0,
+          303.0,
+          456.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          502.0,
+          509.0,
+          516.0,
+          539.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          188.0,
+          411.0,
+          237.0,
+          638.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          453.0,
+          431.0,
+          491.0,
+          518.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/00596_jpg.rf.d030c5d98b937d080d75db1c1b269a84.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          610.0,
+          123.0,
+          623.0,
+          194.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          585.0,
+          129.0,
+          599.0,
+          196.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          188.0,
+          114.0,
+          317.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          338.0,
+          120.0,
+          490.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          44.0,
+          210.0,
+          209.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          235.0,
+          113.0,
+          298.0,
+          205.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          341.0,
+          317.0,
+          408.0,
+          371.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          235.0,
+          113.0,
+          298.0,
+          272.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          188.0,
+          226.0,
+          317.0,
+          538.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/006463_jpg.rf.02f19082420ecc5537b9d59abbe6050c.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          595.0,
+          323.0,
+          638.0,
+          501.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          474.0,
+          281.0,
+          510.0,
+          563.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          124.0,
+          268.0,
+          193.0,
+          580.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          416.0,
+          278.0,
+          477.0,
+          586.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          45.0,
+          230.0,
+          137.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          268.0,
+          252.0,
+          337.0,
+          622.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          208.0,
+          239.0,
+          282.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          357.0,
+          264.0,
+          422.0,
+          624.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          493.0,
+          263.0,
+          575.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          82.0,
+          229.0,
+          132.0,
+          281.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          228.0,
+          238.0,
+          272.0,
+          297.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          282.0,
+          253.0,
+          311.0,
+          285.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          375.0,
+          264.0,
+          408.0,
+          299.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          139.0,
+          268.0,
+          169.0,
+          297.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          516.0,
+          263.0,
+          552.0,
+          307.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          431.0,
+          276.0,
+          458.0,
+          304.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          484.0,
+          282.0,
+          510.0,
+          315.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          614.0,
+          322.0,
+          635.0,
+          346.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          473.0,
+          386.0,
+          486.0,
+          402.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          420.0,
+          590.0,
+          434.0,
+          614.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          371.0,
+          591.0,
+          393.0,
+          613.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          301.0,
+          587.0,
+          329.0,
+          616.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          501.0,
+          585.0,
+          523.0,
+          628.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          537.0,
+          575.0,
+          557.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          356.0,
+          310.0,
+          417.0,
+          458.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          268.0,
+          308.0,
+          337.0,
+          466.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          127.0,
+          323.0,
+          193.0,
+          451.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          417.0,
+          325.0,
+          477.0,
+          449.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          595.0,
+          347.0,
+          638.0,
+          427.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          494.0,
+          313.0,
+          574.0,
+          476.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          208.0,
+          298.0,
+          272.0,
+          491.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          45.0,
+          300.0,
+          137.0,
+          519.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/0_jpg.rf.2ff49f74309118f169e07aa12564df87.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          361.0,
+          247.0,
+          382.0,
+          343.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          185.0,
+          280.0,
+          203.0,
+          389.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          120.0,
+          358.0,
+          138.0,
+          466.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          90.0,
+          368.0,
+          111.0,
+          476.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          108.0,
+          395.0,
+          134.0,
+          504.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          188.0,
+          278.0,
+          197.0,
+          292.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          124.0,
+          358.0,
+          134.0,
+          375.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          125.0,
+          353.0,
+          132.0,
+          365.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          187.0,
+          336.0,
+          198.0,
+          387.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          91.0,
+          375.0,
+          112.0,
+          423.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/2008_008320_jpg.rf.bd34011d46f82f9410d95f00e560b8ea.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          180.0,
+          83.0,
+          363.0,
+          507.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          340.0,
+          167.0,
+          364.0,
+          228.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          207.0,
+          282.0,
+          236.0,
+          343.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          229.0,
+          0.0,
+          261.0,
+          56.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          181.0,
+          116.0,
+          354.0,
+          334.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__005447_jpg.rf.d6b948ff75c1201d032c20df018add4f.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          269.0,
+          108.0,
+          316.0,
+          197.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          139.0,
+          170.0,
+          229.0,
+          374.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          68.0,
+          191.0,
+          142.0,
+          373.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          331.0,
+          184.0,
+          461.0,
+          382.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          166.0,
+          170.0,
+          196.0,
+          195.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          388.0,
+          184.0,
+          419.0,
+          204.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          118.0,
+          190.0,
+          142.0,
+          216.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          440.0,
+          215.0,
+          462.0,
+          231.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          331.0,
+          358.0,
+          367.0,
+          372.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          170.0,
+          357.0,
+          200.0,
+          373.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          72.0,
+          361.0,
+          90.0,
+          373.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          153.0,
+          360.0,
+          172.0,
+          375.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          138.0,
+          199.0,
+          194.0,
+          276.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          379.0,
+          212.0,
+          444.0,
+          276.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          95.0,
+          214.0,
+          129.0,
+          278.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__005491_jpg.rf.03afedd2b129bba220f187cac6baf072.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          166.0,
+          42.0,
+          261.0,
+          221.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          120.0,
+          32.0,
+          190.0,
+          235.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          9.0,
+          25.0,
+          157.0,
+          263.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          76.0,
+          25.0,
+          139.0,
+          67.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          130.0,
+          33.0,
+          170.0,
+          67.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          197.0,
+          42.0,
+          240.0,
+          77.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          170.0,
+          137.0,
+          189.0,
+          155.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          189.0,
+          146.0,
+          214.0,
+          163.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          216.0,
+          189.0,
+          239.0,
+          218.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          185.0,
+          191.0,
+          206.0,
+          221.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          127.0,
+          219.0,
+          160.0,
+          263.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          35.0,
+          220.0,
+          89.0,
+          262.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          88.0,
+          232.0,
+          159.0,
+          262.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          119.0,
+          82.0,
+          150.0,
+          140.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          165.0,
+          88.0,
+          226.0,
+          150.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          9.0,
+          66.0,
+          105.0,
+          198.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__005503_jpg.rf.75676b9f37499f5f6c4800b99678bfa2.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          198.0,
+          143.0,
+          274.0,
+          325.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          199.0,
+          143.0,
+          221.0,
+          160.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          249.0,
+          293.0,
+          278.0,
+          327.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          199.0,
+          163.0,
+          258.0,
+          246.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__005514_jpg.rf.357ef00ffb39721afc3bf9bea9dc6231.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          135.0,
+          49.0,
+          186.0,
+          104.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          225.0,
+          33.0,
+          287.0,
+          143.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          101.0,
+          41.0,
+          144.0,
+          138.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          292.0,
+          42.0,
+          350.0,
+          163.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          395.0,
+          30.0,
+          461.0,
+          185.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          42.0,
+          41.0,
+          132.0,
+          197.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          323.0,
+          77.0,
+          384.0,
+          220.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          128.0,
+          97.0,
+          201.0,
+          204.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          171.0,
+          54.0,
+          250.0,
+          248.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          178.0,
+          84.0,
+          326.0,
+          324.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          287.0,
+          103.0,
+          466.0,
+          323.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          0.0,
+          118.0,
+          167.0,
+          323.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          238.0,
+          34.0,
+          270.0,
+          55.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          395.0,
+          29.0,
+          446.0,
+          60.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          64.0,
+          39.0,
+          105.0,
+          69.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          301.0,
+          42.0,
+          333.0,
+          67.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          100.0,
+          41.0,
+          130.0,
+          88.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          141.0,
+          49.0,
+          175.0,
+          80.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          183.0,
+          53.0,
+          222.0,
+          91.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          353.0,
+          77.0,
+          385.0,
+          102.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          250.0,
+          84.0,
+          297.0,
+          115.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          135.0,
+          97.0,
+          175.0,
+          129.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          362.0,
+          104.0,
+          438.0,
+          165.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          12.0,
+          118.0,
+          79.0,
+          169.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          258.0,
+          183.0,
+          281.0,
+          205.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          232.0,
+          137.0,
+          326.0,
+          228.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__005518_jpg.rf.897f62ea1fbca703a5e94eba21b1cf8f.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          236.0,
+          137.0,
+          262.0,
+          249.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          67.0,
+          151.0,
+          83.0,
+          250.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          304.0,
+          126.0,
+          335.0,
+          277.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          0.0,
+          154.0,
+          21.0,
+          253.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          22.0,
+          124.0,
+          77.0,
+          283.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          169.0,
+          38.0,
+          258.0,
+          374.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          133.0,
+          131.0,
+          178.0,
+          294.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          259.0,
+          104.0,
+          342.0,
+          320.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          340.0,
+          116.0,
+          429.0,
+          308.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          76.0,
+          125.0,
+          150.0,
+          311.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          204.0,
+          84.0,
+          249.0,
+          107.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          284.0,
+          105.0,
+          309.0,
+          126.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          365.0,
+          117.0,
+          391.0,
+          138.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          33.0,
+          124.0,
+          43.0,
+          136.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          92.0,
+          125.0,
+          117.0,
+          142.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          147.0,
+          130.0,
+          166.0,
+          145.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          241.0,
+          136.0,
+          256.0,
+          149.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          67.0,
+          151.0,
+          81.0,
+          163.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          0.0,
+          153.0,
+          12.0,
+          163.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          245.0,
+          196.0,
+          255.0,
+          205.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          340.0,
+          285.0,
+          359.0,
+          301.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          398.0,
+          294.0,
+          429.0,
+          309.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          275.0,
+          297.0,
+          299.0,
+          312.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          312.0,
+          302.0,
+          343.0,
+          321.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          183.0,
+          72.0,
+          244.0,
+          228.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          260.0,
+          139.0,
+          314.0,
+          207.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          357.0,
+          149.0,
+          396.0,
+          205.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          133.0,
+          155.0,
+          178.0,
+          202.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          22.0,
+          150.0,
+          71.0,
+          210.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          0.0,
+          171.0,
+          20.0,
+          199.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          77.0,
+          156.0,
+          131.0,
+          233.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__frame00001_png.rf.1bc96f2adf8cc42fe7d441bb169e5273.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          116.0,
+          238.0,
+          173.0,
+          435.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          426.0,
+          273.0,
+          507.0,
+          491.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          90.0,
+          359.0,
+          187.0,
+          524.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          138.0,
+          239.0,
+          159.0,
+          268.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          475.0,
+          273.0,
+          504.0,
+          310.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          127.0,
+          358.0,
+          153.0,
+          396.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          86.0,
+          479.0,
+          106.0,
+          499.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          429.0,
+          341.0,
+          469.0,
+          418.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          117.0,
+          259.0,
+          171.0,
+          326.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          472.0,
+          310.0,
+          507.0,
+          429.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          133.0,
+          389.0,
+          187.0,
+          490.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__frame00031_png.rf.4ce9f7f0a0450f587d298dc47fae2ce8.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          412.0,
+          111.0,
+          471.0,
+          361.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          374.0,
+          155.0,
+          429.0,
+          430.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          187.0,
+          226.0,
+          243.0,
+          399.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          233.0,
+          162.0,
+          287.0,
+          463.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          441.0,
+          251.0,
+          508.0,
+          453.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          72.0,
+          340.0,
+          131.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          433.0,
+          112.0,
+          455.0,
+          148.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          204.0,
+          148.0,
+          223.0,
+          177.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          393.0,
+          155.0,
+          416.0,
+          188.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          260.0,
+          162.0,
+          288.0,
+          196.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          194.0,
+          227.0,
+          221.0,
+          263.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          477.0,
+          352.0,
+          506.0,
+          372.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          92.0,
+          341.0,
+          121.0,
+          383.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          412.0,
+          285.0,
+          431.0,
+          318.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          174.0,
+          364.0,
+          191.0,
+          404.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          374.0,
+          197.0,
+          405.0,
+          305.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__frame00251_png.rf.c7baf25b891c45aff70e3fa12a7873c1.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          336.0,
+          183.0,
+          382.0,
+          491.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          227.0,
+          219.0,
+          283.0,
+          505.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          285.0,
+          245.0,
+          335.0,
+          574.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          91.0,
+          386.0,
+          166.0,
+          543.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          76.0,
+          533.0,
+          139.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          347.0,
+          183.0,
+          377.0,
+          222.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          245.0,
+          219.0,
+          270.0,
+          251.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          302.0,
+          245.0,
+          326.0,
+          280.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          164.0,
+          440.0,
+          184.0,
+          489.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          110.0,
+          532.0,
+          138.0,
+          587.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          330.0,
+          272.0,
+          348.0,
+          318.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          258.0,
+          458.0,
+          277.0,
+          490.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          351.0,
+          459.0,
+          372.0,
+          495.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          240.0,
+          469.0,
+          255.0,
+          504.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          227.0,
+          266.0,
+          283.0,
+          362.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__frame00281_png.rf.5ad3ea5aa3d13b16c25137ed015da273.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          265.0,
+          263.0,
+          315.0,
+          381.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          197.0,
+          251.0,
+          248.0,
+          533.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          93.0,
+          311.0,
+          149.0,
+          597.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          128.0,
+          326.0,
+          184.0,
+          638.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          271.0,
+          339.0,
+          321.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          150.0,
+          371.0,
+          222.0,
+          638.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          212.0,
+          250.0,
+          238.0,
+          295.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          265.0,
+          262.0,
+          290.0,
+          293.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          265.0,
+          288.0,
+          290.0,
+          330.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          115.0,
+          311.0,
+          150.0,
+          353.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          155.0,
+          326.0,
+          185.0,
+          363.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          272.0,
+          339.0,
+          303.0,
+          384.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          182.0,
+          372.0,
+          215.0,
+          416.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          236.0,
+          437.0,
+          254.0,
+          502.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          236.0,
+          437.0,
+          254.0,
+          502.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          199.0,
+          313.0,
+          249.0,
+          481.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/anuragraj03__helmet999532_jpg.rf.033e03a04792fbded6ab95d6b7d734a0.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          875.0,
+          293.0,
+          1012.0,
+          718.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          1181.0,
+          310.0,
+          1277.0,
+          718.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          1065.0,
+          398.0,
+          1202.0,
+          719.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      }
+    ]
+  },
+  {
+    "image": "typical/Building-Site-CCTV-Installation.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          323.0,
+          98.0,
+          636.0,
+          498.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          31.0,
+          98.0,
+          329.0,
+          498.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          32.0,
+          169.0,
+          305.0,
+          498.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          436.0,
+          191.0,
+          635.0,
+          499.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/class1_150_jpg.rf.5995dce34d38deb9eb0b6e36cae78f17.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          320.0,
+          3.0,
+          558.0,
+          305.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          144.0,
+          251.0,
+          324.0,
+          478.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          156.0,
+          251.0,
+          209.0,
+          281.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          525.0,
+          0.0,
+          559.0,
+          27.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          327.0,
+          232.0,
+          367.0,
+          253.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          365.0,
+          284.0,
+          393.0,
+          306.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          409.0,
+          316.0,
+          425.0,
+          332.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/Construction-site-security-team.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          438.0,
+          230.0,
+          476.0,
+          310.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          408.0,
+          239.0,
+          441.0,
+          323.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          382.0,
+          246.0,
+          406.0,
+          327.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          346.0,
+          254.0,
+          368.0,
+          338.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          303.0,
+          264.0,
+          334.0,
+          348.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          268.0,
+          266.0,
+          300.0,
+          353.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          200.0,
+          277.0,
+          240.0,
+          372.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          453.0,
+          230.0,
+          466.0,
+          240.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          423.0,
+          240.0,
+          435.0,
+          250.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          386.0,
+          245.0,
+          398.0,
+          254.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          350.0,
+          256.0,
+          363.0,
+          267.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          310.0,
+          265.0,
+          325.0,
+          278.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          275.0,
+          267.0,
+          288.0,
+          279.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          205.0,
+          276.0,
+          220.0,
+          286.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          455.0,
+          254.0,
+          464.0,
+          266.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          422.0,
+          265.0,
+          431.0,
+          274.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          386.0,
+          270.0,
+          392.0,
+          280.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          349.0,
+          272.0,
+          355.0,
+          281.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          384.0,
+          285.0,
+          390.0,
+          294.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          349.0,
+          287.0,
+          355.0,
+          296.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          304.0,
+          289.0,
+          311.0,
+          298.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          319.0,
+          290.0,
+          325.0,
+          299.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          279.0,
+          294.0,
+          286.0,
+          302.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          211.0,
+          305.0,
+          219.0,
+          314.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          434.0,
+          361.0,
+          449.0,
+          369.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          412.0,
+          361.0,
+          427.0,
+          369.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          404.0,
+          366.0,
+          419.0,
+          374.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          392.0,
+          366.0,
+          407.0,
+          374.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          225.0,
+          365.0,
+          240.0,
+          374.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          229.0,
+          370.0,
+          244.0,
+          380.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          448.0,
+          245.0,
+          475.0,
+          275.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          418.0,
+          256.0,
+          441.0,
+          287.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          387.0,
+          260.0,
+          407.0,
+          296.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          346.0,
+          267.0,
+          367.0,
+          303.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          305.0,
+          281.0,
+          330.0,
+          308.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          268.0,
+          281.0,
+          287.0,
+          315.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          203.0,
+          295.0,
+          229.0,
+          328.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/Construction20CCTV.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          122.0,
+          47.0,
+          147.0,
+          95.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          154.0,
+          50.0,
+          184.0,
+          111.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          296.0,
+          53.0,
+          330.0,
+          168.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          126.0,
+          47.0,
+          134.0,
+          56.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          309.0,
+          52.0,
+          324.0,
+          64.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          310.0,
+          77.0,
+          322.0,
+          97.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          296.0,
+          154.0,
+          312.0,
+          162.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          305.0,
+          159.0,
+          321.0,
+          168.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          302.0,
+          71.0,
+          330.0,
+          118.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/gettyimages-1354822857-640x640.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          257.0,
+          15.0,
+          274.0,
+          39.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          442.0,
+          21.0,
+          451.0,
+          41.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          382.0,
+          22.0,
+          403.0,
+          52.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          344.0,
+          29.0,
+          358.0,
+          46.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          467.0,
+          22.0,
+          485.0,
+          55.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          492.0,
+          29.0,
+          503.0,
+          52.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          505.0,
+          26.0,
+          519.0,
+          56.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          525.0,
+          30.0,
+          536.0,
+          54.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          546.0,
+          36.0,
+          557.0,
+          50.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          555.0,
+          37.0,
+          566.0,
+          51.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          615.0,
+          34.0,
+          626.0,
+          55.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          563.0,
+          32.0,
+          582.0,
+          60.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          528.0,
+          35.0,
+          544.0,
+          59.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          595.0,
+          41.0,
+          609.0,
+          59.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          548.0,
+          42.0,
+          566.0,
+          61.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          639.0,
+          35.0,
+          655.0,
+          68.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          658.0,
+          47.0,
+          672.0,
+          83.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          717.0,
+          40.0,
+          740.0,
+          91.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          743.0,
+          39.0,
+          767.0,
+          92.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          618.0,
+          40.0,
+          652.0,
+          91.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          0.0,
+          26.0,
+          16.0,
+          106.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          160.0,
+          100.0,
+          263.0,
+          213.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          361.0,
+          107.0,
+          477.0,
+          365.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          264.0,
+          15.0,
+          276.0,
+          25.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          393.0,
+          22.0,
+          404.0,
+          32.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          508.0,
+          27.0,
+          517.0,
+          34.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          565.0,
+          31.0,
+          573.0,
+          39.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          549.0,
+          33.0,
+          554.0,
+          38.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          616.0,
+          33.0,
+          624.0,
+          38.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          643.0,
+          34.0,
+          651.0,
+          40.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          532.0,
+          36.0,
+          540.0,
+          43.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          571.0,
+          36.0,
+          580.0,
+          45.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          552.0,
+          38.0,
+          557.0,
+          43.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          643.0,
+          38.0,
+          651.0,
+          44.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          698.0,
+          39.0,
+          704.0,
+          45.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          699.0,
+          48.0,
+          704.0,
+          53.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          697.0,
+          62.0,
+          705.0,
+          69.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          740.0,
+          70.0,
+          753.0,
+          86.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          422.0,
+          107.0,
+          465.0,
+          125.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          174.0,
+          100.0,
+          206.0,
+          138.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          454.0,
+          192.0,
+          468.0,
+          205.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          360.0,
+          308.0,
+          393.0,
+          329.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          415.0,
+          343.0,
+          454.0,
+          364.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          187.0,
+          113.0,
+          263.0,
+          198.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          381.0,
+          123.0,
+          463.0,
+          206.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/Health-and-safety-on-a-construction.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          13.0,
+          1.0,
+          59.0,
+          91.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          97.0,
+          0.0,
+          136.0,
+          99.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          591.0,
+          44.0,
+          627.0,
+          126.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          580.0,
+          126.0,
+          599.0,
+          165.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          339.0,
+          186.0,
+          355.0,
+          235.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          198.0,
+          213.0,
+          239.0,
+          333.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          227.0,
+          202.0,
+          310.0,
+          409.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          289.0,
+          211.0,
+          425.0,
+          425.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          341.0,
+          212.0,
+          357.0,
+          224.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          233.0,
+          203.0,
+          277.0,
+          236.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          207.0,
+          214.0,
+          231.0,
+          232.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          307.0,
+          212.0,
+          346.0,
+          249.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          126.0,
+          90.0,
+          142.0,
+          100.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          264.0,
+          325.0,
+          281.0,
+          337.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          198.0,
+          327.0,
+          215.0,
+          335.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          266.0,
+          379.0,
+          282.0,
+          397.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          364.0,
+          402.0,
+          384.0,
+          426.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          98.0,
+          0.0,
+          130.0,
+          67.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          13.0,
+          3.0,
+          56.0,
+          67.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          603.0,
+          62.0,
+          625.0,
+          89.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          581.0,
+          126.0,
+          598.0,
+          146.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          340.0,
+          194.0,
+          353.0,
+          217.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          199.0,
+          235.0,
+          229.0,
+          289.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/Health-and-Safety-on-building-site.jpg.webp",
+    "detections": [
+      {
+        "xyxy": [
+          369.0,
+          136.0,
+          419.0,
+          289.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          425.0,
+          143.0,
+          467.0,
+          285.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          334.0,
+          143.0,
+          368.0,
+          309.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          553.0,
+          169.0,
+          601.0,
+          307.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          367.0,
+          138.0,
+          387.0,
+          161.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          334.0,
+          143.0,
+          356.0,
+          162.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          447.0,
+          141.0,
+          468.0,
+          167.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          562.0,
+          170.0,
+          583.0,
+          186.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          403.0,
+          122.0,
+          411.0,
+          136.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          391.0,
+          149.0,
+          401.0,
+          166.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          461.0,
+          166.0,
+          473.0,
+          177.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          461.0,
+          194.0,
+          469.0,
+          204.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          362.0,
+          231.0,
+          373.0,
+          246.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          555.0,
+          264.0,
+          575.0,
+          308.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          563.0,
+          185.0,
+          597.0,
+          200.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/Incorrect-camera-positioning-with-obstructions-for-PPE-detection-1024x576.webp",
+    "detections": [
+      {
+        "xyxy": [
+          583.0,
+          198.0,
+          607.0,
+          356.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          591.0,
+          193.0,
+          647.0,
+          360.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          369.0,
+          193.0,
+          455.0,
+          436.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          607.0,
+          194.0,
+          631.0,
+          213.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          397.0,
+          194.0,
+          427.0,
+          216.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          433.0,
+          360.0,
+          451.0,
+          386.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          401.0,
+          413.0,
+          419.0,
+          437.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          601.0,
+          211.0,
+          637.0,
+          239.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          600.0,
+          226.0,
+          638.0,
+          285.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          386.0,
+          235.0,
+          446.0,
+          327.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/ketakichalke-boots__image117.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          527.0,
+          306.0,
+          566.0,
+          443.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          274.0,
+          301.0,
+          311.0,
+          447.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          376.0,
+          298.0,
+          447.0,
+          501.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          480.0,
+          305.0,
+          564.0,
+          498.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          431.0,
+          311.0,
+          473.0,
+          498.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          618.0,
+          316.0,
+          639.0,
+          498.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          576.0,
+          319.0,
+          633.0,
+          500.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          310.0,
+          324.0,
+          378.0,
+          500.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          563.0,
+          333.0,
+          591.0,
+          496.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          288.0,
+          299.0,
+          307.0,
+          316.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          388.0,
+          298.0,
+          426.0,
+          329.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          528.0,
+          306.0,
+          551.0,
+          324.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          487.0,
+          305.0,
+          536.0,
+          335.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          429.0,
+          312.0,
+          460.0,
+          332.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          549.0,
+          317.0,
+          565.0,
+          331.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          615.0,
+          316.0,
+          638.0,
+          338.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          586.0,
+          318.0,
+          618.0,
+          340.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          332.0,
+          323.0,
+          366.0,
+          350.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          565.0,
+          330.0,
+          588.0,
+          349.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          301.0,
+          351.0,
+          314.0,
+          363.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          374.0,
+          449.0,
+          389.0,
+          474.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          289.0,
+          431.0,
+          308.0,
+          443.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          273.0,
+          432.0,
+          284.0,
+          446.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          273.0,
+          321.0,
+          309.0,
+          372.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          533.0,
+          339.0,
+          565.0,
+          380.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          440.0,
+          342.0,
+          473.0,
+          416.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          623.0,
+          344.0,
+          639.0,
+          419.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          564.0,
+          354.0,
+          589.0,
+          425.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          580.0,
+          351.0,
+          633.0,
+          438.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          391.0,
+          348.0,
+          447.0,
+          461.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          315.0,
+          363.0,
+          379.0,
+          466.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          480.0,
+          360.0,
+          564.0,
+          494.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/ketakichalke-boots__image322.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          183.0,
+          200.0,
+          247.0,
+          444.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          97.0,
+          170.0,
+          218.0,
+          484.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          283.0,
+          238.0,
+          327.0,
+          446.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          319.0,
+          218.0,
+          380.0,
+          485.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          380.0,
+          248.0,
+          469.0,
+          546.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          183.0,
+          186.0,
+          302.0,
+          627.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          153.0,
+          182.0,
+          172.0,
+          211.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          267.0,
+          186.0,
+          295.0,
+          231.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          223.0,
+          200.0,
+          240.0,
+          223.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          299.0,
+          248.0,
+          316.0,
+          269.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          430.0,
+          261.0,
+          453.0,
+          287.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          210.0,
+          168.0,
+          220.0,
+          194.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          146.0,
+          194.0,
+          157.0,
+          211.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          421.0,
+          245.0,
+          432.0,
+          265.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          453.0,
+          252.0,
+          466.0,
+          278.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          183.0,
+          402.0,
+          195.0,
+          446.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          284.0,
+          400.0,
+          298.0,
+          448.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          143.0,
+          422.0,
+          159.0,
+          482.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          96.0,
+          420.0,
+          116.0,
+          488.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          317.0,
+          436.0,
+          331.0,
+          477.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          343.0,
+          449.0,
+          360.0,
+          490.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          433.0,
+          454.0,
+          450.0,
+          534.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          380.0,
+          485.0,
+          403.0,
+          549.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          247.0,
+          561.0,
+          268.0,
+          627.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          180.0,
+          580.0,
+          210.0,
+          613.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          125.0,
+          225.0,
+          178.0,
+          333.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          203.0,
+          251.0,
+          242.0,
+          321.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          332.0,
+          255.0,
+          377.0,
+          350.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          299.0,
+          283.0,
+          316.0,
+          361.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          219.0,
+          261.0,
+          296.0,
+          428.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          394.0,
+          298.0,
+          449.0,
+          416.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/ketakichalke-boots__image726.jpeg",
+    "detections": [
+      {
+        "xyxy": [
+          106.0,
+          145.0,
+          142.0,
+          200.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          210.0,
+          156.0,
+          272.0,
+          377.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          397.0,
+          162.0,
+          491.0,
+          391.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          156.0,
+          195.0,
+          269.0,
+          448.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          218.0,
+          157.0,
+          254.0,
+          193.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          433.0,
+          161.0,
+          480.0,
+          194.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          165.0,
+          195.0,
+          212.0,
+          245.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          418.0,
+          195.0,
+          425.0,
+          215.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          256.0,
+          238.0,
+          264.0,
+          252.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          415.0,
+          255.0,
+          429.0,
+          268.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          228.0,
+          344.0,
+          242.0,
+          360.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          476.0,
+          296.0,
+          502.0,
+          336.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          240.0,
+          347.0,
+          270.0,
+          376.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          396.0,
+          368.0,
+          437.0,
+          390.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          211.0,
+          183.0,
+          264.0,
+          277.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          429.0,
+          196.0,
+          490.0,
+          299.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          156.0,
+          236.0,
+          239.0,
+          344.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/ketakichalke-boots__image962.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          188.0,
+          288.0,
+          249.0,
+          491.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          290.0,
+          284.0,
+          353.0,
+          495.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          399.0,
+          289.0,
+          459.0,
+          500.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          310.0,
+          284.0,
+          333.0,
+          303.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          205.0,
+          286.0,
+          230.0,
+          304.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          418.0,
+          290.0,
+          446.0,
+          310.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          308.0,
+          348.0,
+          317.0,
+          360.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          191.0,
+          470.0,
+          219.0,
+          488.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          217.0,
+          473.0,
+          238.0,
+          490.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          197.0,
+          319.0,
+          243.0,
+          390.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          401.0,
+          323.0,
+          458.0,
+          400.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/Mask2_mov-15_jpg.rf.026bd9a95154b1ead451a722a25ed130.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          0.0,
+          170.0,
+          639.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          259.0,
+          363.0,
+          639.0,
+          560.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          0.0,
+          423.0,
+          639.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/NX_img_177_jpg.rf.c03709e5fadfe2109411f05a9e9bc25f.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          601.0,
+          50.0,
+          627.0,
+          223.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          153.0,
+          0.0,
+          195.0,
+          49.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          213.0,
+          103.0,
+          257.0,
+          124.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          599.0,
+          205.0,
+          610.0,
+          215.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          97.0,
+          20.0,
+          190.0,
+          208.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/ppe_0665_jpg.rf.1dad479f7f54b2a7127cf18ef74ffd85.jpg",
+    "detections": [
+      {
+        "xyxy": [
+          429.0,
+          180.0,
+          515.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          316.0,
+          184.0,
+          413.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          509.0,
+          193.0,
+          605.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          218.0,
+          204.0,
+          302.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          151.0,
+          224.0,
+          244.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          67.0,
+          254.0,
+          174.0,
+          639.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          277.0,
+          306.0,
+          372.0,
+          638.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          454.0,
+          178.0,
+          490.0,
+          232.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          331.0,
+          181.0,
+          372.0,
+          236.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          530.0,
+          192.0,
+          569.0,
+          243.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          454.0,
+          178.0,
+          490.0,
+          232.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          331.0,
+          181.0,
+          372.0,
+          236.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          530.0,
+          192.0,
+          569.0,
+          243.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          454.0,
+          178.0,
+          490.0,
+          232.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          331.0,
+          181.0,
+          372.0,
+          236.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          530.0,
+          192.0,
+          569.0,
+          243.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          433.0,
+          278.0,
+          510.0,
+          441.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          319.0,
+          280.0,
+          395.0,
+          488.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          517.0,
+          296.0,
+          592.0,
+          508.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  },
+  {
+    "image": "typical/Virtual-Trip-Wires-on-building-sites.jpg.webp",
+    "detections": [
+      {
+        "xyxy": [
+          517.0,
+          100.0,
+          553.0,
+          213.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          420.0,
+          105.0,
+          476.0,
+          212.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          346.0,
+          225.0,
+          423.0,
+          382.0
+        ],
+        "conf": 1.0,
+        "cls_id": 0,
+        "cls_name": "person"
+      },
+      {
+        "xyxy": [
+          526.0,
+          100.0,
+          544.0,
+          115.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          456.0,
+          105.0,
+          478.0,
+          122.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          369.0,
+          224.0,
+          389.0,
+          243.0
+        ],
+        "conf": 1.0,
+        "cls_id": 1,
+        "cls_name": "helmet"
+      },
+      {
+        "xyxy": [
+          470.0,
+          147.0,
+          479.0,
+          156.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          534.0,
+          150.0,
+          545.0,
+          161.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          419.0,
+          157.0,
+          428.0,
+          167.0
+        ],
+        "conf": 1.0,
+        "cls_id": 2,
+        "cls_name": "gloves"
+      },
+      {
+        "xyxy": [
+          519.0,
+          194.0,
+          537.0,
+          205.0
+        ],
+        "conf": 1.0,
+        "cls_id": 3,
+        "cls_name": "boots"
+      },
+      {
+        "xyxy": [
+          439.0,
+          117.0,
+          472.0,
+          161.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      },
+      {
+        "xyxy": [
+          358.0,
+          248.0,
+          407.0,
+          308.0
+        ],
+        "conf": 1.0,
+        "cls_id": 4,
+        "cls_name": "vest"
+      }
+    ]
+  }
+]

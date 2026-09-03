@@ -134,3 +134,32 @@ Metrics per class and micro-averaged: `precision = TP/(TP+FP)`, `recall = TP/(TP
 `F1 = 2PR/(P+R)`, `accuracy (Jaccard) = TP/(TP+FP+FN)` at IoU 0.5.
 Images in `demo-pics/` with no `merge_manifest.csv` entry (external web images)
 are listed as unmatched and excluded from the counts.
+
+## Falcon demo-pics vs data/merged GT (mask → bbox)
+
+Run Falcon Perception on the same `demo-pics`/`data/merged` split but derive
+bboxes from its masks so it can be scored with the same IoU counts as YOLO.
+One text query per class (`person`, `helmet`, `gloves`, `boots`, `vest`,
+`no-helmet`, `no-gloves`, `no-boots`, `no-vest` — order = class id, override
+with `--queries`):
+
+```bash
+# Single image -> bboxes (uses existing visualization helper, no eval script):
+python -c "from falcon_perception.visualization_utils import detections_from_sequence; \
+            from falcon_perception import load_and_prepare_model, build_prompt_for_task; \
+            from falcon_perception.paged_inference import PagedInferenceEngine, Sequence; \
+            # load -> Sequence(image, text=build_prompt_for_task('person','segmentation')) -> engine.generate -> detections_from_sequence(seq)"
+
+# Full demo-pics eval (mask->bbox at original resolution, same greedy IoU matching as YOLO):
+python experiment/falcon/eval/eval_falcon_demo_pics.py --hf-local-dir /path/to/export --verbose
+python experiment/falcon/eval/eval_falcon_demo_pics.py --hf-model-id tiiuae/Falcon-Perception --device cuda --dtype bfloat16 --out outputs/eval_falcon_demo_pics.json
+python experiment/falcon/eval/eval_falcon_demo_pics.py --hf-local-dir /path/to/export --task detection --queries "person,helmet,gloves,boots,vest"
+python experiment/falcon/eval/eval_falcon_demo_pics.py --help
+```
+
+Bbox derivation reuses `eval/metrics.py:resize_rle(nms(...))` (masks resized
+to original `PIL.Image.size` before `pycocotools.mask.toBbox`/tight bounds)
+and `visualization_utils.pair_bbox_entries(bboxes_raw)` as fallback when
+`do_segmentation=False`. Same metrics/buckets as YOLO: per-class + micro
+`precision/recall/F1/accuracy (Jaccard)` at `IoU=0.5`, with `challenging` vs
+`typical` breakdown and 10 external unmatched images excluded.

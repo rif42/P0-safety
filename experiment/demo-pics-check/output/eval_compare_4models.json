@@ -1,0 +1,705 @@
+{
+  "iou_threshold": 0.5,
+  "source": "E:\\work\\P0-safety\\demo-pics",
+  "data": "E:\\work\\P0-safety\\data\\merged",
+  "manifest": "E:\\work\\P0-safety\\data\\merged\\merge_manifest.csv",
+  "models": [
+    "yolo26m_merged_150ev2",
+    "yolov8n_scratch",
+    "yolo26m_css_300e",
+    "falcon_5cls"
+  ],
+  "model_names_ordered": [
+    "person",
+    "helmet",
+    "gloves",
+    "boots",
+    "vest",
+    "no-helmet",
+    "no-gloves",
+    "no-boots",
+    "no-vest"
+  ],
+  "n_demo_images": 48,
+  "mapping_note": "yolo26m_css_300e/yolov8n_scratch native (Hardhat->helmet 1, Person->person 0, Safety Vest->vest 4) mapped for 5cls restricted view via SOURCE_CLASS_MAPS snehilsanyal-main; gloves/boots have no source in that dataset -> FN; merged+falcon use 0-8 directly",
+  "results": {
+    "yolo26m_merged_150ev2": {
+      "n_matched": 38,
+      "n_unmatched": 10,
+      "overall": {
+        "tp": 480,
+        "fp": 57,
+        "fn": 56,
+        "precision": 0.8938547486033519,
+        "recall": 0.8955223880597015,
+        "f1": 0.8946877912395155,
+        "accuracy": 0.8094435075885329
+      },
+      "overall_5cls": {
+        "tp": 396,
+        "fp": 54,
+        "fn": 47,
+        "precision": 0.88,
+        "recall": 0.8939051918735892,
+        "f1": 0.8868980963045914,
+        "accuracy": 0.7967806841046278
+      },
+      "per_class": {
+        "0": {
+          "name": "person",
+          "support": 172,
+          "tp": 153,
+          "fp": 23,
+          "fn": 19,
+          "precision": 0.8693181818181818,
+          "recall": 0.8895348837209303,
+          "f1": 0.8793103448275862,
+          "accuracy": 0.7846153846153846
+        },
+        "1": {
+          "name": "helmet",
+          "support": 168,
+          "tp": 161,
+          "fp": 13,
+          "fn": 7,
+          "precision": 0.9252873563218391,
+          "recall": 0.9583333333333334,
+          "f1": 0.9415204678362572,
+          "accuracy": 0.8895027624309392
+        },
+        "2": {
+          "name": "gloves",
+          "support": 12,
+          "tp": 11,
+          "fp": 0,
+          "fn": 1,
+          "precision": 1.0,
+          "recall": 0.9166666666666666,
+          "f1": 0.9565217391304348,
+          "accuracy": 0.9166666666666666
+        },
+        "3": {
+          "name": "boots",
+          "support": 49,
+          "tp": 37,
+          "fp": 15,
+          "fn": 12,
+          "precision": 0.7115384615384616,
+          "recall": 0.7551020408163265,
+          "f1": 0.7326732673267328,
+          "accuracy": 0.578125
+        },
+        "4": {
+          "name": "vest",
+          "support": 42,
+          "tp": 34,
+          "fp": 3,
+          "fn": 8,
+          "precision": 0.918918918918919,
+          "recall": 0.8095238095238095,
+          "f1": 0.860759493670886,
+          "accuracy": 0.7555555555555555
+        },
+        "5": {
+          "name": "no-helmet",
+          "support": 29,
+          "tp": 24,
+          "fp": 2,
+          "fn": 5,
+          "precision": 0.9230769230769231,
+          "recall": 0.8275862068965517,
+          "f1": 0.8727272727272727,
+          "accuracy": 0.7741935483870968
+        },
+        "6": {
+          "name": "no-gloves",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "7": {
+          "name": "no-boots",
+          "support": 7,
+          "tp": 7,
+          "fp": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "accuracy": 1.0
+        },
+        "8": {
+          "name": "no-vest",
+          "support": 57,
+          "tp": 53,
+          "fp": 1,
+          "fn": 4,
+          "precision": 0.9814814814814815,
+          "recall": 0.9298245614035088,
+          "f1": 0.954954954954955,
+          "accuracy": 0.9137931034482759
+        }
+      },
+      "per_class_mapped_0_4": null,
+      "by_bucket": {
+        "challenging": {
+          "tp": 188,
+          "fp": 18,
+          "fn": 19,
+          "precision": 0.912621359223301,
+          "recall": 0.9082125603864735,
+          "f1": 0.9104116222760291,
+          "accuracy": 0.8355555555555556
+        },
+        "typical": {
+          "tp": 292,
+          "fp": 39,
+          "fn": 37,
+          "precision": 0.8821752265861027,
+          "recall": 0.8875379939209727,
+          "f1": 0.8848484848484848,
+          "accuracy": 0.7934782608695652
+        }
+      }
+    },
+    "yolov8n_scratch": {
+      "n_matched": 38,
+      "n_unmatched": 10,
+      "overall": {
+        "tp": 6,
+        "fp": 431,
+        "fn": 530,
+        "precision": 0.013729977116704805,
+        "recall": 0.011194029850746268,
+        "f1": 0.012332990750256935,
+        "accuracy": 0.0062047569803516025
+      },
+      "overall_5cls": {
+        "tp": 190,
+        "fp": 88,
+        "fn": 253,
+        "precision": 0.6834532374100719,
+        "recall": 0.4288939051918736,
+        "f1": 0.5270457697642164,
+        "accuracy": 0.3578154425612053
+      },
+      "per_class": {
+        "0": {
+          "name": "person",
+          "support": 172,
+          "tp": 2,
+          "fp": 112,
+          "fn": 170,
+          "precision": 0.017543859649122806,
+          "recall": 0.011627906976744186,
+          "f1": 0.013986013986013984,
+          "accuracy": 0.007042253521126761
+        },
+        "1": {
+          "name": "helmet",
+          "support": 168,
+          "tp": 0,
+          "fp": 1,
+          "fn": 168,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "2": {
+          "name": "gloves",
+          "support": 12,
+          "tp": 0,
+          "fp": 18,
+          "fn": 12,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "3": {
+          "name": "boots",
+          "support": 49,
+          "tp": 0,
+          "fp": 57,
+          "fn": 49,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "4": {
+          "name": "vest",
+          "support": 42,
+          "tp": 4,
+          "fp": 71,
+          "fn": 38,
+          "precision": 0.05333333333333334,
+          "recall": 0.09523809523809523,
+          "f1": 0.06837606837606837,
+          "accuracy": 0.035398230088495575
+        },
+        "5": {
+          "name": "no-helmet",
+          "support": 29,
+          "tp": 0,
+          "fp": 130,
+          "fn": 29,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "6": {
+          "name": "no-gloves",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "7": {
+          "name": "no-boots",
+          "support": 7,
+          "tp": 0,
+          "fp": 34,
+          "fn": 7,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "8": {
+          "name": "no-vest",
+          "support": 57,
+          "tp": 0,
+          "fp": 8,
+          "fn": 57,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        }
+      },
+      "per_class_mapped_0_4": {
+        "0": {
+          "tp": 86,
+          "fp": 44,
+          "fn": 86,
+          "support": 172,
+          "precision": 0.6615384615384615,
+          "recall": 0.5,
+          "f1": 0.5695364238410596,
+          "accuracy": 0.39814814814814814
+        },
+        "1": {
+          "tp": 85,
+          "fp": 29,
+          "fn": 83,
+          "support": 168,
+          "precision": 0.7456140350877193,
+          "recall": 0.5059523809523809,
+          "f1": 0.6028368794326241,
+          "accuracy": 0.43147208121827413
+        },
+        "2": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "support": 12,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "3": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 49,
+          "support": 49,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "4": {
+          "tp": 19,
+          "fp": 15,
+          "fn": 23,
+          "support": 42,
+          "precision": 0.5588235294117647,
+          "recall": 0.4523809523809524,
+          "f1": 0.5,
+          "accuracy": 0.3333333333333333
+        }
+      },
+      "by_bucket": {
+        "challenging": {
+          "tp": 2,
+          "fp": 154,
+          "fn": 205,
+          "precision": 0.01282051282051282,
+          "recall": 0.00966183574879227,
+          "f1": 0.011019283746556472,
+          "accuracy": 0.00554016620498615
+        },
+        "typical": {
+          "tp": 4,
+          "fp": 277,
+          "fn": 325,
+          "precision": 0.014234875444839857,
+          "recall": 0.0121580547112462,
+          "f1": 0.013114754098360656,
+          "accuracy": 0.006600660066006601
+        }
+      }
+    },
+    "yolo26m_css_300e": {
+      "n_matched": 38,
+      "n_unmatched": 10,
+      "overall": {
+        "tp": 3,
+        "fp": 531,
+        "fn": 533,
+        "precision": 0.0056179775280898875,
+        "recall": 0.005597014925373134,
+        "f1": 0.005607476635514018,
+        "accuracy": 0.0028116213683223993
+      },
+      "overall_5cls": {
+        "tp": 257,
+        "fp": 67,
+        "fn": 186,
+        "precision": 0.7932098765432098,
+        "recall": 0.5801354401805869,
+        "f1": 0.6701434159061278,
+        "accuracy": 0.503921568627451
+      },
+      "per_class": {
+        "0": {
+          "name": "person",
+          "support": 172,
+          "tp": 2,
+          "fp": 133,
+          "fn": 170,
+          "precision": 0.014814814814814815,
+          "recall": 0.011627906976744186,
+          "f1": 0.013029315960912051,
+          "accuracy": 0.006557377049180328
+        },
+        "1": {
+          "name": "helmet",
+          "support": 168,
+          "tp": 0,
+          "fp": 4,
+          "fn": 168,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "2": {
+          "name": "gloves",
+          "support": 12,
+          "tp": 0,
+          "fp": 24,
+          "fn": 12,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "3": {
+          "name": "boots",
+          "support": 49,
+          "tp": 0,
+          "fp": 90,
+          "fn": 49,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "4": {
+          "name": "vest",
+          "support": 42,
+          "tp": 1,
+          "fp": 79,
+          "fn": 41,
+          "precision": 0.0125,
+          "recall": 0.023809523809523808,
+          "f1": 0.016393442622950824,
+          "accuracy": 0.008264462809917356
+        },
+        "5": {
+          "name": "no-helmet",
+          "support": 29,
+          "tp": 0,
+          "fp": 149,
+          "fn": 29,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "6": {
+          "name": "no-gloves",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "7": {
+          "name": "no-boots",
+          "support": 7,
+          "tp": 0,
+          "fp": 40,
+          "fn": 7,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "8": {
+          "name": "no-vest",
+          "support": 57,
+          "tp": 0,
+          "fp": 5,
+          "fn": 57,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        }
+      },
+      "per_class_mapped_0_4": {
+        "0": {
+          "tp": 124,
+          "fp": 25,
+          "fn": 48,
+          "support": 172,
+          "precision": 0.8322147651006712,
+          "recall": 0.7209302325581395,
+          "f1": 0.7725856697819314,
+          "accuracy": 0.6294416243654822
+        },
+        "1": {
+          "tp": 105,
+          "fp": 30,
+          "fn": 63,
+          "support": 168,
+          "precision": 0.7777777777777778,
+          "recall": 0.625,
+          "f1": 0.6930693069306931,
+          "accuracy": 0.5303030303030303
+        },
+        "2": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 12,
+          "support": 12,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "3": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 49,
+          "support": 49,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "4": {
+          "tp": 28,
+          "fp": 12,
+          "fn": 14,
+          "support": 42,
+          "precision": 0.7,
+          "recall": 0.6666666666666666,
+          "f1": 0.6829268292682926,
+          "accuracy": 0.5185185185185185
+        }
+      },
+      "by_bucket": {
+        "challenging": {
+          "tp": 2,
+          "fp": 198,
+          "fn": 205,
+          "precision": 0.01,
+          "recall": 0.00966183574879227,
+          "f1": 0.009828009828009828,
+          "accuracy": 0.0049382716049382715
+        },
+        "typical": {
+          "tp": 1,
+          "fp": 333,
+          "fn": 328,
+          "precision": 0.0029940119760479044,
+          "recall": 0.00303951367781155,
+          "f1": 0.0030165912518853697,
+          "accuracy": 0.0015105740181268882
+        }
+      }
+    },
+    "falcon_5cls": {
+      "n_matched": 38,
+      "n_unmatched": 10,
+      "overall": {
+        "tp": 285,
+        "fp": 303,
+        "fn": 251,
+        "precision": 0.4846938775510204,
+        "recall": 0.5317164179104478,
+        "f1": 0.5071174377224199,
+        "accuracy": 0.3396901072705602
+      },
+      "overall_5cls": {
+        "tp": 285,
+        "fp": 303,
+        "fn": 158,
+        "precision": 0.4846938775510204,
+        "recall": 0.6433408577878104,
+        "f1": 0.5528612997090203,
+        "accuracy": 0.3820375335120643
+      },
+      "per_class": {
+        "0": {
+          "name": "person",
+          "support": 172,
+          "tp": 145,
+          "fp": 63,
+          "fn": 27,
+          "precision": 0.6971153846153846,
+          "recall": 0.8430232558139535,
+          "f1": 0.763157894736842,
+          "accuracy": 0.6170212765957447
+        },
+        "1": {
+          "name": "helmet",
+          "support": 168,
+          "tp": 105,
+          "fp": 63,
+          "fn": 63,
+          "precision": 0.625,
+          "recall": 0.625,
+          "f1": 0.625,
+          "accuracy": 0.45454545454545453
+        },
+        "2": {
+          "name": "gloves",
+          "support": 12,
+          "tp": 0,
+          "fp": 47,
+          "fn": 12,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "3": {
+          "name": "boots",
+          "support": 49,
+          "tp": 3,
+          "fp": 66,
+          "fn": 46,
+          "precision": 0.043478260869565216,
+          "recall": 0.061224489795918366,
+          "f1": 0.05084745762711864,
+          "accuracy": 0.02608695652173913
+        },
+        "4": {
+          "name": "vest",
+          "support": 42,
+          "tp": 32,
+          "fp": 64,
+          "fn": 10,
+          "precision": 0.3333333333333333,
+          "recall": 0.7619047619047619,
+          "f1": 0.463768115942029,
+          "accuracy": 0.3018867924528302
+        },
+        "5": {
+          "name": "no-helmet",
+          "support": 29,
+          "tp": 0,
+          "fp": 0,
+          "fn": 29,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "6": {
+          "name": "no-gloves",
+          "support": 0,
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "7": {
+          "name": "no-boots",
+          "support": 7,
+          "tp": 0,
+          "fp": 0,
+          "fn": 7,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        },
+        "8": {
+          "name": "no-vest",
+          "support": 57,
+          "tp": 0,
+          "fp": 0,
+          "fn": 57,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "accuracy": 0.0
+        }
+      },
+      "per_class_mapped_0_4": null,
+      "by_bucket": {
+        "challenging": {
+          "tp": 109,
+          "fp": 116,
+          "fn": 98,
+          "precision": 0.48444444444444446,
+          "recall": 0.5265700483091788,
+          "f1": 0.5046296296296297,
+          "accuracy": 0.33746130030959753
+        },
+        "typical": {
+          "tp": 176,
+          "fp": 187,
+          "fn": 153,
+          "precision": 0.48484848484848486,
+          "recall": 0.5349544072948328,
+          "f1": 0.5086705202312137,
+          "accuracy": 0.34108527131782945
+        }
+      }
+    }
+  }
+}

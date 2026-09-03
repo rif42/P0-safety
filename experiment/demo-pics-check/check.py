@@ -1,10 +1,11 @@
-"""Run detection on demo-pics with four YOLO models and build 2x2 compare grid.
+"""Run detection on demo-pics with four models and build 2x2 compare grid.
 
-Models:
+Models (TL/TR/BL/BR = yolo26m_merged_150ev2 / yolov8n_scratch / ground_truth / falcon_5cls):
   - yolo26m_merged_150ev2: runs/detect/yolo26m_merged_150ev2/weights/best.pt
   - yolov8n_scratch:       runs/scratch/yolov8n_scratch/weights/best.pt
-  - yolo26m_css_300e:      runs/detect/yolo26m_css_300e/weights/best.pt
-  - yolo26m_merged_150e:   runs/detect/yolo26m_merged_150e/weights/best.pt
+  - ground_truth:          data/merged GT via generate_ground_truth.py
+  - falcon_5cls:           experiment/falcon/outputs/demo-pics-5cls/**/predictions_yolo.txt (rendered via generate_falcon_5cls.py)
+  Previous: yolo26m_css_300e -> output/yolo26m_css_300e (kept, not in grid) and output/_archived/yolo26m_merged_150e
 
 Output: experiment/demo-pics-check/output/
   - output/<model>/{typical,challenging}/*_pred.jpg  (annotated + model label)
@@ -29,8 +30,8 @@ OUT = Path(__file__).resolve().parent / "output"
 MODELS = {
     "yolo26m_merged_150ev2": ROOT / "runs/detect/yolo26m_merged_150ev2/weights/best.pt",
     "yolov8n_scratch": ROOT / "runs/scratch/yolov8n_scratch/weights/best.pt",
-    "yolo26m_css_300e": ROOT / "runs/detect/yolo26m_css_300e/weights/best.pt",
-    "yolo26m_merged_150e": ROOT / "runs/detect/yolo26m_merged_150e/weights/best.pt",
+    "ground_truth": None,  # rendered via generate_ground_truth.py from data/merged GT
+    "falcon_5cls": None,  # rendered from experiment/falcon/outputs/demo-pics-5cls via generate_falcon_5cls.py
 }
 
 CONF = 0.35
@@ -150,7 +151,7 @@ def make_compare_2x2(images: list[Path]):
 
     Tiles are already labeled via annotate_and_save, so we just fit + grid.
     Order: [yolo26m_merged_150ev2, yolov8n_scratch] on top row,
-           [yolo26m_css_300e, yolo26m_merged_150e] on bottom row.
+           [ground_truth, falcon_5cls] on bottom row.
     """
     compare_root = OUT / "compare"
     if compare_root.exists():
@@ -185,12 +186,36 @@ def main():
     if not SRC.exists():
         raise SystemExit(f"Source not found: {SRC}")
     for n, w in MODELS.items():
-        if not w.exists():
+        if n in ("falcon_5cls", "ground_truth"):
+            # rendered externally: falcon via generate_falcon_5cls.py, GT via generate_ground_truth.py
+            if not (OUT / n / "results.json").exists():
+                raise SystemExit(f"Missing {n} results — run: python experiment/demo-pics-check/generate_{n}.py")
+            continue
+        if w is None or not w.exists():
             raise SystemExit(f"Weight not found [{n}]: {w}")
+
+    # Keep externally-generated outputs if they already exist (avoid wiping pre-generated preds)
+    caches: dict[str, Path] = {}
+    for cached in ("falcon_5cls", "ground_truth"):
+        d = OUT / cached
+        if d.exists():
+            import tempfile
+            caches[cached] = Path(tempfile.mkdtemp()) / cached
+            shutil.copytree(d, caches[cached])
 
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True, exist_ok=True)
+
+    # Restore cached external outputs
+    for name, tmp in caches.items():
+        if tmp.exists():
+            shutil.copytree(tmp, OUT / name)
+            # tmp is .../tmpXXX/name, parent is the tempdir
+            try:
+                shutil.rmtree(tmp.parent if tmp.parent.name.startswith("tmp") else tmp)
+            except Exception:
+                pass
 
     images = find_images(SRC)
     if not images:
@@ -200,6 +225,9 @@ def main():
         print(f"  {p.relative_to(SRC)}")
 
     for name, weight in MODELS.items():
+        if name in ("falcon_5cls", "ground_truth"):
+            print(f"\n[{name}] using cached {OUT / name} — skip inference")
+            continue
         run_model(name, weight, images)
 
     make_compare_2x2(images)

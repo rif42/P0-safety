@@ -18,7 +18,8 @@ import cv2
 
 # Allow importing detector for colors when run from repo root or scripts/
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_merged_150e" / "weights" / "best.pt"
+# DEFAULT_WEIGHTS = REPO_ROOT / "runs" / "detect" / "yolo26m_merged_150e" / "weights" / "best.pt"
+DEFAULT_WEIGHTS = REPO_ROOT / "runs" / "scratch" / "yolov8n_scratch" / "weights" / "best.pt"
 
 # Fallback palette if detector not importable
 FALLBACK_COLORS = {
@@ -93,7 +94,7 @@ def _color_for(class_name: str):
 
 def parse_args():
     p = argparse.ArgumentParser(description="YOLO26m video inference")
-    p.add_argument("--source", required=True, help="Video path, image path, or 0 for webcam (also supports RTSP/YouTube via opencv)")
+    p.add_argument("--source", required=False, default="0", help="Video path, image path, or 0 for webcam (also supports RTSP/YouTube via opencv) [default: 0 (webcam) if omitted]")
     p.add_argument("--weights", default=None, help="Path to best.pt (default: runs/detect/yolo26m_merged_150e/weights/best.pt or $HIVIS_MODEL_PATH)")
     p.add_argument("--conf", type=float, default=0.25, help="Confidence threshold (default 0.25)")
     p.add_argument("--iou", type=float, default=0.5, help="NMS IoU threshold (default 0.5)")
@@ -230,10 +231,14 @@ def main():
                 writer.write(frame)
 
             if args.show:
-                cv2.imshow("YOLO26m - video inference (q to quit)", frame)
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    print("[info] quit by user")
-                    break
+                try:
+                    cv2.imshow("YOLO26m - video inference (q to quit)", frame)
+                    if cv2.waitKey(1) & 0xFF == ord("q"):
+                        print("[info] quit by user")
+                        break
+                except cv2.error as e:
+                    print(f"[warn] cv2.imshow not available (headless OpenCV), disabling display: {e}", file=sys.stderr)
+                    args.show = False
 
             if frame_idx % 30 == 0:
                 avg = sum(infer_ms[-30:]) / min(30, len(infer_ms))
