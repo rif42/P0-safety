@@ -311,6 +311,13 @@ class OllamaAdapter:
                 "images": [image_b64],
                 "stream": False,
                 "format": "json",
+                # The per-person checklist prompt (bbox+confidence per item per
+                # person) asks for far more output than the old boolean-per-class
+                # one — uncapped, a small local model can fall into a slow/looping
+                # generation that eats the whole 300s timeout instead of failing
+                # fast. Capped, not tuned per-model: raise if legitimate multi-
+                # person answers start getting truncated.
+                "options": {"num_predict": 800},
             },
             timeout=300,  # cold model loads observed up to ~140s under load; leave headroom
         )
