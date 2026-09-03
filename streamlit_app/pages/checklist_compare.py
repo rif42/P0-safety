@@ -1074,8 +1074,15 @@ def _run_checklist_worker(bg):
     except Exception as exc:
         # Keep whatever's already on disk resumable, same as a Pause —
         # an API error partway through shouldn't cost the pairs already
-        # answered.
-        _checkpoint(bg)
+        # answered. _checkpoint() itself gets its own try: a SECOND
+        # exception here (e.g. a pandas/disk hiccup) must never skip
+        # setting bg["error"] below — that's what _render_live_run's
+        # thread-liveness check exists to catch, but surfacing the real
+        # error here is strictly better than "died without reporting".
+        try:
+            _checkpoint(bg)
+        except Exception:
+            pass
         with bg["lock"]:
             bg["error"], bg["needs_full_rerun"] = str(exc), True
 
@@ -1095,7 +1102,9 @@ def _start_background_run(run_dir, run_name, model_names, sampled_files, adapter
         "finished": False, "stopped": False, "error": None, "final_dir": None, "needs_full_rerun": False,
     }
     st.session_state["checklist_bg"] = bg
-    threading.Thread(target=_run_checklist_worker, args=(bg,), daemon=True).start()
+    thread = threading.Thread(target=_run_checklist_worker, args=(bg,), daemon=True)
+    bg["thread"] = thread
+    thread.start()
 
 
 @st.fragment(run_every="1s")
@@ -1111,9 +1120,19 @@ def _render_live_run(show_json, show_descriptive):
         done, total = bg["done"], bg["total"]
         done_per_model, in_flight = dict(bg["done_per_model"]), list(bg["in_flight"])
         finished, stopped, error, final_dir = bg["finished"], bg["stopped"], bg["error"], bg["final_dir"]
-        needs_full_rerun = bg["needs_full_rerun"]
-        if needs_full_rerun:
-            bg["needs_full_rerun"] = False
+        # Watchdog: the thread is the only thing that ever sets finished/
+        # stopped/error, so if it died without setting any of them (an
+        # exception escaping _run_checklist_worker's own try/except
+        # entirely — e.g. a second failure inside its except block, before
+        # this hardening) this is the only way the UI finds out, instead of
+        # sitting on "live" with a Pause button forever for a run that's
+        # actually gone.
+        thread = bg.get("thread")  # .get(), not [] — a session already holding a
+        # pre-upgrade bg dict (no "thread" key) shouldn't crash on a code update
+        if not (finished or stopped or error) and thread is not None and not thread.is_alive():
+            error = bg["error"] = "worker thread died without reporting an error — this is a bug, please report it"
+        needs_full_rerun = bg["needs_full_rerun"] or bool(error)
+        bg["needs_full_rerun"] = False
     model_names, sampled_files, gt_counts = bg["model_names"], bg["sampled_files"], bg["gt_counts"]
     people_by_pair, text_by_pair = bg["people_by_pair"], bg["text_by_pair"]
     descriptive_by_pair, latency_by_pair = bg["descriptive_by_pair"], bg["latency_by_pair"]
