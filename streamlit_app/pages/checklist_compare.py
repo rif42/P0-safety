@@ -114,6 +114,16 @@ def _yolo_weights_for(name):
 def _display_name(name):
     return "yolo" if name == "yolo" else YOLO_SHORT_BY_KEY.get(name, name)
 
+
+def _group_rank(name):
+    """0/1/2 — YOLO weight runs, then local LLMs, then API LLMs, matching
+    MODEL_OPTIONS' order. Used to sort model_names for display wherever
+    the order otherwise reflects raw selection order (e.g. the progress
+    indicator) instead of this grouping."""
+    if _is_yolo_name(name):
+        return 0
+    return 2 if ADAPTERS.get(name, {}).get("is_cloud") else 1
+
 st.markdown(vh.HV_STYLE_CSS, unsafe_allow_html=True)
 st.markdown(vh.header_html("LLM vs YOLO (PERSON DETECTION)", "how many people, and what are they wearing?"),
             unsafe_allow_html=True)
@@ -225,6 +235,21 @@ def model_counts_for_people(people):
         counts[item] = present
         counts[f"no-{item}"] = n - present
     return counts
+
+
+def _buf_for_file(file_stem, model_names, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair):
+    """The render_*_row() "buf" shape for one file, rebuilt on demand from
+    the (file, model)-keyed dicts every render path already carries —
+    shared by the resume-replay/redraw/Open-run call sites (previously
+    each built this dict inline) and by the image-gallery dialog, which
+    needs to be able to look up ANY sampled file, not just the one whose
+    thumbnail was clicked."""
+    return {m: {"counts": model_counts_for_people(people_by_pair.get((file_stem, m))),
+                "people": people_by_pair.get((file_stem, m)),
+                "raw_text": text_by_pair.get((file_stem, m)),
+                "descriptive_text": descriptive_by_pair.get((file_stem, m)),
+                "latency": latency_by_pair.get((file_stem, m))}
+            for m in model_names}
 
 
 def enhance_gt(gt_count, model_counts_by_model):
@@ -502,14 +527,33 @@ def _response_html(raw_text, counts, descriptive_text, show_json, show_descripti
     return "".join(parts)
 
 
-def _zoom_image_html(img_path, boxes, height=210, max_side=900):
+# One-time CSS for the inline table thumbnails: a small image that stays
+# inside the row (no forced height blowing up every row — the old fixed-
+# height iframe's whole problem), plus a bigger copy of the SAME image,
+# absolutely positioned and hidden until :hover — pure CSS, no JS, no
+# scroll/drag handlers to fight with. Injected once, module-level, like
+# vh.HV_STYLE_CSS below.
+_THUMB_CSS = """
+<style>
+.hv-thumb-wrap { position:relative; display:inline-block; line-height:0; }
+.hv-thumb-wrap img.hv-thumb { height:44px; width:auto; display:block; border:1px solid #C4C6C0; }
+.hv-thumb-wrap .hv-thumb-big {
+  display:none; position:absolute; z-index:200; left:0; top:0;
+  width:480px; max-width:min(70vw, 480px); border:2px solid #141414; background:#111;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.hv-thumb-wrap:hover .hv-thumb-big { display:block; }
+</style>
+"""
+st.markdown(_THUMB_CSS, unsafe_allow_html=True)
+
+
+def _annotated_image_uri(img_path, boxes, max_side=900):
     """The source image with `boxes` (a flat list of {"bbox","color","label",
-    "dashed"?}) drawn as an SVG overlay, inside a plain wheel-to-zoom/
-    drag-to-pan viewport — no chart/zoom library, just a CSS transform
-    driven by a few event listeners (components.v1.html runs this in a
-    real iframe, so the <script> actually executes, unlike a plain
-    st.markdown). Starts fit-to-width so the un-zoomed state is already
-    legible; scroll to go further, drag to pan once zoomed.
+    "dashed"?}) drawn as SVG shapes over it, returned as a data: URI ready
+    for a plain <img src=...> — SVG (not a rasterized copy) keeps the boxes
+    crisp whether it's shown as a 44px thumbnail or blown up in the hover
+    preview/gallery dialog, from the exact same URI.
     ponytail: rebuilds + re-embeds the JPEG on every render (no cache) — a
     tab isn't hammering this in a loop, so it's not worth memoizing yet."""
     img = Image.open(img_path).convert("RGB")
@@ -531,47 +575,13 @@ def _zoom_image_html(img_path, boxes, height=210, max_side=900):
         if b.get("label"):
             shapes.append(f'<text x="{bx:.1f}" y="{max(by - 4, font_size):.1f}" fill="{b["color"]}" '
                           f'font-size="{font_size:.0f}" font-family="monospace">{html.escape(b["label"])}</text>')
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
+           f'<image href="data:image/jpeg;base64,{b64}" width="{w}" height="{h}"/>{"".join(shapes)}</svg>')
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
 
-    return f"""
-    <div id="zbox" style="border:1px solid {FAINT};overflow:hidden;position:relative;
-                height:{height}px;background:#111;cursor:grab">
-      <div id="zwrap" style="transform-origin:0 0;position:absolute;top:0;left:0">
-        <svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" style="display:block">
-          <image href="data:image/jpeg;base64,{b64}" width="{w}" height="{h}"/>
-          {"".join(shapes)}
-        </svg>
-      </div>
-    </div>
-    <script>
-    (function() {{
-      const box = document.currentScript.previousElementSibling;
-      const wrap = box.querySelector('#zwrap');
-      let scale, tx = 0, ty = 0, dragging = false, lastX = 0, lastY = 0;
-      const fit = box.clientWidth / {w};
-      scale = fit;
-      function apply() {{ wrap.style.transform = `translate(${{tx}}px,${{ty}}px) scale(${{scale}})`; }}
-      apply();
-      box.addEventListener('wheel', (e) => {{
-        e.preventDefault();
-        const rect = box.getBoundingClientRect();
-        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-        const next = Math.min(Math.max(scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15), fit * 0.5), fit * 15);
-        tx = mx - (mx - tx) * (next / scale);
-        ty = my - (my - ty) * (next / scale);
-        scale = next;
-        apply();
-      }}, {{passive: false}});
-      box.addEventListener('mousedown', (e) => {{ dragging = true; lastX = e.clientX; lastY = e.clientY; box.style.cursor = 'grabbing'; }});
-      window.addEventListener('mouseup', () => {{ dragging = false; box.style.cursor = 'grab'; }});
-      window.addEventListener('mousemove', (e) => {{
-        if (!dragging) return;
-        tx += e.clientX - lastX; ty += e.clientY - lastY;
-        lastX = e.clientX; lastY = e.clientY;
-        apply();
-      }});
-    }})();
-    </script>
-    """
+
+def _thumb_html(uri):
+    return f'<div class="hv-thumb-wrap"><img class="hv-thumb" src="{uri}"><img class="hv-thumb-big" src="{uri}"></div>'
 
 
 def _gt_boxes_for_zoom(gt_boxes):
@@ -628,7 +638,7 @@ def _card_head(container, file_stem):
                     unsafe_allow_html=True)
         img_col, tbl_col = st.columns([1, 3])
         with img_col:
-            st.caption("scroll to zoom · drag to pan")
+            st.caption("hover to enlarge · 🔍 to browse")
         with tbl_col:
             st.markdown(f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">{_TABLE_COLGROUP}'
                         f'<thead>{_grouped_head(["total", "latency"])}</thead></table>', unsafe_allow_html=True)
@@ -643,7 +653,10 @@ def render_gt_row(container, file_stem, gt, gt_total):
         img_col, tbl_col = st.columns([1, 3])
         with img_col:
             if img_path:
-                components.html(_zoom_image_html(img_path, _gt_boxes_for_zoom(load_gt_boxes(file_stem))), height=225)
+                st.markdown(_thumb_html(_annotated_image_uri(img_path, _gt_boxes_for_zoom(load_gt_boxes(file_stem)))),
+                             unsafe_allow_html=True)
+                if st.button("🔍", key=f"gallery_{file_stem}_gt", help="Browse all images"):
+                    st.session_state["checklist_gallery_click"] = (file_stem, "__gt__")
         with tbl_col:
             st.markdown(_row_table(gt_row), unsafe_allow_html=True)
 
@@ -673,7 +686,10 @@ def render_model_row(container, file_stem, name, entry, gt, gt_total, max_latenc
         img_col, tbl_col = st.columns([1, 3])
         with img_col:
             if img_path:
-                components.html(_zoom_image_html(img_path, _person_boxes_for_zoom(people)), height=225)
+                st.markdown(_thumb_html(_annotated_image_uri(img_path, _person_boxes_for_zoom(people))),
+                             unsafe_allow_html=True)
+                if entry and st.button("🔍", key=f"gallery_{file_stem}_{name}", help="Browse all images"):
+                    st.session_state["checklist_gallery_click"] = (file_stem, name)
         with tbl_col:
             st.markdown(_row_table(row_tr), unsafe_allow_html=True)
     return _response_html(raw_text, counts, descriptive_text, show_json, show_descriptive)
@@ -714,6 +730,79 @@ def render_file_card(container, model_names, file_stem, buf, gt_counts, show_jso
             )
     with container:
         st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
+
+
+@st.dialog("Browse images", width="large")
+def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair):
+    """The image browser a thumbnail's 🔍 button opens — a real, native
+    st.dialog (Streamlit >= 1.31) rather than a hand-rolled modal, since a
+    true full-page overlay isn't something a components.html() iframe can
+    do (it's clipped to its own box). Left/right buttons walk through
+    every sampled file in the run, keeping whichever annotation view was
+    clicked (ground truth, or one model) so you're comparing the same
+    thing across images; the file's full result table is shown right
+    below the image for context."""
+    file_stem, model = st.session_state["checklist_gallery_click"]
+    idx = sampled_files.index(file_stem) if file_stem in sampled_files else 0
+
+    nav_l, nav_mid, nav_r, nav_close = st.columns([1, 5, 1, 1])
+    if nav_l.button("←", key="gallery_prev", disabled=idx == 0):
+        idx -= 1
+    if nav_r.button("→", key="gallery_next", disabled=idx >= len(sampled_files) - 1):
+        idx += 1
+    if nav_close.button("✕", key="gallery_close"):
+        del st.session_state["checklist_gallery_click"]
+        st.rerun()
+    file_stem = sampled_files[idx]
+    st.session_state["checklist_gallery_click"] = (file_stem, model)
+    label = "ground truth" if model == "__gt__" else _display_name(model)
+    nav_mid.markdown(
+        f'<div class="hv-mono" style="text-align:center;font-size:12px">{html.escape(file_stem)} — '
+        f'{html.escape(label)} ({idx + 1}/{len(sampled_files)})</div>', unsafe_allow_html=True)
+
+    img_path = image_path_for(file_stem)
+    if img_path:
+        boxes = (_gt_boxes_for_zoom(load_gt_boxes(file_stem)) if model == "__gt__"
+                 else _person_boxes_for_zoom(people_by_pair.get((file_stem, model))))
+        uri = _annotated_image_uri(img_path, boxes, max_side=1600)
+        st.markdown(f'<img src="{uri}" style="display:block;width:100%;max-height:65vh;'
+                    f'object-fit:contain;background:#111;margin-bottom:10px">', unsafe_allow_html=True)
+
+    gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
+    gt_total = sum(gt.values())
+    buf = _buf_for_file(file_stem, model_names, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
+    max_latency = max((buf[n]["latency"] for n in model_names if buf.get(n) and buf[n].get("latency")), default=None)
+    body_rows = [f'<tr style="background:#F0F1EC;font-weight:600"><td style="padding:3px 8px">ground truth</td>'
+                 f'{"".join(_plain_cell(gt[s], series=s) for s in SERIES)}{_plain_cell(gt_total)}{_plain_cell("—")}</tr>']
+    for m in sorted(model_names, key=lambda n: (_group_rank(n), n)):
+        entry = buf.get(m)
+        counts = entry["counts"] if entry else None
+        total = sum(counts.values()) if counts else None
+        cells = "".join(_count_cell(counts[s] if counts else None, gt[s], series=s) for s in SERIES)
+        latency = entry.get("latency") if entry else None
+        body_rows.append(f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(m)}</td>'
+                          f'{cells}{_count_cell(total, gt_total)}{_latency_cell(latency, max_latency)}</tr>')
+    st.markdown(f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">{_TABLE_COLGROUP}'
+                f'<thead>{_grouped_head(["total", "latency"])}</thead><tbody>{"".join(body_rows)}</tbody></table>',
+                unsafe_allow_html=True)
+
+    # Best-effort arrow-key navigation: Streamlit has no keyboard-shortcut
+    # API, so this reaches into the parent document (components.html runs
+    # in its own iframe) and clicks the real Prev/Next buttons above by
+    # their visible glyph. If a future Streamlit DOM change ever breaks
+    # this, the visible buttons still work — only the shortcut is lost.
+    components.html("""
+    <script>
+    (function() {
+      const doc = window.parent.document;
+      function findByText(t) { return Array.from(doc.querySelectorAll('button')).find(b => b.innerText.trim() === t); }
+      doc.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft') { const b = findByText('←'); if (b && !b.disabled) b.click(); }
+        if (e.key === 'ArrowRight') { const b = findByText('→'); if (b && !b.disabled) b.click(); }
+      });
+    })();
+    </script>
+    """, height=0)
 
 
 # Fixed reference for the LIVE per-row latency bar, since a row drawn on its
@@ -770,7 +859,7 @@ def _progress_html(model_names, done_per_model, total_per_model, in_flight_by_mo
     empty right after a plain completion event, when the next tick (at
     most ~1s later) will have it again."""
     rows = []
-    for name in model_names:
+    for name in sorted(model_names, key=lambda n: (_group_rank(n), n)):
         done_n = done_per_model.get(name, 0)
         flight = in_flight_by_model.get(name)
         if done_n >= total_per_model:
@@ -872,19 +961,14 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
         for file_stem in sampled_files:
             if file_stem not in covered:
                 continue
-            buf = {m: {"counts": model_counts_for_people(people_by_pair.get((file_stem, m))),
-                       "people": people_by_pair.get((file_stem, m)),
-                       "raw_text": text_by_pair.get((file_stem, m)),
-                       "descriptive_text": descriptive_by_pair.get((file_stem, m)),
-                       "latency": latency_by_pair.get((file_stem, m))}
-                   for m in covered[file_stem]}
+            buf = _buf_for_file(file_stem, model_names, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
             if covered[file_stem] == set(model_names):
                 render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive)
             else:
                 file_bufs[file_stem] = buf
                 scaffold = init_live_card(feed, model_names, file_stem, gt_counts)
-                for name, entry in buf.items():
-                    update_live_row(scaffold, file_stem, name, entry, show_json, show_descriptive)
+                for name in covered[file_stem]:
+                    update_live_row(scaffold, file_stem, name, buf[name], show_json, show_descriptive)
                 file_scaffolds[file_stem] = scaffold
 
     t_start = time.perf_counter()
@@ -1172,15 +1256,13 @@ elif "checklist_last_run" in st.session_state:
                 unsafe_allow_html=True)
     feed = st.container()
     for f in sampled_files:
-        buf = {m: {"counts": model_counts_for_people(people_by_pair.get((f, m))),
-                   "people": people_by_pair.get((f, m)),
-                   "raw_text": text_by_pair.get((f, m)),
-                   "descriptive_text": descriptive_by_pair.get((f, m)),
-                   "latency": latency_by_pair.get((f, m))}
-               for m in model_names}
+        buf = _buf_for_file(f, model_names, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
         render_file_card(feed, model_names, f, buf, gt_counts, show_json, show_descriptive)
 else:
     st.stop()
+
+if "checklist_gallery_click" in st.session_state:
+    _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair)
 
 # ---------------------------------------------------------------------------
 # analysis — live, right below, common to both the resume and fresh paths
