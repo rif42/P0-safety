@@ -249,7 +249,18 @@ def people_from_detections(detections, items=CHECKLIST_ITEMS, containment_thresh
 class YOLOAdapter:
     """Our trained detector — the baseline every other model is compared
     against. Real boxes, all 9 classes, since it was trained on negatives
-    too."""
+    too.
+
+    _lock (per-INSTANCE, unlike OllamaAdapter's per-CLASS _SERVER_LOCK —
+    different weight files are independent models, free to run in
+    parallel; only calls sharing this one instance need serializing):
+    checklist_compare.py's run_checklist_steps() submits every (file,
+    model) pair to a thread pool at once, so a single popular YOLO weight
+    can get a couple dozen concurrent .predict() calls on this exact
+    object. Ultralytics' predict() isn't safe for that — enough
+    concurrent callers reliably deadlocked with no exception and no CPU
+    use (each call re-triggering .predictor's lazy setup, racing on the
+    same internal state) rather than merely raising or slowing down."""
 
     name = "yolo"
     supports_grounding = True
@@ -261,9 +272,11 @@ class YOLOAdapter:
         self.model = YOLO(str(weights_path))
         self.class_names = self.model.names  # {id: name}
         self.conf = conf
+        self._lock = threading.Lock()
 
     def predict(self, image_path):
-        result = self.model.predict(str(image_path), conf=self.conf, verbose=False)[0]
+        with self._lock:
+            result = self.model.predict(str(image_path), conf=self.conf, verbose=False)[0]
         img_h, img_w = result.orig_shape
         detections = []
         for box in result.boxes:
