@@ -622,37 +622,10 @@ def _row_table(row_tr):
             f'<tbody>{row_tr}</tbody></table>')
 
 
-def render_file_card(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive):
-    """One row per entity — ground truth FIRST, then each model — each row a
-    columns([1, 3]) pair: its own annotated, zoomable/pannable image on the
-    left (see _zoom_image_html()) and its counts (colored green -> red by
-    distance from ground truth, see _count_cell()) plus latency (filled
-    bar, see _latency_cell()) on the right. Every row is its own single-row
-    <table> sharing _TABLE_COLGROUP with the header, since a live per-row
-    iframe can't sit inside one <td> of a single shared <table>. This is
-    the ONLY place the source image appears on the page — comparing every
-    model's boxes against ground truth is a matter of scanning straight
-    down this one column, not hunting for a thumbnail elsewhere.
-
-    `container` is whatever the caller wants this drawn into — the shared
-    history feed for a one-shot render (resume replay, redraw from
-    session_state), or a per-file st.empty() that gets redrawn every time a
-    new model's result comes in, so a card shows partial results (some
-    rows filled, others still "—") the moment they exist instead of
-    waiting for the whole image to finish (see run_checklist_live()).
-    ponytail: one iframe per row per image — fine at today's run sizes
-    (tens of images), revisit with on-demand rendering if a 100-image run
-    makes the page heavy."""
-    img_path = image_path_for(file_stem)
-    gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
-    gt_total = sum(gt.values())
-    max_latency = max((buf[n]["latency"] for n in model_names if buf.get(n) and buf[n].get("latency")),
-                       default=None)
-
+def _card_head(container, file_stem):
     with container:
         st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin:10px 0 2px">{file_stem}</div>',
                     unsafe_allow_html=True)
-
         img_col, tbl_col = st.columns([1, 3])
         with img_col:
             st.caption("scroll to zoom · drag to pan")
@@ -660,47 +633,178 @@ def render_file_card(container, model_names, file_stem, buf, gt_counts, show_jso
             st.markdown(f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">{_TABLE_COLGROUP}'
                         f'<thead>{_grouped_head(["total", "latency"])}</thead></table>', unsafe_allow_html=True)
 
-        if img_path:
-            gt_row = (f'<tr style="background:#F0F1EC;font-weight:600"><td style="padding:3px 8px">ground truth</td>'
-                      f'{"".join(_plain_cell(gt[s], series=s) for s in SERIES)}'
-                      f'{_plain_cell(gt_total)}{_plain_cell("—")}</tr>')
-            img_col, tbl_col = st.columns([1, 3])
-            with img_col:
+
+def render_gt_row(container, file_stem, gt, gt_total):
+    img_path = image_path_for(file_stem)
+    gt_row = (f'<tr style="background:#F0F1EC;font-weight:600"><td style="padding:3px 8px">ground truth</td>'
+              f'{"".join(_plain_cell(gt[s], series=s) for s in SERIES)}'
+              f'{_plain_cell(gt_total)}{_plain_cell("—")}</tr>')
+    with container:
+        img_col, tbl_col = st.columns([1, 3])
+        with img_col:
+            if img_path:
                 components.html(_zoom_image_html(img_path, _gt_boxes_for_zoom(load_gt_boxes(file_stem))), height=225)
-            with tbl_col:
-                st.markdown(_row_table(gt_row), unsafe_allow_html=True)
+        with tbl_col:
+            st.markdown(_row_table(gt_row), unsafe_allow_html=True)
 
-        response_blocks = []
-        for name in model_names:
-            entry = buf.get(name)
-            counts = entry["counts"] if entry else None
-            people = entry.get("people") if entry else None
-            raw_text = entry.get("raw_text") if entry else None
-            descriptive_text = entry.get("descriptive_text") if entry else None
-            latency = entry.get("latency") if entry else None
-            cells = "".join(_count_cell(counts[s] if counts else None, gt[s], series=s) for s in SERIES)
-            total = sum(counts.values()) if counts else None
-            row_tr = (f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
-                      f'{cells}{_count_cell(total, gt_total)}{_latency_cell(latency, max_latency)}</tr>')
 
-            img_col, tbl_col = st.columns([1, 3])
-            with img_col:
-                if img_path:
-                    components.html(_zoom_image_html(img_path, _person_boxes_for_zoom(people)), height=225)
-            with tbl_col:
-                st.markdown(_row_table(row_tr), unsafe_allow_html=True)
+def render_model_row(container, file_stem, name, entry, gt, gt_total, max_latency, show_json, show_descriptive):
+    """Draws exactly ONE model's row (image + table) into `container` —
+    entry=None (nothing back yet) renders a pending "—" row. Used both by
+    render_file_card() below (a one-shot full render, `container` a plain
+    st.container()) and by the live loop's per-row st.empty() placeholders
+    — the latter is why this had to split out of render_file_card() at
+    all: redrawing the WHOLE card (every row's image) on every single
+    model's completion was O(n_models^2) total image re-transmission for
+    one file, the likely cause of results visibly "blinking and
+    disappearing" under load with many models selected. Redrawing just the
+    one row that actually changed costs one image re-embed, not N."""
+    img_path = image_path_for(file_stem)
+    counts = entry["counts"] if entry else None
+    people = entry.get("people") if entry else None
+    raw_text = entry.get("raw_text") if entry else None
+    descriptive_text = entry.get("descriptive_text") if entry else None
+    latency = entry.get("latency") if entry else None
+    cells = "".join(_count_cell(counts[s] if counts else None, gt[s], series=s) for s in SERIES)
+    total = sum(counts.values()) if counts else None
+    row_tr = (f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
+              f'{cells}{_count_cell(total, gt_total)}{_latency_cell(latency, max_latency)}</tr>')
+    with container:
+        img_col, tbl_col = st.columns([1, 3])
+        with img_col:
+            if img_path:
+                components.html(_zoom_image_html(img_path, _person_boxes_for_zoom(people)), height=225)
+        with tbl_col:
+            st.markdown(_row_table(row_tr), unsafe_allow_html=True)
+    return _response_html(raw_text, counts, descriptive_text, show_json, show_descriptive)
 
-            resp = _response_html(raw_text, counts, descriptive_text, show_json, show_descriptive)
-            if resp:
-                response_blocks.append(f'<div style="margin-top:2px"><b>{name}</b>{resp}</div>')
 
-        if response_blocks:
+def render_file_card(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive):
+    """One-shot full render — ground truth row FIRST, then each model,
+    built from render_gt_row()/render_model_row() above. Used wherever a
+    file's data is already complete and only needs drawing once (resume
+    replay of an already-covered file, redraw from session_state, an
+    opened past run) — for the LIVE, still-in-progress case see
+    init_live_card()/update_live_row() instead, which update one row at a
+    time rather than re-rendering everything on every model's result."""
+    gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
+    gt_total = sum(gt.values())
+    max_latency = max((buf[n]["latency"] for n in model_names if buf.get(n) and buf[n].get("latency")),
+                       default=None)
+
+    _card_head(container, file_stem)
+    with container:
+        gt_container = st.container()
+        row_containers = {name: st.container() for name in model_names}
+        response_area = st.container()
+
+    render_gt_row(gt_container, file_stem, gt, gt_total)
+    response_blocks = []
+    for name in model_names:
+        resp = render_model_row(row_containers[name], file_stem, name, buf.get(name), gt, gt_total,
+                                 max_latency, show_json, show_descriptive)
+        if resp:
+            response_blocks.append(f'<div style="margin-top:2px"><b>{name}</b>{resp}</div>')
+    if response_blocks:
+        with response_area:
             st.markdown(
                 f'<div style="margin-top:6px;padding:8px 10px;background:#FFFFFF;border:1px solid {FAINT};'
                 f'font-size:11px;line-height:1.5">' + "".join(response_blocks) + "</div>",
                 unsafe_allow_html=True,
             )
+    with container:
         st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
+
+
+# Fixed reference for the LIVE per-row latency bar, since a row drawn on its
+# own can't know the eventual slowest model the way render_file_card()'s
+# one-shot max_latency does — accepted trade-off for not re-touching every
+# already-drawn row every time a new completion changes the true max.
+LIVE_LATENCY_CEILING = 60.0
+
+
+def init_live_card(feed, model_names, file_stem, gt_counts):
+    """First-touch setup for a file in the live loop: draws the title,
+    shared header, and the ground-truth row (known upfront, drawn once),
+    plus one empty per-model placeholder pre-filled with a pending row so
+    the card looks complete immediately. Returns the state
+    update_live_row() needs to fill in each row independently as that
+    model's result arrives."""
+    gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
+    gt_total = sum(gt.values())
+    _card_head(feed, file_stem)
+    with feed:
+        gt_container = st.container()
+        row_placeholders = {name: st.empty() for name in model_names}
+        response_ph = st.empty()
+        st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
+    render_gt_row(gt_container, file_stem, gt, gt_total)
+    for name in model_names:
+        render_model_row(row_placeholders[name], file_stem, name, None, gt, gt_total,
+                          LIVE_LATENCY_CEILING, False, False)
+    return {"row_placeholders": row_placeholders, "response_ph": response_ph,
+            "gt": gt, "gt_total": gt_total, "responses": {}}
+
+
+def update_live_row(scaffold, file_stem, name, entry, show_json, show_descriptive):
+    resp = render_model_row(scaffold["row_placeholders"][name], file_stem, name, entry,
+                             scaffold["gt"], scaffold["gt_total"], LIVE_LATENCY_CEILING,
+                             show_json, show_descriptive)
+    scaffold["responses"][name] = resp
+    blocks = [f'<div style="margin-top:2px"><b>{n}</b>{r}</div>' for n, r in scaffold["responses"].items() if r]
+    with scaffold["response_ph"]:
+        if blocks:
+            st.markdown(
+                f'<div style="margin-top:6px;padding:8px 10px;background:#FFFFFF;border:1px solid {FAINT};'
+                f'font-size:11px;line-height:1.5">' + "".join(blocks) + "</div>",
+                unsafe_allow_html=True,
+            )
+
+
+def _progress_html(model_names, done_per_model, total_per_model, in_flight_by_model):
+    """One visual row per model — a small bar plus an icon (✅ done, ⏳
+    actively running with elapsed time, ⌛ queued) — instead of one long
+    wrapped line of "name:n/N" pairs, which stops being readable past a
+    couple of models. `in_flight_by_model`: name -> (file, secs, n_pending)
+    from the generator's ~1s "tick" events (see run_checklist_steps());
+    empty right after a plain completion event, when the next tick (at
+    most ~1s later) will have it again."""
+    rows = []
+    for name in model_names:
+        done_n = done_per_model.get(name, 0)
+        flight = in_flight_by_model.get(name)
+        if done_n >= total_per_model:
+            icon, detail, bar_color = "✅", "done", POSITIVE_GREEN
+        elif flight:
+            f, secs, n_pending = flight
+            extra = f" (+{n_pending - 1} more queued)" if n_pending > 1 else ""
+            icon, detail, bar_color = "⏳", f"running on {f} · {secs:.0f}s{extra}", INK
+        else:
+            icon, detail, bar_color = "⌛", "queued", MUTED
+        pct = (done_n / total_per_model * 100) if total_per_model else 0
+        rows.append(
+            '<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;padding:2px 0">'
+            f'<span style="width:18px">{icon}</span>'
+            f'<span class="hv-mono" style="width:180px;flex-shrink:0">{html.escape(_display_name(name))}</span>'
+            f'<div style="background:#E4E5E2;height:8px;width:110px;position:relative;flex-shrink:0">'
+            f'<div style="position:absolute;inset:0;width:{pct:.0f}%;background:{bar_color}"></div></div>'
+            f'<span style="color:{MUTED};font-size:10.5px;white-space:nowrap">{done_n}/{total_per_model} — '
+            f'{html.escape(detail)}</span></div>'
+        )
+    return "".join(rows)
+
+
+def _in_flight_by_model(in_flight):
+    by_model = {}
+    for f, n, secs in in_flight:
+        cur = by_model.get(n)
+        if cur is None:
+            by_model[n] = [f, secs, 1]
+        else:
+            cur[2] += 1
+            if secs > cur[1]:
+                cur[0], cur[1] = f, secs
+    return {n: tuple(v) for n, v in by_model.items()}
 
 
 def build_args(model_names):
@@ -751,15 +855,16 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
     feed = st.container()
 
     # Replay whatever this run already has on disk (a resume) before the
-    # live loop continues — a fully-covered file gets its final card now, a
-    # file caught mid-way seeds file_bufs/file_placeholders so the loop
-    # below merges into it. Keyed by file (not one "current file" slot):
-    # run_checklist_steps() now fires every (file, model) pair at once, so
-    # several files can be genuinely in progress at the same time — each
-    # gets its own placeholder, filled in independently as its models
-    # finish, in whatever order they actually complete.
+    # live loop continues — a fully-covered file gets its final card now
+    # (render_file_card — done, never changes again), a file caught
+    # mid-way gets a live scaffold (init_live_card/update_live_row) so the
+    # loop below merges into it. Keyed by file (not one "current file"
+    # slot): run_checklist_steps() now fires every (file, model) pair at
+    # once, so several files can be genuinely in progress at the same
+    # time — each gets its own scaffold, updated independently as its
+    # models finish, in whatever order they actually complete.
     file_bufs = {}
-    file_placeholders = {}
+    file_scaffolds = {}
     if skip_pairs:
         covered = {}
         for f, m in skip_pairs:
@@ -777,10 +882,10 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
                 render_file_card(feed, model_names, file_stem, buf, gt_counts, show_json, show_descriptive)
             else:
                 file_bufs[file_stem] = buf
-                with feed:
-                    file_placeholders[file_stem] = st.empty()
-                render_file_card(file_placeholders[file_stem], model_names, file_stem, buf, gt_counts,
-                                  show_json, show_descriptive)
+                scaffold = init_live_card(feed, model_names, file_stem, gt_counts)
+                for name, entry in buf.items():
+                    update_live_row(scaffold, file_stem, name, entry, show_json, show_descriptive)
+                file_scaffolds[file_stem] = scaffold
 
     t_start = time.perf_counter()
     for step in run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for,
@@ -791,10 +896,12 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             # (several Ollama-backed models share one lock and run one at a
             # time — see model_adapters.OllamaAdapter — so a multi-minute
             # gap between completions is normal, not a hang).
-            per_model = " · ".join(f"{n}:{c}/{len(sampled_files)}" for n, c in step["done_per_model"].items())
-            in_flight = " · ".join(f"{n} on {f} ({secs:.0f}s)" for f, n, secs in sorted(step["in_flight"]))
-            status_line.markdown(f"**{step['done']}/{step['total']}** pairs · {time.perf_counter() - t_start:.0f}s "
-                                  f"elapsed — {per_model}  \n⏳ running now: {in_flight or '—'}")
+            status_line.markdown(
+                f"**{step['done']}/{step['total']}** pairs · {time.perf_counter() - t_start:.0f}s elapsed<br>"
+                + _progress_html(model_names, step["done_per_model"], len(sampled_files),
+                                  _in_flight_by_model(step["in_flight"])),
+                unsafe_allow_html=True,
+            )
             continue
         if step["skipped"]:
             continue
@@ -805,8 +912,7 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
         file_stem = step["file"]
         if file_stem not in file_bufs:
             file_bufs[file_stem] = {}
-            with feed:
-                file_placeholders[file_stem] = st.empty()  # redrawn below on every model's result
+            file_scaffolds[file_stem] = init_live_card(feed, model_names, file_stem, gt_counts)
 
         people = step["people"]
         key = (step["file"], step["model"])
@@ -834,24 +940,25 @@ def run_checklist_live(run_dir, run_name, model_names, sampled_files, adapters, 
             descriptive_by_pair[key] = step["descriptive_text"]
             descriptive_rows.append({"file": step["file"], "model": step["model"], "response_text": step["descriptive_text"]})
 
-        file_bufs[file_stem][step["model"]] = {
+        entry = {
             "counts": model_counts_for_people(people), "people": people, "raw_text": step["raw_text"],
             "descriptive_text": step["descriptive_text"], "latency": step["latency"],
         }
-        # Redraw this file's card right now, with whatever models have
-        # answered so far for it — a model not in its buf yet just shows
-        # "—" cells (render_file_card already handles a missing buf entry).
-        # Every model runs in its own thread and yields the instant it
-        # finishes (see run_checklist_steps()), so this is the point where
-        # that actually reaches the screen instead of waiting for the whole
-        # image — or, now, for every OTHER image in the run — to finish.
-        render_file_card(file_placeholders[file_stem], model_names, file_stem, file_bufs[file_stem], gt_counts,
-                          show_json, show_descriptive)
+        file_bufs[file_stem][step["model"]] = entry
+        # Redraw ONLY this one model's row, not the whole card — every model
+        # runs in its own thread and yields the instant it finishes (see
+        # run_checklist_steps()), so this is the point where that reaches
+        # the screen without re-sending every OTHER already-drawn row's
+        # image too (see render_model_row()'s docstring for why that matters).
+        update_live_row(file_scaffolds[file_stem], file_stem, step["model"], entry, show_json, show_descriptive)
 
         done, total = step["done"], step["total"]
         progress_bar.progress(done / total)
-        per_model = " · ".join(f"{n}:{c}/{len(sampled_files)}" for n, c in step["done_per_model"].items())
-        status_line.markdown(f"**{done}/{total}** pairs · {time.perf_counter() - t_start:.0f}s elapsed — {per_model}")
+        status_line.markdown(
+            f"**{done}/{total}** pairs · {time.perf_counter() - t_start:.0f}s elapsed<br>"
+            + _progress_html(model_names, step["done_per_model"], len(sampled_files), {}),
+            unsafe_allow_html=True,
+        )
 
         if done % 10 == 0 or done == total:  # checkpoint: survive a paused/killed tab
             pd.DataFrame(count_rows).to_csv(counts_path, index=False)

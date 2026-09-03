@@ -332,10 +332,10 @@ class OllamaAdapter:
                     # to different model tags on one server, fixed by _SERVER_LOCK
                     # above). 800 was too tight and silently cut off legitimate
                     # multi-person answers (observed: a real 95s gemma4 response
-                    # came back empty) — 3000 gives headroom for a busy image
-                    # (~6-8 people, each with 4 items x confidence+bbox) while
-                    # still bounding a true loop.
-                    "options": {"num_predict": 3000},
+                    # came back empty; a real 5-person answer needed ~450 tokens).
+                    # 1200 gives ~2.5x that headroom while still failing a true
+                    # loop in well under a minute instead of several.
+                    "options": {"num_predict": 1200},
                 },
                 timeout=300,  # cold model loads observed up to ~140s under load; leave headroom
             )
@@ -420,20 +420,24 @@ class GeminiAdapter:
         # from this endpoint under a 100-image run, not hypothetical.
         # Anything else (400/403/404) is a real problem and should raise
         # immediately rather than retry into the same wall 5 times.
+        # timeout=90/backoff cap=15s (was 180/30): worst case with all 5
+        # retries timing out was 1050s — long enough to look identical to a
+        # genuine hang in the UI. 90/15 halves that ceiling; a request that's
+        # actually going to succeed almost never takes anywhere near 90s.
         last_exc = None
         data = None
         for attempt in range(max_retries):
             try:
-                response = requests.post(url, json=body, timeout=180)
+                response = requests.post(url, json=body, timeout=90)
             except requests.exceptions.RequestException as exc:
                 last_exc = exc
-                time.sleep(min(2**attempt, 30))
+                time.sleep(min(2**attempt, 15))
                 continue
             if response.status_code == 429 or response.status_code >= 500:
                 last_exc = requests.exceptions.HTTPError(
                     f"{response.status_code} on attempt {attempt + 1}/{max_retries}", response=response
                 )
-                time.sleep(min(2**attempt, 30))
+                time.sleep(min(2**attempt, 15))
                 continue
             response.raise_for_status()
             data = response.json()
