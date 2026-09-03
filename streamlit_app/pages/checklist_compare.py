@@ -538,9 +538,10 @@ _THUMB_CSS = """
 .hv-thumb-wrap { position:relative; display:inline-block; line-height:0; }
 .hv-thumb-wrap img.hv-thumb { height:44px; width:auto; display:block; border:1px solid #C4C6C0; }
 .hv-thumb-wrap .hv-thumb-big {
-  display:none; position:absolute; z-index:200; left:0; top:0;
-  width:480px; max-width:min(70vw, 480px); border:2px solid #141414; background:#111;
+  display:none; position:absolute; z-index:200; left:100%; top:0; margin-left:8px;
+  width:480px; max-width:min(60vw, 480px); border:2px solid #141414; background:#111;
   box-shadow:0 8px 24px rgba(0,0,0,.35);
+  pointer-events:none;  /* never intercepts clicks/hover meant for what's underneath */
 }
 .hv-thumb-wrap:hover .hv-thumb-big { display:block; }
 </style>
@@ -584,33 +585,48 @@ def _thumb_html(uri):
     return f'<div class="hv-thumb-wrap"><img class="hv-thumb" src="{uri}"><img class="hv-thumb-big" src="{uri}"></div>'
 
 
+# One fixed color per class, everywhere a box gets drawn (thumbnail, hover
+# preview, gallery dialog — all three go through _annotated_image_uri()) —
+# reused from streamlit_app/detector.py's CLASS_META rather than this
+# page's old ad-hoc green=present/red=absent-only scheme, so "helmet" reads
+# as the same color as it does on the Demo page, not just "good/bad".
+_CLASS_COLOR = {
+    "person": det.CLASS_META["person"]["color"],
+    "helmet": det.CLASS_META["hardhat"]["color"], "no-helmet": det.CLASS_META["nohardhat"]["color"],
+    "vest": det.CLASS_META["vest"]["color"], "no-vest": det.CLASS_META["novest"]["color"],
+    "gloves": det.CLASS_META["gloves"]["color"], "no-gloves": det.CLASS_META["nogloves"]["color"],
+    "boots": det.CLASS_META["boots"]["color"], "no-boots": det.CLASS_META["noboots"]["color"],
+}
+
+
 def _gt_boxes_for_zoom(gt_boxes):
-    """load_gt_boxes()'s [(class_name, bbox)] -> _zoom_image_html()'s box
-    shape: green for a present slot, red for its "no-X" negative, neutral
-    for "person" (not a compliance call). Anything outside SERIES (e.g.
-    mask/no-mask on an 11-class export — not a tracked slot here) is
-    dropped rather than mis-colored."""
+    """load_gt_boxes()'s [(class_name, bbox)] -> _annotated_image_uri()'s
+    box shape, one fixed color per class (see _CLASS_COLOR). Anything
+    outside it (e.g. mask/no-mask on an 11-class export — not a tracked
+    slot here) is dropped rather than mis-colored. Person is dashed to
+    read as "the person", not an item."""
     boxes = []
     for class_name, bbox in gt_boxes:
-        if class_name not in SERIES:
+        if class_name not in _CLASS_COLOR:
             continue
-        color = MUTED if class_name == "person" else (NEGATIVE_RED if class_name.startswith("no-") else POSITIVE_GREEN)
-        boxes.append({"bbox": bbox, "color": color, "label": class_name})
+        boxes.append({"bbox": bbox, "color": _CLASS_COLOR[class_name], "label": class_name,
+                      "dashed": class_name == "person"})
     return boxes
 
 
 def _person_boxes_for_zoom(people):
     """A model's people (see model_adapters.parse_person_checklist_json())
-    -> _zoom_image_html()'s box shape: each person's own box dashed/neutral,
-    each item green (present) or red (absent), labeled "class conf%"."""
+    -> _annotated_image_uri()'s box shape: each person's own box dashed,
+    each item in its class's fixed color (see _CLASS_COLOR), labeled
+    "class conf%"."""
     boxes = []
     for p in people or []:
         if p["bbox"]:
-            boxes.append({"bbox": p["bbox"], "color": MUTED, "label": None, "dashed": True})
+            boxes.append({"bbox": p["bbox"], "color": _CLASS_COLOR["person"], "label": None, "dashed": True})
         for d in p["items"]:
             if d.bbox:
                 label = f"{d.class_name} {d.confidence:.0%}" if d.confidence is not None else d.class_name
-                boxes.append({"bbox": d.bbox, "color": POSITIVE_GREEN if d.present else NEGATIVE_RED, "label": label})
+                boxes.append({"bbox": d.bbox, "color": _CLASS_COLOR.get(d.class_name, MUTED), "label": label})
     return boxes
 
 
@@ -633,6 +649,15 @@ def _row_table(row_tr):
 
 
 def _card_head(container, file_stem):
+    """Draws the file title + shared table header, then returns the
+    img/table columns THEMSELVES (not just draws into them) — every row
+    for this file reuses this SAME pair of columns (see render_gt_row()/
+    render_model_row()) instead of each row opening its own fresh
+    st.columns() split. A fresh st.columns() per row is what made the
+    table look "broken to pieces": Streamlit puts real block-level spacing
+    between separate st.columns() calls, so N rows meant N large gaps.
+    Stacking every row inside ONE pair of columns instead means only
+    Streamlit's normal (small) within-container spacing between rows."""
     with container:
         st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin:10px 0 2px">{file_stem}</div>',
                     unsafe_allow_html=True)
@@ -642,36 +667,42 @@ def _card_head(container, file_stem):
         with tbl_col:
             st.markdown(f'<table style="width:100%;border-collapse:collapse;font-size:11.5px">{_TABLE_COLGROUP}'
                         f'<thead>{_grouped_head(["total", "latency"])}</thead></table>', unsafe_allow_html=True)
+    return img_col, tbl_col
 
 
-def render_gt_row(container, file_stem, gt, gt_total):
+def render_gt_row(img_container, tbl_container, file_stem, gt, gt_total):
+    """Draws the ground-truth row's image into `img_container` and its
+    table fragment into `tbl_container` — callers decide what those are:
+    _card_head()'s own columns (one-shot full render, rows just stack) or
+    a pair of st.empty() placeholders (the live loop, so this exact row
+    can be redrawn later without touching any other row)."""
     img_path = image_path_for(file_stem)
     gt_row = (f'<tr style="background:#F0F1EC;font-weight:600"><td style="padding:3px 8px">ground truth</td>'
               f'{"".join(_plain_cell(gt[s], series=s) for s in SERIES)}'
               f'{_plain_cell(gt_total)}{_plain_cell("—")}</tr>')
-    with container:
-        img_col, tbl_col = st.columns([1, 3])
-        with img_col:
-            if img_path:
-                st.markdown(_thumb_html(_annotated_image_uri(img_path, _gt_boxes_for_zoom(load_gt_boxes(file_stem)))),
-                             unsafe_allow_html=True)
-                if st.button("🔍", key=f"gallery_{file_stem}_gt", help="Browse all images"):
-                    st.session_state["checklist_gallery_click"] = (file_stem, "__gt__")
-        with tbl_col:
-            st.markdown(_row_table(gt_row), unsafe_allow_html=True)
+    with img_container:
+        if img_path:
+            st.markdown(_thumb_html(_annotated_image_uri(img_path, _gt_boxes_for_zoom(load_gt_boxes(file_stem)))),
+                         unsafe_allow_html=True)
+            if st.button("🔍", key=f"gallery_{file_stem}_gt", help="Browse all images · ← → to navigate, Esc to close"):
+                st.session_state["checklist_gallery_click"] = (file_stem, "__gt__")
+    with tbl_container:
+        st.markdown(_row_table(gt_row), unsafe_allow_html=True)
 
 
-def render_model_row(container, file_stem, name, entry, gt, gt_total, max_latency, show_json, show_descriptive):
-    """Draws exactly ONE model's row (image + table) into `container` —
-    entry=None (nothing back yet) renders a pending "—" row. Used both by
-    render_file_card() below (a one-shot full render, `container` a plain
-    st.container()) and by the live loop's per-row st.empty() placeholders
-    — the latter is why this had to split out of render_file_card() at
-    all: redrawing the WHOLE card (every row's image) on every single
-    model's completion was O(n_models^2) total image re-transmission for
-    one file, the likely cause of results visibly "blinking and
-    disappearing" under load with many models selected. Redrawing just the
-    one row that actually changed costs one image re-embed, not N."""
+def render_model_row(img_container, tbl_container, file_stem, name, entry, gt, gt_total, max_latency,
+                      show_json, show_descriptive):
+    """Draws exactly ONE model's row (image into `img_container`, table
+    fragment into `tbl_container`) — entry=None (nothing back yet) renders
+    a pending "—" row. Used both by render_file_card() below (a one-shot
+    full render, both containers plain columns that rows just stack into)
+    and by the live loop's per-row st.empty() placeholders — the latter is
+    why this had to split out of render_file_card() at all: redrawing the
+    WHOLE card (every row's image) on every single model's completion was
+    O(n_models^2) total image re-transmission for one file, the likely
+    cause of results visibly "blinking and disappearing" under load with
+    many models selected. Redrawing just the one row that actually changed
+    costs one image re-embed, not N."""
     img_path = image_path_for(file_stem)
     counts = entry["counts"] if entry else None
     people = entry.get("people") if entry else None
@@ -682,16 +713,15 @@ def render_model_row(container, file_stem, name, entry, gt, gt_total, max_latenc
     total = sum(counts.values()) if counts else None
     row_tr = (f'<tr><td style="padding:3px 8px;border-bottom:1px solid #E4E5E2">{model_chip(name)}</td>'
               f'{cells}{_count_cell(total, gt_total)}{_latency_cell(latency, max_latency)}</tr>')
-    with container:
-        img_col, tbl_col = st.columns([1, 3])
-        with img_col:
-            if img_path:
-                st.markdown(_thumb_html(_annotated_image_uri(img_path, _person_boxes_for_zoom(people))),
-                             unsafe_allow_html=True)
-                if entry and st.button("🔍", key=f"gallery_{file_stem}_{name}", help="Browse all images"):
-                    st.session_state["checklist_gallery_click"] = (file_stem, name)
-        with tbl_col:
-            st.markdown(_row_table(row_tr), unsafe_allow_html=True)
+    with img_container:
+        if img_path:
+            st.markdown(_thumb_html(_annotated_image_uri(img_path, _person_boxes_for_zoom(people))),
+                         unsafe_allow_html=True)
+            if entry and st.button("🔍", key=f"gallery_{file_stem}_{name}",
+                                    help="Browse all images · ← → to navigate, Esc to close"):
+                st.session_state["checklist_gallery_click"] = (file_stem, name)
+    with tbl_container:
+        st.markdown(_row_table(row_tr), unsafe_allow_html=True)
     return _response_html(raw_text, counts, descriptive_text, show_json, show_descriptive)
 
 
@@ -708,28 +738,32 @@ def render_file_card(container, model_names, file_stem, buf, gt_counts, show_jso
     max_latency = max((buf[n]["latency"] for n in model_names if buf.get(n) and buf[n].get("latency")),
                        default=None)
 
-    _card_head(container, file_stem)
-    with container:
-        gt_container = st.container()
-        row_containers = {name: st.container() for name in model_names}
-        response_area = st.container()
-
-    render_gt_row(gt_container, file_stem, gt, gt_total)
+    img_col, tbl_col = _card_head(container, file_stem)
+    render_gt_row(img_col, tbl_col, file_stem, gt, gt_total)
     response_blocks = []
     for name in model_names:
-        resp = render_model_row(row_containers[name], file_stem, name, buf.get(name), gt, gt_total,
+        resp = render_model_row(img_col, tbl_col, file_stem, name, buf.get(name), gt, gt_total,
                                  max_latency, show_json, show_descriptive)
         if resp:
             response_blocks.append(f'<div style="margin-top:2px"><b>{name}</b>{resp}</div>')
-    if response_blocks:
-        with response_area:
+    with container:
+        if response_blocks:
             st.markdown(
                 f'<div style="margin-top:6px;padding:8px 10px;background:#FFFFFF;border:1px solid {FAINT};'
                 f'font-size:11px;line-height:1.5">' + "".join(response_blocks) + "</div>",
                 unsafe_allow_html=True,
             )
-    with container:
         st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
+
+
+def _gallery_sequence(sampled_files, model_names):
+    """Every (file, row) pair in the run, in the same order the table
+    shows them (ground truth, then each model grouped YOLO -> local ->
+    API) — flattened across every sampled file too, so Prev/Next can walk
+    the whole run as one sequence instead of only the files for whichever
+    single model was clicked."""
+    row_keys = ["__gt__"] + sorted(model_names, key=lambda n: (_group_rank(n), n))
+    return [(f, k) for f in sampled_files for k in row_keys]
 
 
 @st.dialog("Browse images", width="large")
@@ -737,28 +771,31 @@ def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by
     """The image browser a thumbnail's 🔍 button opens — a real, native
     st.dialog (Streamlit >= 1.31) rather than a hand-rolled modal, since a
     true full-page overlay isn't something a components.html() iframe can
-    do (it's clipped to its own box). Left/right buttons walk through
-    every sampled file in the run, keeping whichever annotation view was
-    clicked (ground truth, or one model) so you're comparing the same
-    thing across images; the file's full result table is shown right
-    below the image for context."""
-    file_stem, model = st.session_state["checklist_gallery_click"]
-    idx = sampled_files.index(file_stem) if file_stem in sampled_files else 0
+    do (it's clipped to its own box); Streamlit's dialog chrome already
+    gives the dark overlay and Esc-to-close for free. Left/right buttons
+    (plus the arrow keys) walk the FULL sequence of every model's view of
+    every sampled file (see _gallery_sequence()) as one continuous
+    sequence, so browsing the whole run never needs closing and reopening
+    this. The file's full result table is shown right below the image for
+    context."""
+    seq = _gallery_sequence(sampled_files, model_names)
+    current = tuple(st.session_state["checklist_gallery_click"])
+    idx = seq.index(current) if current in seq else 0
 
     nav_l, nav_mid, nav_r, nav_close = st.columns([1, 5, 1, 1])
     if nav_l.button("←", key="gallery_prev", disabled=idx == 0):
         idx -= 1
-    if nav_r.button("→", key="gallery_next", disabled=idx >= len(sampled_files) - 1):
+    if nav_r.button("→", key="gallery_next", disabled=idx >= len(seq) - 1):
         idx += 1
     if nav_close.button("✕", key="gallery_close"):
         del st.session_state["checklist_gallery_click"]
         st.rerun()
-    file_stem = sampled_files[idx]
+    file_stem, model = seq[idx]
     st.session_state["checklist_gallery_click"] = (file_stem, model)
     label = "ground truth" if model == "__gt__" else _display_name(model)
     nav_mid.markdown(
         f'<div class="hv-mono" style="text-align:center;font-size:12px">{html.escape(file_stem)} — '
-        f'{html.escape(label)} ({idx + 1}/{len(sampled_files)})</div>', unsafe_allow_html=True)
+        f'{html.escape(label)} ({idx + 1}/{len(seq)})</div>', unsafe_allow_html=True)
 
     img_path = image_path_for(file_stem)
     if img_path:
@@ -821,22 +858,26 @@ def init_live_card(feed, model_names, file_stem, gt_counts):
     model's result arrives."""
     gt = (gt_counts or {}).get(file_stem, {s: 0 for s in SERIES})
     gt_total = sum(gt.values())
-    _card_head(feed, file_stem)
+    img_col, tbl_col = _card_head(feed, file_stem)
+    with img_col:
+        gt_img_ph = st.empty()
+        row_img_phs = {name: st.empty() for name in model_names}
+    with tbl_col:
+        gt_tbl_ph = st.empty()
+        row_tbl_phs = {name: st.empty() for name in model_names}
     with feed:
-        gt_container = st.container()
-        row_placeholders = {name: st.empty() for name in model_names}
         response_ph = st.empty()
         st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
-    render_gt_row(gt_container, file_stem, gt, gt_total)
+    render_gt_row(gt_img_ph, gt_tbl_ph, file_stem, gt, gt_total)
     for name in model_names:
-        render_model_row(row_placeholders[name], file_stem, name, None, gt, gt_total,
+        render_model_row(row_img_phs[name], row_tbl_phs[name], file_stem, name, None, gt, gt_total,
                           LIVE_LATENCY_CEILING, False, False)
-    return {"row_placeholders": row_placeholders, "response_ph": response_ph,
+    return {"row_img_phs": row_img_phs, "row_tbl_phs": row_tbl_phs, "response_ph": response_ph,
             "gt": gt, "gt_total": gt_total, "responses": {}}
 
 
 def update_live_row(scaffold, file_stem, name, entry, show_json, show_descriptive):
-    resp = render_model_row(scaffold["row_placeholders"][name], file_stem, name, entry,
+    resp = render_model_row(scaffold["row_img_phs"][name], scaffold["row_tbl_phs"][name], file_stem, name, entry,
                              scaffold["gt"], scaffold["gt_total"], LIVE_LATENCY_CEILING,
                              show_json, show_descriptive)
     scaffold["responses"][name] = resp
