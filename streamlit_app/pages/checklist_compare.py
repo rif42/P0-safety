@@ -1498,7 +1498,7 @@ if n_flagged:
     )
     st.dataframe(
         by_source, width="stretch",
-        column_config={"flag_rate": st.column_config.ProgressColumn("flag rate", format="%.0f%%", min_value=0, max_value=1)},
+        column_config={"flag_rate": st.column_config.ProgressColumn("flag rate", format="percent", min_value=0, max_value=1)},
     )
 else:
     st.caption("No images where model consensus exceeded the label's person count in this run.")
@@ -1568,3 +1568,63 @@ else:
 
     with st.expander("Full numbers (long form, with sample sizes)"):
         st.dataframe(macro, hide_index=True, width="stretch")
+
+    # --- ranking — one aggregate score per model, so a run answers "which
+    # model won" directly instead of leaving that to eyeballing the two
+    # heatmaps above. Reuses `macro` (already computed) — no rescoring.
+    st.markdown('<div class="hv-h1" style="font-size:20px;margin:22px 0 2px">RANKING</div>', unsafe_allow_html=True)
+    st.caption(
+        "Overall: each model's exact-match rate and mean abs. error averaged across every class series "
+        "above, ranked by exact-match rate then by error (ties share first). Latency: average seconds "
+        "per image answered. Person-count-only is called out separately since raw people-counting is "
+        "the one question every model — YOLO or chat — answers the same way, unlike the per-item slots."
+    )
+    overall = macro.groupby("model").agg(
+        exact_match_rate=("exact_match_rate", "mean"), mean_abs_error=("mean_abs_error", "mean"),
+    ).reset_index()
+    overall["avg_latency_s"] = overall["model"].map(
+        lambda m: statistics.mean(lat) if (lat := [latency_by_pair[(f, m)] for f in sampled_files
+                                                    if latency_by_pair.get((f, m)) is not None]) else None
+    )
+    overall["display"] = overall["model"].map(_display_name)
+    overall = overall.sort_values(["exact_match_rate", "mean_abs_error"], ascending=[False, True])
+
+    top_score = overall.iloc[0]["exact_match_rate"]
+    winners = overall[overall["exact_match_rate"] == top_score]
+    winner_names = ", ".join(f"{_display_name(m)}" for m in winners["model"])
+    timed = overall.dropna(subset=["avg_latency_s"])
+    fastest = timed.loc[timed["avg_latency_s"].idxmin()] if not timed.empty else None
+    person_sub = macro[macro["series"] == "person"].sort_values(
+        ["exact_match_rate", "mean_abs_error"], ascending=[False, True])
+    person_winner = person_sub.iloc[0] if not person_sub.empty else None
+
+    fastest_note = ""
+    if fastest is not None and fastest["model"] in winners["model"].values:
+        fastest_note = f' — also fastest here, {fastest["avg_latency_s"]:.1f}s/image'
+    st.markdown(
+        f'<div style="padding:14px 16px;background:{INK};color:#FFFFFF;margin-bottom:10px">'
+        f'<div class="hv-mono" style="font-size:10.5px;letter-spacing:1px;color:#9B9D97">'
+        f'OVERALL WINNER{"S" if len(winners) > 1 else ""}</div>'
+        f'<div style="font-size:20px;font-weight:700;margin:2px 0 4px">{html.escape(winner_names)}</div>'
+        f'<div style="font-size:12px;color:#C4C6C0">{top_score:.0%} exact-match, '
+        f'{winners.iloc[0]["mean_abs_error"]:.2f} mean abs. error{fastest_note}</div></div>',
+        unsafe_allow_html=True,
+    )
+    if fastest is not None and fastest["model"] not in winners["model"].values:
+        st.caption(f"Fastest overall: **{fastest['display']}** at {fastest['avg_latency_s']:.1f}s/image "
+                   "(not the most accurate here).")
+    if person_winner is not None and person_winner["model"] not in winners["model"].values:
+        st.caption(f"Best at pure person-counting: **{_display_name(person_winner['model'])}** "
+                   f"({person_winner['exact_match_rate']:.0%} exact-match on person count alone).")
+
+    st.dataframe(
+        overall[["display", "exact_match_rate", "mean_abs_error", "avg_latency_s"]]
+        .rename(columns={"display": "model", "exact_match_rate": "exact-match rate",
+                          "mean_abs_error": "mean abs error", "avg_latency_s": "avg latency (s)"}),
+        hide_index=True, width="stretch",
+        column_config={
+            "exact-match rate": st.column_config.ProgressColumn(format="percent", min_value=0, max_value=1),
+            "mean abs error": st.column_config.NumberColumn(format="%.2f"),
+            "avg latency (s)": st.column_config.NumberColumn(format="%.1f"),
+        },
+    )
