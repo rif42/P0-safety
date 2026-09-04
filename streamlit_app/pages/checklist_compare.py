@@ -1166,6 +1166,18 @@ def _render_live_run(show_json, show_descriptive):
             + _progress_html(model_names, done_per_model, len(sampled_files), _in_flight_by_model(in_flight)),
             unsafe_allow_html=True,
         )
+        if any(n in LOCAL_LLM_NAMES for _f, n, _s in in_flight):
+            # "Is it stuck or is something happening?" is the single most
+            # repeated question on a local-model run — self-serve the
+            # answer instead of it always needing a live process check:
+            # `ollama ps` only shows a model as loaded while something (a
+            # load, or actual generation) is using it, so a frozen/dead
+            # call would drop off that list, not just sit there quietly.
+            st.caption(
+                "⏳ A local model can look frozen for minutes between completions (see the time "
+                "estimate above) — to check it's actually working, not hung, run `ollama ps` in a "
+                "terminal: a model listed there with a live `expires_at` is genuinely in use right now."
+            )
     elif error:
         st.error(f"Run failed: {error} — partial results saved, resumable from PAUSED RUNS above.")
     elif stopped:
@@ -1286,21 +1298,27 @@ else:
         )
         local_llm_in_selection = [m for m in model_names if m in LOCAL_LLM_NAMES]
         if local_llm_in_selection:
-            # Not a hang — this genuinely takes minutes. Local LLMs share one
-            # Ollama server and run strictly one call at a time (see
-            # OllamaAdapter._SERVER_LOCK): each call is a cold model load
-            # (~30-40s on CPU, confirmed directly against Ollama) plus the
-            # actual JSON generation, so N local models × M images all
-            # serialize into one long queue with no progress in between —
-            # easy to mistake for broken. Said here, not just in the
-            # multiselect's help tooltip above, since that's easy to miss
-            # and this is the single most common "it's not running" report.
+            # Not a hang — this genuinely takes minutes, PER IMAGE. Local
+            # LLMs share one Ollama server and run strictly one call at a
+            # time (see OllamaAdapter._SERVER_LOCK): each call is a cold
+            # model load (~30-40s on CPU, confirmed directly against
+            # Ollama) PLUS the actual generation — the checklist prompt
+            # asks for a full structured JSON breakdown of every person
+            # and 4 items each, up to 1200 output tokens, not a short
+            # answer, so a full call runs 1-5 min on CPU for an 8B model
+            # (confirmed directly: 94-272s per call across 4 different
+            # local models on this hardware). N models × M images all
+            # serialize into one long queue on top of that — easy to
+            # mistake for broken when nothing ticks over for minutes.
+            # Said here, not just in the multiselect's help tooltip above,
+            # since that's easy to miss and this is the single most common
+            # "it's not running" report.
             st.caption(
                 f"⏳ {len(local_llm_in_selection)} local model(s) × {n_images} image(s) = "
                 f"{len(local_llm_in_selection) * n_images} calls, one at a time on one Ollama server — "
-                f"roughly 30-90s **each**, so this queue alone could take "
-                f"{len(local_llm_in_selection) * n_images * 30 // 60}-{len(local_llm_in_selection) * n_images * 90 // 60}+ min. "
-                "Progress can look frozen for a while between completions; that's normal, not a hang."
+                f"roughly **1-5 min each** (full JSON answer, not a quick reply), so this queue alone "
+                f"could take {len(local_llm_in_selection) * n_images * 1}-{len(local_llm_in_selection) * n_images * 5}+ min. "
+                "Progress can look frozen for minutes between completions; that's normal, not a hang."
             )
         cloud_in_selection = [m for m in model_names if ADAPTERS.get(m, {}).get("is_cloud")]
         # key= pins this checkbox's identity — without it the auto-derived
