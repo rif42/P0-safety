@@ -799,18 +799,32 @@ def _gallery_sequence(sampled_files, model_names):
     return [(f, k) for f in sampled_files for k in row_keys]
 
 
-@st.dialog("Browse images", width="large")
+def _on_gallery_dismiss():
+    """on_dismiss callback (see @st.dialog below) — fires for EVERY way the
+    dialog closes: Esc, clicking the native ✕, or clicking outside it.
+    Without this, only our own in-dialog button could close it: those
+    native dismissals are frontend-only and never touched
+    checklist_gallery_click, so the very next rerun (e.g. this page's own
+    1s live-progress tick) saw the flag still set and reopened the dialog
+    right back — Esc/outer-✕ looked like they silently did nothing. One
+    real close path now, via Streamlit's own chrome — no second, redundant
+    ✕ of our own inside the dialog."""
+    st.session_state.pop("checklist_gallery_click", None)
+
+
+@st.dialog("Browse images", width="large", on_dismiss=_on_gallery_dismiss)
 def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair):
     """The image browser a thumbnail's 🔍 button opens — a real, native
     st.dialog (Streamlit >= 1.31) rather than a hand-rolled modal, since a
     true full-page overlay isn't something a components.html() iframe can
     do (it's clipped to its own box); Streamlit's dialog chrome already
-    gives the dark overlay and Esc-to-close for free. Left/right buttons
-    (plus the arrow keys) walk the FULL sequence of every model's view of
-    every sampled file (see _gallery_sequence()) as one continuous
-    sequence, so browsing the whole run never needs closing and reopening
-    this. The file's full result table is shown right below the image for
-    context."""
+    gives the dark overlay, Esc-to-close, and its own ✕ for free — see
+    _on_gallery_dismiss for why closing is wired through on_dismiss rather
+    than a second, custom close button. Left/right buttons (plus the
+    arrow keys) walk the FULL sequence of every model's view of every
+    sampled file (see _gallery_sequence()) as one continuous sequence, so
+    browsing the whole run never needs closing and reopening this. The
+    file's full result table is shown right below the image for context."""
     if "checklist_gallery_click" not in st.session_state:
         return
     seq = _gallery_sequence(sampled_files, model_names)
@@ -823,21 +837,18 @@ def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by
     # redrawing. scope="fragment" looked right (this dialog only ever
     # opens from inside a fragment — _browse_button's, or, for a
     # still-running file, _render_live_run's) but a dialog is its own
-    # implicit rerun scope: it made nav_close re-invoke THIS function
-    # directly instead of unwinding out to the "is it open" check that
-    # opened it (leaving an empty dialog shell instead of closing), and
-    # while _render_live_run was ticking every 1s it raced with that
-    # timer, sometimes eating a click's idx update entirely (arrows
-    # looked stuck again). Plain st.rerun() sidesteps both.
-    nav_l, nav_mid, nav_r, nav_close = st.columns([1, 5, 1, 1])
+    # implicit rerun scope: an earlier version of the (now-removed) close
+    # button re-invoked THIS function directly instead of unwinding out to
+    # the "is it open" check that opened it, and while _render_live_run
+    # was ticking every 1s it raced with that timer, sometimes eating a
+    # click's idx update entirely (arrows looked stuck again). Plain
+    # st.rerun() sidesteps both.
+    nav_l, nav_mid, nav_r = st.columns([1, 5, 1])
     if nav_l.button("←", key="gallery_prev", disabled=idx == 0):
         st.session_state["checklist_gallery_click"] = seq[idx - 1]
         st.rerun()
     if nav_r.button("→", key="gallery_next", disabled=idx >= len(seq) - 1):
         st.session_state["checklist_gallery_click"] = seq[idx + 1]
-        st.rerun()
-    if nav_close.button("✕", key="gallery_close"):
-        del st.session_state["checklist_gallery_click"]
         st.rerun()
     file_stem, model = seq[idx]
     st.session_state["checklist_gallery_click"] = (file_stem, model)
@@ -1272,6 +1283,24 @@ else:
                  "then API-based LLMs (calls a paid API). Local LLMs share one Ollama server and run one "
                  "at a time, not in parallel — picking several roughly sums their individual times.",
         )
+        local_llm_in_selection = [m for m in model_names if m in LOCAL_LLM_NAMES]
+        if local_llm_in_selection:
+            # Not a hang — this genuinely takes minutes. Local LLMs share one
+            # Ollama server and run strictly one call at a time (see
+            # OllamaAdapter._SERVER_LOCK): each call is a cold model load
+            # (~30-40s on CPU, confirmed directly against Ollama) plus the
+            # actual JSON generation, so N local models × M images all
+            # serialize into one long queue with no progress in between —
+            # easy to mistake for broken. Said here, not just in the
+            # multiselect's help tooltip above, since that's easy to miss
+            # and this is the single most common "it's not running" report.
+            st.caption(
+                f"⏳ {len(local_llm_in_selection)} local model(s) × {n_images} image(s) = "
+                f"{len(local_llm_in_selection) * n_images} calls, one at a time on one Ollama server — "
+                f"roughly 30-90s **each**, so this queue alone could take "
+                f"{len(local_llm_in_selection) * n_images * 30 // 60}-{len(local_llm_in_selection) * n_images * 90 // 60}+ min. "
+                "Progress can look frozen for a while between completions; that's normal, not a hang."
+            )
         cloud_in_selection = [m for m in model_names if ADAPTERS.get(m, {}).get("is_cloud")]
         # key= pins this checkbox's identity — without it the auto-derived
         # key includes the label text below, which embeds cloud_in_selection.
