@@ -333,7 +333,7 @@ def _checklist_predict_one(name, adapter, image_path, prompt, items, descriptive
 
 
 def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, items=None,
-                         skip_pairs=None, descriptive_prompt=None):
+                         skip_pairs=None, descriptive_prompt=None, cancel_event=None):
     """Sibling to run_comparison_steps() for the per-person checklist prompt
     ("how many people, and for each: helmet/vest/gloves/boots?") — a
     different question shape (a list of people, not flat per-class
@@ -360,21 +360,28 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     within one. Consumers can no longer assume steps arrive grouped by
     file (see streamlit_app/pages/checklist_compare.py's per-file
     placeholders, keyed by file rather than tracking one "current file").
-    Pool sized to every pair at once, UNCAPPED — a cap here is actively
-    wrong, not just unnecessary: a thread blocked waiting on
-    OllamaAdapter's _SERVER_LOCK still occupies a pool slot the whole
-    time it waits, not just while it's actually calling Ollama. Capping
-    at (say) 32 workers with a large run (many models x many images)
-    reliably starved every OTHER adapter — including plain, fast YOLO
-    weights with no lock at all — because most of the 32 slots filled up
-    with local-LLM threads sitting blocked on that one lock, leaving too
-    few free workers to even START the fast, unrelated tasks. One thread
-    per pair removes the possibility entirely: a blocked thread only
-    ever blocks itself now.
-    ponytail: thousands of threads, almost all idle/blocked on I/O or a
-    lock rather than burning CPU, is cheap in Python — revisit only if a
-    run size ever makes raw thread COUNT (not what they're blocked on)
-    the actual bottleneck, which today's realistic run sizes don't.
+    TWO pools, not one: `fast_pool` (uncapped — one thread per pair) for
+    everything except Ollama-backed adapters, and `local_pool` (fixed at
+    4 workers) for OllamaAdapter instances specifically. They already
+    serialize onto one real HTTP connection via OllamaAdapter's own
+    class-level _SERVER_LOCK regardless of pool size, so this isn't about
+    concurrency — it's about CANCELLATION. With one shared uncapped pool,
+    a submitted local-model task starts its OS thread immediately and
+    blocks on _SERVER_LOCK for however long it takes to reach the front
+    of the queue — at that point it can no longer be cancelled, only
+    waited out, even after a Pause. Confirmed live: a session with
+    several pause/resume cycles accumulated 1200+ threads, because every
+    run's full batch of local-model calls had already started and could
+    never be abandoned, each new run's local models queuing up BEHIND
+    every previous run's leftover backlog on the same shared lock,
+    forever. A separate, small local_pool means most local-model tasks
+    are still genuinely QUEUED (not yet started) at any moment, so
+    `cancel_event` (below) can actually drop them via cancel_futures — a
+    plain thread already blocked on a lock can't be killed at all, so
+    cancellation only works if it happens before that.
+    fast_pool stays uncapped (see prior note) — a thread blocked on
+    nothing but a fast, independent call was never the problem; only the
+    ones queuing behind OllamaAdapter's shared lock are.
 
     Each step's `people` is the list scripts/model_adapters.py's
     parse_person_checklist_json() (or people_from_detections()) returns, or
@@ -384,7 +391,7 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     itself took."""
     import concurrent.futures
 
-    from model_adapters import CHECKLIST_ITEMS, render_checklist_prompt
+    from model_adapters import CHECKLIST_ITEMS, OllamaAdapter, render_checklist_prompt
 
     items = items or CHECKLIST_ITEMS
     prompt = render_checklist_prompt(items)
@@ -393,7 +400,10 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     done = 0
     done_per_model = {name: 0 for name in adapters}
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, total)) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, total)) as fast_pool, \
+         concurrent.futures.ThreadPoolExecutor(max_workers=4) as local_pool:
+        pools_by_name = {name: (local_pool if isinstance(adapter, OllamaAdapter) else fast_pool)
+                          for name, adapter in adapters.items()}
         futures = {}
         for file_stem in sampled_files:
             image_path = image_path_for(file_stem)
@@ -415,7 +425,8 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
                         "people": None, "raw_text": None, "latency": None, "descriptive_text": None,
                     }
                     continue
-                future = pool.submit(_checklist_predict_one, name, adapter, image_path, prompt, items, descriptive_prompt)
+                future = pools_by_name[name].submit(
+                    _checklist_predict_one, name, adapter, image_path, prompt, items, descriptive_prompt)
                 futures[future] = (file_stem, name, time.perf_counter())
 
         # concurrent.futures.wait(..., timeout=1) instead of as_completed():
@@ -426,6 +437,16 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
         # is still in flight, is what actually answers "is this stuck?".
         pending = set(futures)
         while pending:
+            if cancel_event is not None and cancel_event.is_set():
+                # cancel_futures=True only drops tasks local_pool hasn't
+                # STARTED yet (at most 4 are ever running) — that's the
+                # whole reason local-model work gets its own small pool
+                # instead of sharing fast_pool's one-thread-per-task sizing,
+                # where everything submitted is already running/blocked and
+                # nothing is left to cancel by the time Pause is clicked.
+                local_pool.shutdown(wait=False, cancel_futures=True)
+                fast_pool.shutdown(wait=False, cancel_futures=True)
+                return
             finished, pending = concurrent.futures.wait(pending, timeout=1.0,
                                                           return_when=concurrent.futures.FIRST_COMPLETED)
             if not finished:

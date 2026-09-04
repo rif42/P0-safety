@@ -1018,7 +1018,8 @@ def _run_checklist_worker(bg):
 
     try:
         for step in run_checklist_steps(bg["adapters"], sampled_files, image_path_for=image_path_for,
-                                         skip_pairs=bg["skip_pairs"], descriptive_prompt=DESCRIPTIVE_PROMPT):
+                                         skip_pairs=bg["skip_pairs"], descriptive_prompt=DESCRIPTIVE_PROMPT,
+                                         cancel_event=bg["stop_event"]):
             if bg["stop_event"].is_set():
                 break
             if step.get("tick"):
