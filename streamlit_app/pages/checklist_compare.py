@@ -735,9 +735,10 @@ def _browse_button_body(file_stem, model_names, sampled_files, gt_counts, people
     every row wasted table space for what a single click + the gallery's
     own Prev/Next already covers (it walks every row of every file, see
     _gallery_sequence()). Opens at this file's ground-truth row; arrow to
-    any specific row/model from there. Shared by _browse_button (static
-    cards) and _browse_button_live (still-running cards) below — same
-    body, only the ticking behavior differs."""
+    any specific row/model from there. Called directly (no fragment) for
+    a still-running file from inside _render_live_run's own fragment, or
+    via _browse_button's fragment wrapper for a static/finished file —
+    see render_file_card and _browse_button's docstring."""
     st.caption("hover a thumbnail to enlarge")
     if st.button("🔍 Browse images", key=f"gallery_{file_stem}"):
         st.session_state["checklist_gallery_click"] = (file_stem, "__gt__")
@@ -751,16 +752,20 @@ def _browse_button(*args):
     """@st.fragment so opening/browsing the gallery only reruns this button
     (and the dialog it opens), not the whole script — without it, every
     click here is a full-app rerun, which would cancel a still-running
-    background run the same way Streamlit's native Stop does."""
-    _browse_button_body(*args)
+    background run the same way Streamlit's native Stop does.
 
-
-@st.fragment(run_every="1s")
-def _browse_button_live(*args):
-    """Same as _browse_button, plus a 1s tick — for a file whose run is
-    still going: if its gallery is open, this keeps it refreshed as more
-    of that file's models finish, instead of only updating on the next
-    manual Prev/Next click."""
+    Only for the STATIC case (render_file_card's live=False, called
+    directly from the outer, non-fragment script). The live=True case
+    below calls _browse_button_body directly, with NO fragment wrapper —
+    Streamlit doesn't render a fragment's output when it's invoked from
+    inside another already-running fragment (confirmed directly: the
+    button's own st.button()/st.dialog() calls ran without error, logged
+    as executing, but nothing reached the page — a nested @st.fragment
+    silently produces no UI). render_file_card's live=True path already
+    runs inside _render_live_run's own @st.fragment(run_every="1s"), which
+    gives it the identical "isolated rerun scope + ticks every 1s"
+    behavior for free — a second, nested fragment here was both redundant
+    and the reason Browse Images never appeared on a still-running file."""
     _browse_button_body(*args)
 
 
@@ -768,16 +773,17 @@ def render_file_card(container, model_names, file_stem, buf, gt_counts, show_jso
                       sampled_files, people_by_pair, text_by_pair, descriptive_by_pair, latency_by_pair,
                       live=False):
     """Full render of one file's card. `live=True` (still-running file,
-    called every tick from _render_live_run) uses the self-refreshing
-    browse button so an open gallery updates as more answers land;
-    `live=False` (a finished file — redraw from session_state, an opened
-    past run) uses the plain one-shot version."""
+    called every tick from _render_live_run, itself already a fragment)
+    calls the browse button body directly — no nested fragment, see
+    _browse_button's docstring. `live=False` (a finished file — redraw
+    from session_state, an opened past run, called from the outer,
+    non-fragment script) uses the fragment-wrapped version."""
     with container:
         st.markdown(f'<div class="hv-mono" style="font-size:11px;color:{MUTED};margin:10px 0 2px">{file_stem}</div>',
                      unsafe_allow_html=True)
     render_full_table(container, model_names, file_stem, buf, gt_counts, show_json, show_descriptive)
     with container:
-        browse = _browse_button_live if live else _browse_button
+        browse = _browse_button_body if live else _browse_button
         browse(file_stem, model_names, sampled_files, gt_counts, people_by_pair, text_by_pair,
                descriptive_by_pair, latency_by_pair)
         st.markdown("<hr style='margin:10px 0'>", unsafe_allow_html=True)
@@ -815,14 +821,14 @@ def _show_gallery(model_names, sampled_files, gt_counts, people_by_pair, text_by
     # lives on a background thread (see _run_checklist_worker), so a full
     # rerun here no longer cancels anything — it's just Streamlit
     # redrawing. scope="fragment" looked right (this dialog only ever
-    # opens from inside _browse_button's/_browse_button_live's fragment)
-    # but a dialog is its own implicit rerun scope: it made nav_close
-    # re-invoke THIS function directly instead of unwinding out to
-    # _browse_button's "is it open" check (leaving an empty dialog shell
-    # instead of closing), and on _browse_button_live (run_every="1s")
-    # it raced with the fragment's own timer tick, sometimes eating a
-    # click's idx update entirely (arrows looked stuck again). Plain
-    # st.rerun() sidesteps both.
+    # opens from inside a fragment — _browse_button's, or, for a
+    # still-running file, _render_live_run's) but a dialog is its own
+    # implicit rerun scope: it made nav_close re-invoke THIS function
+    # directly instead of unwinding out to the "is it open" check that
+    # opened it (leaving an empty dialog shell instead of closing), and
+    # while _render_live_run was ticking every 1s it raced with that
+    # timer, sometimes eating a click's idx update entirely (arrows
+    # looked stuck again). Plain st.rerun() sidesteps both.
     nav_l, nav_mid, nav_r, nav_close = st.columns([1, 5, 1, 1])
     if nav_l.button("←", key="gallery_prev", disabled=idx == 0):
         st.session_state["checklist_gallery_click"] = seq[idx - 1]
@@ -1356,6 +1362,19 @@ if "checklist_bg" in st.session_state:
         }
     if wrapped_up:
         del st.session_state["checklist_bg"]
+        # One more full rerun, right now, from OUTSIDE the fragment: without
+        # this, _render_live_run's own run_every="1s" timer keeps ticking
+        # forever (fragments aren't unregistered just because their call
+        # site stops being "the" branch taken) — its NEXT tick reads
+        # checklist_bg as None (just deleted above) and renders nothing,
+        # permanently blanking the file card/Browse button it drew a
+        # moment ago, since a rerun triggered from OUTSIDE this fragment's
+        # own code never happened to let the elif branch below take over
+        # first. Rerunning here — before returning control to Streamlit at
+        # all — guarantees the very next script execution takes the elif
+        # branch instead, which stops this fragment's call site from ever
+        # being reached again (and Streamlit retires its timer with it).
+        st.rerun()
     model_names, sampled_files, gt_counts = bg["model_names"], bg["sampled_files"], bg["gt_counts"]
     people_by_pair, text_by_pair = bg["people_by_pair"], bg["text_by_pair"]
     descriptive_by_pair, latency_by_pair = bg["descriptive_by_pair"], bg["latency_by_pair"]
