@@ -360,9 +360,21 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     within one. Consumers can no longer assume steps arrive grouped by
     file (see streamlit_app/pages/checklist_compare.py's per-file
     placeholders, keyed by file rather than tracking one "current file").
-    ponytail: pool sized to every pair at once, capped at 32 — plenty for
-    today's run sizes; the real throughput ceiling is OllamaAdapter's lock
-    and each cloud API's own rate limit, not thread count.
+    Pool sized to every pair at once, UNCAPPED — a cap here is actively
+    wrong, not just unnecessary: a thread blocked waiting on
+    OllamaAdapter's _SERVER_LOCK still occupies a pool slot the whole
+    time it waits, not just while it's actually calling Ollama. Capping
+    at (say) 32 workers with a large run (many models x many images)
+    reliably starved every OTHER adapter — including plain, fast YOLO
+    weights with no lock at all — because most of the 32 slots filled up
+    with local-LLM threads sitting blocked on that one lock, leaving too
+    few free workers to even START the fast, unrelated tasks. One thread
+    per pair removes the possibility entirely: a blocked thread only
+    ever blocks itself now.
+    ponytail: thousands of threads, almost all idle/blocked on I/O or a
+    lock rather than burning CPU, is cheap in Python — revisit only if a
+    run size ever makes raw thread COUNT (not what they're blocked on)
+    the actual bottleneck, which today's realistic run sizes don't.
 
     Each step's `people` is the list scripts/model_adapters.py's
     parse_person_checklist_json() (or people_from_detections()) returns, or
@@ -381,7 +393,7 @@ def run_checklist_steps(adapters, sampled_files, image_path_for=image_path_for, 
     done = 0
     done_per_model = {name: 0 for name in adapters}
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=min(32, max(1, total))) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, total)) as pool:
         futures = {}
         for file_stem in sampled_files:
             image_path = image_path_for(file_stem)
